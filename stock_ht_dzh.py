@@ -6,6 +6,7 @@ import os
 from pprint import pprint
 '''
 http://www.sse.com.cn/assortment/stock/list/share/
+http://www.szse.cn/main/marketdata/jypz/colist/
 http://mnews.gw.com.cn/wap/data/ipad/stock/SZ/02/002702/gsgg/1.json
 http://mnews.gw.com.cn/wap/data/ipad/stock/SZ/38/300238/f10/F10_Sjm.json
 http://mnews.gw.com.cn/wap/data/ipad/stock/SZ/38/300238/f10/F10_Jbm.json
@@ -30,6 +31,7 @@ def get_json_url(url):
 url='http://mnews.gw.com.cn/wap/data/ipad/stock/SZ/38/300238/f10/F10_Sjm.json'
 
 def parse_sjm(stock_code):
+    #数据面
     stock_info={'market':stock_code[:2],'suffix':stock_code[-2:],'code':stock_code[2:]}
     url='http://mnews.gw.com.cn/wap/data/ipad/stock/{market}/{suffix}/{code}/f10/F10_Sjm.json'.format(**stock_info)    
     r=requests.get(url)
@@ -43,6 +45,7 @@ def parse_sjm(stock_code):
     return data
     
 def parse_jbm(stock_code):
+    #基本面
     stock_info={'market':stock_code[:2],'suffix':stock_code[-2:],'code':stock_code[2:]}
     url='http://mnews.gw.com.cn/wap/data/ipad/stock/{market}/{suffix}/{code}/f10/F10_Jbm.json'.format(**stock_info)
     # print url
@@ -63,7 +66,7 @@ def parse_jbm(stock_code):
                     rdic[key]=vlu    
     return rdic
 
-def load_list(market):
+def load_stock_list(market):
     rows=[]
     rdr=csv.reader(open('idx/%sSEC.csv'%market) )
     for row in rdr:
@@ -116,9 +119,11 @@ def query_data():
             
 def main():
     # market='SH'
+    load_stock_list('SH')
+    load_stock_list('SZ')
     # fetch_api_data(market)
     # dump_text_data()
-    query_data()
+    # query_data()
     # sjm= parse_sjm('SZ300001')          
     # print dic2str(sjm)
     # url='http://mnews.gw.com.cn/wap/data/scfl.json'
