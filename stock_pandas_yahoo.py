@@ -8,7 +8,7 @@ def load_ticker(ticker):
     if os.path.exists(fname):
         df = read_csv(fname)
     else:
-        df= data.get_data_yahoo(ticker,'1/1/2015','12/1/2017')    
+        df= data.get_data_yahoo(ticker,'1/1/2001','12/1/2017')    
         df.to_csv(fname)
     return df
     
