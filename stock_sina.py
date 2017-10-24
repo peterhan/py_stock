@@ -23,11 +23,11 @@ from cStringIO import StringIO
 lst = '''
 s_sz399001
 s_sh000300
+s_sz399006
 # s_sz150028
 # s_sz399415
 # s_sh603333
 # s_sh000001
-# s_sz399006
 # s_sz300431
 # s_sz002702
 # s_sz000025
@@ -41,7 +41,9 @@ s_sh000300
 s_sz300072
 s_sz300330
 '''
-
+s='''\
+sz300072 14.627 6200
+sz300330 39.540 2300'''
 
 def u2g(st): return st.encode('gbk','ignore')
 
@@ -72,8 +74,13 @@ def get_index(lst):
     print url
     res = requests.get(url)
     rs = parse_js(u2g(res.text))
+    def fmt(row):
+        return ''.join(map(lambda x: '%10s' % x, row))
+    print fmt(['code','name','cur','price_chg','rate','sell','buy'])
     for row in rs:
-        print ''.join(map(lambda x: '%10s' % x, row))
+        if row[0]=='':
+            continue
+        print fmt(row)
         
 def guba(code):
     import urllib
@@ -83,7 +90,7 @@ def guba(code):
     print url
     html=urllib.urlopen(url).read()
     # print html
-    soup=BeautifulSoup(html)
+    soup=BeautifulSoup(html,"lxml")
     for tag in soup.findAll('span',class_='l3')[6:16]:
         print u2g(tag.text ),'|',
         atag=tag.findAll('a')
@@ -101,5 +108,5 @@ def main():
 if __name__=='__main__':
     main()
     # guba('600401')
-    # guba('600962')
     # guba('300072')
+    # guba('300330')
