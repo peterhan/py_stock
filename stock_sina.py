@@ -4,6 +4,7 @@ import datetime
 import time
 import os
 from bs4 import BeautifulSoup
+from util import ConfLoader
 doc='''
 http://itindex.net/detail/49971-sina-%E8%82%A1%E7%A5%A8-%E6%95%B0%E6%8D%AE
 查看日K线图：
@@ -20,38 +21,20 @@ http://hq.sinajs.cn/list=sh601006
 http://itindex.net/detail/54764-%E8%82%A1%E7%A5%A8-%E5%AE%9E%E6%97%B6-%E4%BA%A4%E6%98%93
 '''
 from cStringIO import StringIO
-lst = '''
-s_sz399001
-s_sh000300
-s_sz399006
-# s_sz150028
-# s_sz399415
-# s_sh603333
-# s_sh000001
-# s_sz300431
-# s_sz002702
-# s_sz000025
-# s_sh600401
-# s_sh600962
-# s_sh601001
-# s_sh600650
-# s_sz300330
-# s_sz300072
-# s_sz000629
-s_sz300072
-s_sz300330
-'''
+
 s='''\
 sz300072 14.627 6200
 sz300330 39.540 2300'''
 
-def u2g(st): return st.encode('gbk','ignore')
+def u2g(st): 
+    return st.encode('gbk','ignore')
 
 
 def parse_js(st):
     rs = []
     st = st.replace('var hq_str_s_', '').replace(
         '=\"', '\t').replace('\";', '').replace(',', '\t')
+    # print st
     for l in StringIO(st):
         row=l.strip().split('\t')[0:]
         row[0]=row[0][:]
@@ -65,18 +48,18 @@ def ts_to_str(i):
     return datetime.datetime.fromtimestamp(i).strftime('%Y-%m-%d %H:%M:%S')
 
 
-def get_index(lst):
-    lst = ','.join([s.strip() for s in StringIO(lst) if not s.startswith('#')])
+def get_index(holding):
+    lst = ','.join(holding)
     tobj = time.time()
     gt = '%d' % (tobj * 1000)
     print ts_to_str(tobj)  # 1435729332785
-    url = 'http://hq.sinajs.cn/rn=%s&list=s_%s' % (gt, lst)
+    url = 'http://hq.sinajs.cn/rn=%s&list=%s' % (gt, lst)
     print url
     res = requests.get(url)
     rs = parse_js(u2g(res.text))
     def fmt(row):
         return ''.join(map(lambda x: '%10s' % x, row))
-    print fmt(['code','name','cur','price_chg','rate','sell','buy'])
+    print fmt(['code','name','current','price_chg','rate','sell','buy'])
     for row in rs:
         if row[0]=='':
             continue
@@ -100,11 +83,9 @@ def guba(code):
     print ''
     
 def main():
-    for i in range(1):
-        get_index(lst)
-        time.sleep(2)
-        os.system('cls')
-
+    holding=ConfLoader().holding    
+    get_index(holding)
+    
 if __name__=='__main__':
     main()
     # guba('600401')
