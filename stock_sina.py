@@ -47,7 +47,9 @@ def parse_js(st):
 def ts_to_str(i):
     return datetime.datetime.fromtimestamp(i).strftime('%Y-%m-%d %H:%M:%S')
 
-
+def fmt(row):
+    return ''.join(map(lambda x: '%10s' % x, row))
+        
 def get_index(holding):
     lst = ','.join(holding)
     tobj = time.time()
@@ -57,13 +59,12 @@ def get_index(holding):
     print url
     res = requests.get(url)
     rs = parse_js(u2g(res.text))
-    def fmt(row):
-        return ''.join(map(lambda x: '%10s' % x, row))
-    print fmt(['code','name','current','price_chg','rate','sell','buy'])
+
+    print fmt('code,name,current,price_chg,rate,sell,buy'.split(','))
     for row in rs:
         if row[0]=='':
             continue
-        print fmt(row)
+        print fmt(row),holding['s_'+row[0]]
         
 def guba(code):
     import urllib
