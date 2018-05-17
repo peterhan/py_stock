@@ -119,7 +119,7 @@ def extract_info(idx_fname,article_fname):
         tags = ','.join(jieba.analyse.extract_tags(text, topK=50))
         url
         print (u'%s\n%s\n%s\n%s\n%s'%(updated,url,topics,title,tags)).encode('gbk','ignore')
-        print '#'*30   
+        print '#'*50   
         #break
 
         
