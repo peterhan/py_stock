@@ -1,3 +1,4 @@
+#!coding:utf8
 import json
 import gzip
 import datetime
@@ -118,8 +119,8 @@ def extract_info(idx_fname,article_fname):
         text = text
         tags = ','.join(jieba.analyse.extract_tags(text, topK=50))
         url
-        print (u'%s\n%s\n%s\n%s\n%s'%(updated,url,topics,title,tags)).encode('gbk','ignore')
         print '#'*50   
+        print (u'推荐时间：%s\n链接：%s\n推广标签：%s\n标题：%s\n语义标签：%s\n'%(updated,url,topics,title,tags)).encode('gbk','ignore')
         #break
 
         
