@@ -8,7 +8,8 @@ import requests
 import bs4
 
 cookies={
-'z_c0':	"2|1:0|10:1515625766|4:z_c0|92:Mi4xdXVVQUFBQUFBQUFBQUFDR3VxQV9DaVlBQUFCZ0FsVk5KdXREV3dBUVh4ZklLTWpFY0djYWdLSTBCcnBadzM4Vml3|c5a841429a7555bb1ff760a0940a3c4de6d5b5ea6e610f7fda2f48d8cfc8f103",
+# 'z_c0':	"2|1:0|10:1515625766|4:z_c0|92:Mi4xdXVVQUFBQUFBQUFBQUFDR3VxQV9DaVlBQUFCZ0FsVk5KdXREV3dBUVh4ZklLTWpFY0djYWdLSTBCcnBadzM4Vml3|c5a841429a7555bb1ff760a0940a3c4de6d5b5ea6e610f7fda2f48d8cfc8f103",
+"z_c0":"2|1:0|10:1539769984|4:z_c0|92:Mi4xdXVVQUFBQUFBQUFBY0M1X0pmZDJEU1lBQUFCZ0FsVk5nRlMwWEFEZlc0MEMyQ0NXTnBMcnFVV19DRDJma2c1QXhn|a424ffd99a6826c5d5cf72945121028812e9a7ac2a5ba072edc7c8a0ad08f6f3"
 }
 headers={
 'Accept':'application/json, text/plain, */*',
@@ -35,11 +36,24 @@ def get_one_index(offset):
     js= resp.json()
     return js
     
+def remove_png(html):
+    pat='\"data:image/png'
+    # pat='data-sentry-config=\"'
+    idx1= html.find(pat)
+    while(idx1!=-1):
+        idx1 = html.find(pat)
+        idx2 = html.find('\"',idx1+len(pat))
+        html=html[:idx1]+"\"PNG_REOVED"+html[idx2:]
+        # print idx1,idx2
+    return html
+    
 def get_one_article(url):
     resp=requests.get(url,cookies=cookies,headers=headers)
     html = resp.text
-    print '[article]',url
+    print '[article]',url,'\n'
     # print html.encode('gbk','ignore')
+    html = remove_png(html)
+    # print html.encode('gbk','ignore')    
     return html
 
 def file2json(fname):
@@ -76,11 +90,12 @@ def get_all_articles(idx_fname,article_fname):
     res = OrderedDict()
     idx = file2json(idx_fname)
     for entry in idx:        
-        # print title.keys()
+        # print title.keys()        
         url = entry['url']
-        print '[topics]',entry['topics']
+        print '[title]',entry['title'].encode('gbk','ignore')
         html = get_one_article(url)
         res[url] = html
+        # break
     json2file(res,article_fname)
         
         
@@ -114,13 +129,13 @@ def extract_info(idx_fname,article_fname):
         text = merge_all_elm('p',soup)
         # print soup.prettify().encode('gbk','ignore')
         updated = unix2ts(str(et_info[url]['updated']))
-        topics = ','.join([elm['name'] for elm in et_info[url]['topics']])
+        
         title = title
         text = text
         tags = ','.join(jieba.analyse.extract_tags(text, topK=50))
         url
         print '#'*50   
-        print (u'推荐时间：%s\n链接：%s\n推广标签：%s\n标题：%s\n语义标签：%s\n'%(updated,url,topics,title,tags)).encode('gbk','ignore')
+        print (u'推荐时间：%s\n链接：%s\n标题：%s\n语义标签：%s\n'%(updated,url,title,tags)).encode('gbk','ignore')
         #break
 
         
@@ -129,10 +144,8 @@ def main():
     article_fname='junlin_article.json'
     
     # get_all_index(idx_fname)
-    # get_all_articles(idx_fname,article_fname)
-    
-    # update_index_articles(idx_fname,article_fname)
-    
+    # get_all_articles(idx_fname,article_fname)    
+    # update_index_articles(idx_fname,article_fname)    
     extract_info(idx_fname,article_fname)
 
     
