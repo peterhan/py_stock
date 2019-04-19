@@ -9,7 +9,8 @@ import bs4
 
 cookies={
 # 'z_c0':	"2|1:0|10:1515625766|4:z_c0|92:Mi4xdXVVQUFBQUFBQUFBQUFDR3VxQV9DaVlBQUFCZ0FsVk5KdXREV3dBUVh4ZklLTWpFY0djYWdLSTBCcnBadzM4Vml3|c5a841429a7555bb1ff760a0940a3c4de6d5b5ea6e610f7fda2f48d8cfc8f103",
-"z_c0":"2|1:0|10:1539769984|4:z_c0|92:Mi4xdXVVQUFBQUFBQUFBY0M1X0pmZDJEU1lBQUFCZ0FsVk5nRlMwWEFEZlc0MEMyQ0NXTnBMcnFVV19DRDJma2c1QXhn|a424ffd99a6826c5d5cf72945121028812e9a7ac2a5ba072edc7c8a0ad08f6f3"
+"z_c0":"2|1:0|10:1555380060|4:z_c0|92:Mi4xdXVVQUFBQUFBQUFBRUdKUjFYb1ZEeVlBQUFCZ0FsVk5XNFdpWFFDN191cUYyZEtuZnc5aHhyQ2dfQVEwbHVCR19n|b0c12c423d728e5bf368b1cc2b1ebd9fce74a20e78cbc06e0a5e74e14d9d26f6"
+
 }
 headers={
 'Accept':'application/json, text/plain, */*',
@@ -145,7 +146,7 @@ def main():
     
     # get_all_index(idx_fname)
     # get_all_articles(idx_fname,article_fname)    
-    # update_index_articles(idx_fname,article_fname)    
+    update_index_articles(idx_fname,article_fname)    
     extract_info(idx_fname,article_fname)
 
     
