@@ -6,6 +6,8 @@ import pdb
 import cPickle
 from itertools import combinations
 
+# http://www.iwencai.com/stockpick/search?ts=1&tid=stockpick&querytype=fund&qs=fund_fhzs_a&w=%E4%B8%AD%E8%AF%81500%E5%9F%BA%E9%87%91
+# http://www.iwencai.com/stockpick/search?typed=1&preParams=&ts=1&f=3&qs=pc_%7Esoniu%7Estock%7Estock%7Ehistory%7Equery&selfsectsn=&querytype=stock&searchfilter=&tid=stockpick&w=%E7%89%9B%E5%8F%89%E9%80%89%E8%82%A1
 
 # pd.set_option('display.height',1000)
 pd.set_option('display.max_rows',500)
