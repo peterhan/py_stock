@@ -4,32 +4,41 @@ import pandas as pd
 import talib as talib
 import datetime
 
+
+def to_list(self):
+    return self.strip().replace(',','\n').replace(' ','\n').splitlines()
+
 #600438 13.397
 #600585 42.562
-tks='''002258,000001,000651,002027,002702
-600183,600132,603501,002202,002466
-002531,002572,159915,300014,300017
-300129,300330,300618,300750,600004,600009
-600025,600029,600201,600311
-600438,600459,600519,600585
-600887,601012,601021,601088
-601111,601222,601636,601888
-601985,603259,603605,600848
-603816,000333,002008,603515
-000089,000681,300012,300203
-002382,601138,600854
-002733,002338,300596'''.replace(',','\n').splitlines()
+tks={}
+tks[0]='''
+000001 000089 000333 000651 000681 
+002008 002027 002202 002258 002338 
+002382 002466 002531 002572 002702 
+002733
+'''
+tks[1]='''159915 399001 sh000001 399006 sh000300'''
+tks[2]='''300012 300014 300017 300129 300203 
+300330 300596 300618 300750'''
+tks[3]='''
+600004 600009 600025 600029 600132 
+600183 600201 600311 600438 600459 
+600519 600585 600848 600854 600887 
+601012 601021 601088 601111 601138 
+601222 601636 601888 601985 603259 
+603501 603515 603605 603816
+'''
+tks[4]='''510300 510500 510600 510630 510150 '''
+tks[5]='''002099 600585 600438'''
 
-
-tks='''510300,510500,510600,510630,510150,510150'''.replace(',','\n').splitlines()
-
+tks=to_list(tks[5])
 
 
 pd.set_option('display.max_rows',None)
 pd.set_option('display.max_columns',None)
 pd.set_option('display.width',None)
 
-def display_ticks_rt(tks):
+def rt_ticks(tks):
     rdf=  ts.get_realtime_quotes(tks)
     # rdf=  ts.get_today_all()
     # print rdf
@@ -45,7 +54,6 @@ def display_ticks_rt(tks):
     # rdf.insert(5,'rate2',(rdf['price']-rdf['open'])/(rdf['open'])*100)
     # rdf.insert(6,'rate3',(rdf['price']-rdf['open'])/(rdf['pre_close'])*100)
 
-
     print rdf.loc[:,:'amount'].sort_values(by='bounce',ascending=False)
     # pdb.set_trace()
     # fc=ts.forecast_data(2019,1)
@@ -54,22 +62,34 @@ def display_ticks_rt(tks):
     # print ttdf[ttdf.volume>=100].groupby(ttdf.type).count()
     # print ttdf[ttdf.volume>=100].groupby(ttdf.type).sum()
     
-def special_stock(tk):
-    tk='600438'
+    
+def focus_tick(tk):    
+    fname=tk+'.csv'
     # df = ts.get_k_data(tk)
-    # df.to_csv(tk)
-    df = pd.read_csv(tk)
+    # df.to_csv(fname)
+    df = pd.read_csv(fname)
     closed=df['close'].values
     
     upper,middle,lower=talib.BBANDS(closed,matype=talib.MA_Type.T3)
-    print talib.MACD(closed)
-    print upper[-1],middle[-1],lower[-1]
-    # print df
+    # print talib.MACD(closed)
+    print tk,upper[-1],middle[-1],lower[-1]
+    cnames = []
+    for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
+        func = getattr(talib,funcname) 
+        res = func(df['open'],df['high'],df['low'],df['close'])
+        cname = funcname[3:]
+        df[cname]=res
+        cnames.append(cname)
+    df['IND_SUM']=df[cnames].sum(axis=1)
+    print df
+    df.to_csv(fname)
     # df = ts.get_sina_dd(tk, date='2019-04-18',vol=500)
     # print df
     # df = ts.get_index()
     
     
 if __name__ == '__main__':
-    display_ticks_rt(tks)
-    # special_stock(tks)
+    rt_ticks(tks)
+    for tk in tks:
+        focus_tick(tk)
+        # break
