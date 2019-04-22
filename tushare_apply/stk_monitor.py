@@ -83,13 +83,15 @@ def focus_tick(tk):
     df['IND_SUM']=df[cnames].sum(axis=1)
     print df
     df.to_csv(fname)
+    for i,row in df.iterrows():
+        print i#,row
     # df = ts.get_sina_dd(tk, date='2019-04-18',vol=500)
     # print df
     # df = ts.get_index()
     
     
 if __name__ == '__main__':
-    rt_ticks(tks)
+    # rt_ticks(tks)
     for tk in tks:
         focus_tick(tk)
         # break
