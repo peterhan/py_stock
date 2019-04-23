@@ -33,7 +33,7 @@ tks[3]='''
 tks[4]='''510300 510500 510600 510630 510150 '''
 tks[5]='''002099 600585 600438 600854 601601 600132'''
 
-tks=to_list(tks[5])
+
 
 
 pd.set_option('display.max_rows',None)
@@ -67,14 +67,14 @@ def rt_ticks(tks):
     
 def focus_tick(tk):    
     fname=tk+'.csv'
-    # df = ts.get_k_data(tk)
-    # df.to_csv(fname)
+    df = ts.get_k_data(tk)
+    df.to_csv(fname)
     df = pd.read_csv(fname)
     closed=df['close'].values
     
     upper,middle,lower=talib.BBANDS(closed,matype=talib.MA_Type.T3)
     # print talib.MACD(closed)
-    print 'MACD %s,%0.2f,%0.2f,%0.2f'%(tk,upper[-1],middle[-1],lower[-1])
+    print 'BOLL %s,%0.2f,%0.2f,%0.2f'%(tk,upper[-1],middle[-1],lower[-1])
     cnames = []
     for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
         func = getattr(talib,funcname) 
@@ -83,17 +83,19 @@ def focus_tick(tk):
         df[cname]=res_vlu
         cnames.append(cname)
     df['IND_SUM']=df[cnames].sum(axis=1)
+    print df.iloc[-1]
     print df.iloc[-1,-1]
     df.to_csv(fname)
-    for i,row in df.iterrows():
-        print i#,row
+    # for i,row in df.iterrows():
+        # print i#,row
     # df = ts.get_sina_dd(tk, date='2019-04-18',vol=500)
     # print df
     # df = ts.get_index()
     
     
 if __name__ == '__main__':
-    # rt_ticks(tks)
+    tks=to_list(tks[5])
+    rt_ticks(tks)
     for tk in tks:
         focus_tick(tk)
         # break
