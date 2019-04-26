@@ -64,7 +64,12 @@ def rt_ticks(tks):
     # print ttdf[ttdf.volume>=100].groupby(ttdf.type).count()
     # print ttdf[ttdf.volume>=100].groupby(ttdf.type).sum()
     
-    
+def load_ta_map():
+    import json
+    return json.load(open('talib_pattern_name.json'))
+ 
+tam = load_ta_map()
+ 
 def focus_tick(tk):    
     fname=tk+'.csv'
     df = ts.get_k_data(tk)
@@ -79,11 +84,11 @@ def focus_tick(tk):
     for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
         func = getattr(talib,funcname) 
         res_vlu = func(df['open'],df['high'],df['low'],df['close'])
-        cname = funcname[3:]
+        cname = funcname[3:]        
         df[cname]=res_vlu
         cnames.append(cname)
     df['IND_SUM']=df[cnames].sum(axis=1)
-    print df.iloc[-1]
+    # print df.iloc[-1]
     print df.iloc[-1,-1]
     df.to_csv(fname)
     # for i,row in df.iterrows():
@@ -96,6 +101,7 @@ def focus_tick(tk):
 if __name__ == '__main__':
     tks=to_list(tks[5])
     rt_ticks(tks)
+    
     for tk in tks:
         focus_tick(tk)
         # break

@@ -1,0 +1,490 @@
+{
+  "SEPARATINGLINES": {
+    "name": "分手线 Separating Lines", 
+    "figure": "形态: 持续", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 看涨（跌）分手线：第一天是一根黑色（白色）蜡烛线，第二天是一根看涨（跌）捉腰带线，且开市价与第一天蜡烛线的开市价在同一水平位置上。仅当第二天的看涨（跌）捉腰带线与将要来临的趋势方向相同时，此持续形态才有深刻的意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLSEPARATINGLINES(open, high, low, close)"
+  }, 
+  "HIKKAKEMOD": {
+    "name": "修正陷阱形态 Modified Hikkake Pattern", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 看涨（跌）修正陷阱：四根蜡烛线依次高点越来越低（高），低点越来越高（低）。在未来的三天内，将出现确认信号：某一天的收市价高（低）于第三天蜡烛线的高（低）点。如果相同的蜡烛线既是确认信号又是陷阱形态的话，将会返回后者的结果。此反转形态仅在明显的下降（上升）趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 4~6", 
+    "desc": "函数原型: integer = CDLHIKKAKEMOD(open, high, low, close)"
+  }, 
+  "MORNINGSTAR": {
+    "name": "启明星 Morning Star", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 第一天是一根坚挺的黑色实体，第二天开市价产生了向下跳空且没有回填缺口，最后收成一根十字线，第三天时出现了一根坚挺的白色蜡烛线且最终收市价位于第一根的实体之内。此反转形态仅在明显的下降趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLMORNINGSTAR(open, high, low, close, penetration=0)"
+  }, 
+  "DOJI": {
+    "name": "十字线 Doji", 
+    "figure": "形态: 反转或保持原有形态", 
+    "signal": "信号: 无法判断", 
+    "intro": "定义: 具有较小实体的蜡烛线。单独的一根十字线并不意味着看涨或者看跌。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLDOJI(open, high, low, close)"
+  }, 
+  "HANGINGMAN": {
+    "name": "上吊线 Hanging Man", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 实体位于整个价格区间的上端，上影线尽可能短或者没有，下影线尽可能长，实体位于上一根蜡烛线高点的附近或比它更高。此反转形态仅出现在明显的上升趋势中。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLHANGINGMAN(open, high, low, close)"
+  }, 
+  "MATHOLD": {
+    "name": "铺垫 Mat Hold", 
+    "figure": "形态: 持续", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 第一天出现一跟坚挺的白色蜡烛线，其次紧挨着三根或以上的依次下降的小实体蜡烛线。第一根实体线为黑色蜡烛线，且与第一天蜡烛线的实体间形成跳空。其余的两根小实体线均收于第一天蜡烛线的实体内。最后一天是同样一根坚挺的白色蜡烛线，且开市价应高于前一天收市价，收于该组合中的最高点。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 5", 
+    "desc": "函数原型: integer = CDLMATHOLD(open, high, low, close, penetration=0)"
+  }, 
+  "DOJISTAR": {
+    "name": "十字星 Doji Star", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 看涨（跌）十字星：第一天是一根坚挺的白色（疲软的黑色）实体，第二天开市价高（低）于了第一天的最高（低）价且收成一根十字星。此反转形态仅在明显的下降（上升）趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLDOJISTAR(open, high, low, close)"
+  }, 
+  "BELTHOLD": {
+    "name": "捉腰带线 Belt-hold", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 看涨（跌）捉腰带线：一根坚挺的白色（疲软的黑色）蜡烛线，其开市价位于当日的最低（高）点或者这跟蜡烛线只有极短的下（上）影线，然后市场一路上扬（下跌）。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLBELTHOLD(open, high, low, close)"
+  }, 
+  "ADVANCEBLOCK": {
+    "name": "前方受阻 Advance Block", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 符合前进白色三兵的定义，每一根蜡烛线的开市价都位于上一根蜡烛线实体之内或者附近。第一根蜡烛线拥有较短或者没有上影线。第二根与第三根蜡烛线、或仅第三根蜡烛线体现出显著的市场力量减弱信号，表现为越来越小的实体和相对越来越长的上影线。此反转形态仅在明显的上升趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLADVANCEBLOCK(open, high, low, close)"
+  }, 
+  "ENGULFING": {
+    "name": "抱线、看涨（跌）吞没 Engulfing Pattern", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 看涨（跌）吞没：第一天是一根黑色（白色）蜡烛线，第二天是一根白色（黑色）蜡烛线且实体必须覆盖第一根蜡烛线的实体（不一定需要吞没上下影线）。此反转形态仅在明显的下降（上升）趋势中才有意义", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLENGULFING(open, high, low, close)"
+  }, 
+  "SPINNINGTOP": {
+    "name": "纺锤线 Spinning Top", 
+    "figure": "形态: 其他", 
+    "signal": "信号: 无法判断", 
+    "intro": "定义: 具有较短实体和长于实体大小的上下影线的蜡烛线。此形态并不意味着任何看涨或者看跌。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLSPINNINGTOP(open, high, low, close)"
+  }, 
+  "LONGLEGGEDDOJI": {
+    "name": "长腿十字线 Long Legged Doji", 
+    "figure": "形态: 其他", 
+    "signal": "信号: 无法判断", 
+    "intro": "定义: 符合星型的定义且有一或两根较长的影线。长腿十字线并不意味着看涨，而是显示出市场的不确定性。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLLONGLEGGEDDOJI(open, high, low, close)"
+  }, 
+  "HIKKAKE": {
+    "name": "陷阱形态 Hikkake Pattern", 
+    "figure": "形态: 反转或保持原有形态", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 看涨（跌）陷阱：三根蜡烛线依次高点越来越低（高），低点越来越高（低）。在未来的三天内，将出现确认信号：某一天的收市价高（低）于第二天蜡烛线的高（低）点。如果相同的蜡烛线既是确认信号又是陷阱形态的话，将会返回后者的结果。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 4~6", 
+    "desc": "函数原型: integer = CDLHIKKAKE(open, high, low, close)"
+  }, 
+  "TAKURI": {
+    "name": "探水竿 Takuri (Dragonfly Doji with very long lower shadow)", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 无法判断", 
+    "intro": "定义: 符合十字线定义，且拥有非常短的或者没有上影线，相对的，下影线应该足够的长。通常与蜻蜓十字相比，下影线要更加的长。此反转形态并不意味着看涨，要结合原有趋势判断。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLTAKURI(open, high, low, close)"
+  }, 
+  "COUNTERATTACK": {
+    "name": "反击线、约会线 Counterattack", 
+    "figure": "形态: 其他", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 看涨（跌）反击线：类似刺透（乌云盖顶）形态，但后一个白色（黑色）蜡烛线仅回升（下跌）到前一天的收市价位置。此形态仅在明显的趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLCOUNTERATTACK(open, high, low, close)"
+  }, 
+  "IDENTICAL3CROWS": {
+    "name": "三胞胎乌鸦 Identical Three Crows", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 符合三只乌鸦的定义，但后面两根蜡烛线要求开市价等于或者非常接近于前一天蜡烛线的收市价。此反转形态仅在高水平的价格上，或者是经过充分发展的上涨行情中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLIDENTICAL3CROWS(open, high, low, close)"
+  }, 
+  "RICKSHAWMAN": {
+    "name": "黄包车夫线 Rickshaw Man", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 无法判断", 
+    "intro": "定义: 符合十字线定义，且实体位于上下影线的中点附近。此形态并不意味着任何看涨或者看跌。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLRICKSHAWMAN(open, high, low, close)"
+  }, 
+  "TASUKIGAP": {
+    "name": "跳空并列阴阳线形态 Tasuki Gap", 
+    "figure": "形态: 持续", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 向上（下）跳空并列阴阳线：第二天出现了一根向上（下）跳空的白色（黑色）蜡烛线，紧接着第三天为一根黑色（白色）蜡烛线，长度与第二天相似，开市价位于第二天的实体之中，且并未回填跳空缺口。此持续形态仅在明显的趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLTASUKIGAP(open, high, low, close)"
+  }, 
+  "UNIQUE3RIVER": {
+    "name": "奇特三川底部形态 Unique 3 River", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 第一天是一根疲软的黑色实体，第二天是一根黑色蜡烛线，低点低于第一天蜡烛线的低点，且与其组合成孕线形态。第三天是一根小的白色实体，且开市价不低于第二天蜡烛线的低点。最好是第三天的开市价与收市价均低于第二天蜡烛线的收市价。此反转形态仅在明显的下降趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLUNIQUE3RIVER(open, high, low, close)"
+  }, 
+  "HAMMER": {
+    "name": "锤子线 Hammer", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 实体位于整个价格区间的上端，上影线尽可能短或者没有，下影线尽可能长，实体位于上一根蜡烛线低点的附近或比它更低。此反转形态仅出现在明显的下降趋势中。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLHAMMER(open, high, low, close)"
+  }, 
+  "PIERCING": {
+    "name": "斩回线、刺透形态 Piercing Pattern", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 第一天是一根疲软的黑色实体，第二天开市价位于第一天实体之中，但收市价向上超越黑色实体的中点。此反转形态仅在下降的趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLPIERCING(open, high, low, close)"
+  }, 
+  "3OUTSIDE": {
+    "name": "三外部上涨（下跌） Three Outside Up / Down", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 三外部上涨（下跌）：第一天是一根黑色（白色）实体蜡烛线，第二天的实体完全吞没了第一天的实体，第三天蜡烛线继续第二天的走势，收于第二天蜡烛线的上方（下方）。此反转形态仅在明显的下降（上升）趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDL3OUTSIDE(open, high, low, close)"
+  }, 
+  "CLOSINGMARUBOZU": {
+    "name": "捉腰带线 Closing Marubozu", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 参考捉腰带线。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLCLOSINGMARUBOZU(open, high, low, close)"
+  }, 
+  "INVERTEDHAMMER": {
+    "name": "倒锤子线 Inverted Hammer", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 实体位于整个价格区间的下端，下影线尽可能短或者没有，上影线尽可能长，实体与上一根蜡烛线之间形成向下跳空。此反转形态仅出现在明显的下降趋势中。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLINVERTEDHAMMER(open, high, low, close)"
+  }, 
+  "LONGLINE": {
+    "name": "长蜡烛线 Long Line Candle", 
+    "figure": "形态: 其他", 
+    "signal": "信号: 无法判断", 
+    "intro": "定义: 具有较长实体和上下影线的一根蜡烛线。此形态并不意味着任何看涨或者看跌。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLLONGLINE(open, high, low, close)"
+  }, 
+  "HOMINGPIGEON": {
+    "name": "家鸽形态 Homing Pigeon", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 第一天是一根疲软的黑色实体，第二天是一根小的黑色实体蜡烛线，且实体部分完全被第一天蜡烛线的实体所包裹（吞没）。此反转形态仅在明显的下降趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLHOMINGPIGEON(open, high, low, close)"
+  }, 
+  "MORNINGDOJISTAR": {
+    "name": "十字启明星 Morning Doji Star", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 符合启明星形态的定义，但第二根蜡烛线为十字线形态。此反转形态仅在明显的下降趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLMORNINGDOJISTAR(open, high, low, close, penetration=0)"
+  }, 
+  "2CROWS": {
+    "name": "两只乌鸦 Two Crows", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 第一天是一根坚挺的白色实体，第二天是一根黑色蜡烛线，且与第一天蜡烛线实体之间的形成跳空。第三天是一根黑色蜡烛线，且其开市价位于第二天蜡烛线实体之内，且收于第一天蜡烛线的实体内。此反转形态仅在明显的上升趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDL2CROWS(open, high, low, close)"
+  }, 
+  "ONNECK": {
+    "name": "待入线 On-Neck Pattern", 
+    "figure": "形态: 持续", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 第一天是一根疲软的黑色实体，第二天开市价低于第一天蜡烛线的低点，后续走高，但最终收于第一天蜡烛线低点附近。此持续形态仅在下降的趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLONNECK(open, high, low, close)"
+  }, 
+  "THRUSTING": {
+    "name": "插入线形态 Thrusting Pattern", 
+    "figure": "形态: 持续", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 第一天是一根疲软的黑色实体，第二天开市价低于第一天蜡烛线的低点，后续走高，但最终收于第一天蜡烛线实体中点之下。为了和切入线区分，收市价不应该非常接近第一天的收市价。此持续形态仅在下降的趋势中才有意义，而在即将到来的上升趋势或是数天内出现多次，可能反而意味着看涨。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLTHRUSTING(open, high, low, close)"
+  }, 
+  "3STARSINSOUTH": {
+    "name": "南方三星形态 Three Stars In The South", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 第一天的蜡烛线为一根疲软的黑色蜡烛线，并有较长的下影线。第二天的开市价高于第一天蜡烛线的收市价但并未超过第一天蜡烛线的高点，且当天的低点介于第一天蜡烛线的低点和收市价之间，最后收成带有一个长下影线的蜡烛线。第三天是一根光头光脚阴线，并形成被第二天蜡烛线的高低点完全吞没的形态。此反转形态仅在明显的下降趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDL3STARSINSOUTH(open, high, low, close)"
+  }, 
+  "ABANDONEDBABY": {
+    "name": "弃婴 Abandoned Baby", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 看涨（跌）弃婴：第一天是一根疲软的黑色（坚挺的白色）蜡烛线，第二天是一根十字线，与第一天蜡烛线的低（高）点形成向下（上）跳空，且两者高低点区域无重叠。第三天是一根坚挺的白色（疲软的黑色）蜡烛线且收市价位于第一天蜡烛线的实体内，与第二天的十字线高（低）点形成向上（下）跳空，且两者高低点区域无重叠。此反转形态仅在明显的趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLABANDONEDBABY(open, high, low, close, penetration=0)"
+  }, 
+  "GAPSIDESIDEWHITE": {
+    "name": "向上（下）跳空并列白色蜡烛线 Up / Down-gap Side-by-side White Lines", 
+    "figure": "形态: 持续", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 向上（下）跳空并列阳线：第二天出现了一根向上（下）跳空的白色蜡烛线，紧接着第三天的蜡烛线长度与第二天相似，开盘、收市价也相当接近，且并未回填跳空缺口。此持续形态仅在明显的趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLGAPSIDESIDEWHITE(open, high, low, close)"
+  }, 
+  "CONCEALBABYSWALL": {
+    "name": "藏婴吞没 Concealing Baby Swallow", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 前两天都是一根光头光脚大阴线，第三天的开市价形成向下跳空但最终收成一根具有较长上影线的蜡烛线，且上影线穿入前一根蜡烛线的实体内。第四天也是一根疲软的黑色蜡烛线，但将前一天的高低点完全吞没。此反转形态仅在明显的下降趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 4", 
+    "desc": "函数原型: integer = CDLCONCEALBABYSWALL(open, high, low, close)"
+  }, 
+  "INNECK": {
+    "name": "切入线 In-Neck Pattern", 
+    "figure": "形态: 持续", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 第一天是一根疲软的黑色实体，第二天开市价低于第一天蜡烛线的低点，后续走高，但最终收于第一天蜡烛线实体下部，靠近其收市价。此持续形态仅在下降的趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLINNECK(open, high, low, close)"
+  }, 
+  "HIGHWAVE": {
+    "name": "风高浪大线 High-Wave Candle", 
+    "figure": "形态: 其他", 
+    "signal": "信号: 无法判断", 
+    "intro": "定义: 类似十字线，拥有较小的实体，但有较长的上下影线。此形态并不意味着看涨或者看跌，而是反映了市场中犹豫不决的状态。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLHIGHWAVE(open, high, low, close)"
+  }, 
+  "TRISTAR": {
+    "name": "三星形态 Tristar Pattern", 
+    "figure": "形态: 其他", 
+    "signal": "信号: 无法判断", 
+    "intro": "定义: 由三根十字线组成，中间一根为十字星。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLTRISTAR(open, high, low, close)"
+  }, 
+  "EVENINGDOJISTAR": {
+    "name": "十字黄昏星 Evening Doji Star", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 符合黄昏星形态的定义，但第二根蜡烛线为十字线形态。此反转形态仅在明显的上升趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLEVENINGDOJISTAR(open, high, low, close, penetration=0)"
+  }, 
+  "KICKINGBYLENGTH": {
+    "name": "反冲形态（由较长光头光脚阴阳线判定） Kicking - Bull / Bear determined by the longer Marubozu", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 符合反冲形态的定义，但是看涨看跌由由两根光头光脚阳（阴）线中较长的那根所决定。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLKICKINGBYLENGTH(open, high, low, close)"
+  }, 
+  "3BLACKCROWS": {
+    "name": "三只乌鸦 Three Black Crows", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 三根依次下降的黑色蜡烛线，且收市价都应当位于其低点或接近低点的位置，开市价也应位于前一个实体范围之内。第一根黑色蜡烛线收市价应当低于之前最近一根的白色蜡烛线的高点。此反转形态仅在高水平的价格上，或者是经过充分发展的上涨行情中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDL3BLACKCROWS(open, high, low, close)"
+  }, 
+  "3WHITESOLDIERS": {
+    "name": "前进白色三兵 Three Advancing White Soldiers", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 由接连三根白色蜡烛线组成，且每一根白色蜡烛线的开市价都位于前一天的白色实体之内，收市价都应该位于当日的最高点或接近最高点处。为了与前方受阻形态所区别，任何一根蜡烛线都不应与前一根蜡烛线有着明显的缩短。此反转形态仅在明显的下降趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDL3WHITESOLDIERS(open, high, low, close)"
+  }, 
+  "UPSIDEGAP2CROWS": {
+    "name": "向上跳空两只乌鸦 Upside Gap Two Crows", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 第一天是一根坚挺的白色实体线，第二天为一根黑色实体线与白色实体线之间的跳空。第三天黑色蜡烛线的开市价位于第二天黑色蜡烛线的开市价之上，且收于第一天蜡烛线的开市价之上，完全吞没第二天的黑色蜡烛线。此反转形态仅在明显的上升趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLUPSIDEGAP2CROWS(open, high, low, close)"
+  }, 
+  "GRAVESTONEDOJI": {
+    "name": "墓碑十字线、灵位十字线 Gravestone Doji", 
+    "figure": "形态: 其他", 
+    "signal": "信号: 无法判断", 
+    "intro": "定义: 符合十字线定义，且拥有非常短的或者没有下影线，相对的，上影线应该足够的长，以与其他十字星的变种所能够区分。此形态并不意味着看涨，要结合原有趋势判断。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLGRAVESTONEDOJI(open, high, low, close)"
+  }, 
+  "DARKCLOUDCOVER": {
+    "name": "乌云盖顶 Dark Cloud Cover", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 第一天是一根坚挺的白色实体，第二天开市价超过了第一天的最高价，但收市价位于第一天的蜡烛线的实体中。备注：Greg Morris 期望收市价位于第一天的蜡烛线实体中点以下的位置。此反转形态仅在明显的上升趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLDARKCLOUDCOVER(open, high, low, close)"
+  }, 
+  "SHORTLINE": {
+    "name": "短蜡烛线 Short Line Candle", 
+    "figure": "形态: 其他", 
+    "signal": "信号: 无法判断", 
+    "intro": "定义: 具有较短实体和上下影线的一根蜡烛线。此形态并不意味着任何看涨或者看跌。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLSHORTLINE(open, high, low, close)"
+  }, 
+  "STICKSANDWICH": {
+    "name": "条形三明治 Stick Sandwich", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 第一天是一根黑色蜡烛线，第二天是一根白色蜡烛线，且低点高于第一天蜡烛线的收市价，第三天又是一根黑色蜡烛线，且收市价与第一天蜡烛线的收市价在同一水平上。此反转形态仅在明显的下降趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLSTICKSANDWICH(open, high, low, close)"
+  }, 
+  "BREAKAWAY": {
+    "name": "突破 Breakaway", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 看涨（跌）突破：第一天是一根疲软的黑色（坚挺的白色）蜡烛线，紧接着跟随三根高点越来越低（高）、低点越来越低（高）的蜡烛线，它们与第一天蜡烛线的实体形成向下（上）跳空，中间一根颜色无所谓，其余两根为黑色（白色）蜡烛线。第五天一根坚挺的白色（疲软的黑色）蜡烛线回填了跳空缺口。此反转形态仅在与最后一根蜡烛线相反的趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 5", 
+    "desc": "函数原型: integer = CDLBREAKAWAY(open, high, low, close)"
+  }, 
+  "SHOOTINGSTAR": {
+    "name": "流星线 Shooting Star", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 拥有较小的实体，且实体位于整个价格区间的下端，上影线尽可能长，而下影线尽可能短或者没有，此外要与之前蜡烛线的实体产生跳空。此反转形态仅出现在明显的上升趋势中。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLSHOOTINGSTAR(open, high, low, close)"
+  }, 
+  "RISEFALL3METHODS": {
+    "name": "上升（下降）三法 Rising / Falling Three Methods", 
+    "figure": "形态: 持续", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 上升（下降）三法：第一天出现一跟坚挺的白色（黑色）蜡烛线，其次紧挨着三根或以上的依次下降（上升）的小实体蜡烛线，且这些实体都局限于第一个白色（黑色）蜡烛线的高低点之内；最后一天是同样一根坚挺的白色（疲软的黑色）蜡烛线，且开市价应高（低）于前一根蜡烛线的收市价，收市价也应高（低于）于第一天的收市价。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 5", 
+    "desc": "函数原型: integer = CDLRISEFALL3METHODS(open, high, low, close)"
+  }, 
+  "STALLEDPATTERN": {
+    "name": "停顿形态 Stalled Pattern", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 符合前进白色三兵的定义，且在后两根蜡烛线中，前一根为有较短或者没有上影线的白色实体，且开市价在第一天蜡烛线实体之内或者附近。后一根在前一根实体顶部附近形成的微小跳空，最终收成一个小实体的蜡烛线。此反转形态仅在明显的上升趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLSTALLEDPATTERN(open, high, low, close)"
+  }, 
+  "LADDERBOTTOM": {
+    "name": "梯底 Ladder Bottom", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 前三根蜡烛线符合三只乌鸦的定义。第四根蜡烛线为一根具有较长上影线的黑色蜡烛线。第五根蜡烛线的开市价高于第四根蜡烛线的实体，为一根白色实体的蜡烛线，且最终收于第四根蜡烛线的高点之上。此反转形态仅在明显的下降趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 5", 
+    "desc": "函数原型: integer = CDLLADDERBOTTOM(open, high, low, close)"
+  }, 
+  "MARUBOZU": {
+    "name": "光头光脚阳（阴）线 Marubozu", 
+    "figure": "形态: 持续", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 光头光脚阳（阴）线：一根坚挺的白色（疲软的黑色）蜡烛线，其开市价位于当日的低（高）点或者只有极短的下（上）影线，然后市场一路上扬（下挫），收市价位于当日的高（低）点或者只有极短的上（下）影线。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLMARUBOZU(open, high, low, close)"
+  }, 
+  "XSIDEGAP3METHODS": {
+    "name": "向上（下）跳空三法形态 Upside / Downside Gap Three Methods", 
+    "figure": "形态: 持续", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 向上（下）跳空三法形态：第一天是一根白色（黑色）蜡烛线，第二天是一根白色（黑色）蜡烛线，且第二天蜡烛线的实体与第一天蜡烛线的实体形成向上（下）跳空。第三天是一根黑色（白色）蜡烛线，且开市价位于第二天蜡烛线实体之内，最终收于第一天蜡烛线实体之内，回填了跳空。此反转形态仅在明显的趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLXSIDEGAP3METHODS(open, high, low, close)"
+  }, 
+  "MATCHINGLOW": {
+    "name": "相同低价 Matching Low", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨", 
+    "intro": "定义: 第一天是一根黑色蜡烛线，第二天也是一根黑色蜡烛线，且收市价接近第一天蜡烛线的收市价。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLMATCHINGLOW(open, high, low, close)"
+  }, 
+  "KICKING": {
+    "name": "反冲形态 Kicking", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 看涨（跌）反冲：第一天是一根光头光脚阴（阳）线，第二天开市价形成向上（下）跳空，收成一根光头光脚阳（阴）线。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLKICKING(open, high, low, close)"
+  }, 
+  "HARAMICROSS": {
+    "name": "十字孕线 Harami Cross Pattern", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 看涨（跌）十字孕线：符合看涨（跌）孕线的定义，且第二天蜡烛线为一根十字线。此反转形态仅在明显的下降（上涨）趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLHARAMICROSS(open, high, low, close)"
+  }, 
+  "3INSIDE": {
+    "name": "三内部上涨（下跌） Three Inside Up / Down", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 三内部上涨（下跌）：第一天是一根疲软的黑色实体（坚挺的白色实体），第二天的实体较短，并形成被第一天蜡烛线完全吞没的形态，第三天收于第一天蜡烛线的开市价之上（下）。此反转形态仅在明显的下降（上升）趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDL3INSIDE(open, high, low, close)"
+  }, 
+  "DRAGONFLYDOJI": {
+    "name": "蜻蜓十字、T型十字 Dragonfly Doji", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 无法判断", 
+    "intro": "定义: 符合十字线定义，且拥有非常短的或者没有上影线，相对的，下影线应该足够的长，以与其他十字星的变种所能够区分。蜻蜓十字并不意味着看涨，要结合原有趋势判断。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 1", 
+    "desc": "函数原型: integer = CDLDRAGONFLYDOJI(open, high, low, close)"
+  }, 
+  "HARAMI": {
+    "name": "孕线 Harami Pattern", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 看涨（跌）孕线：前一个蜡烛线为一个较长的实体的白色蜡烛线，将后一个小实体完全吞没起来，两根蜡烛线实体的颜色可以不一定是不同的颜色，但通常情况下是不同的。此反转形态仅在明显的下降（上涨）趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 2", 
+    "desc": "函数原型: integer = CDLHARAMI(open, high, low, close)"
+  }, 
+  "EVENINGSTAR": {
+    "name": "黄昏星 Evening Star", 
+    "figure": "形态: 反转", 
+    "signal": "信号: 看跌", 
+    "intro": "定义: 第一天是一根坚挺的白色实体，第二天开市价产生了向上跳空且没有回填缺口，最后收成一根具有较小实体的星线，第三天时出现了一根黑色蜡烛线且最终收市价位于第一根的实体之内。此反转形态仅在明显的上升趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 3", 
+    "desc": "函数原型: integer = CDLEVENINGSTAR(open, high, low, close, penetration=0)"
+  }, 
+  "3LINESTRIKE": {
+    "name": "三线打击 Three-Line Strike", 
+    "figure": "形态: 持续", 
+    "signal": "信号: 看涨（跌）", 
+    "intro": "定义: 看涨（跌）三线打击：前三天的蜡烛线形成了前进白色三兵（三只乌鸦）的形态，第四天的开市价位于第三天蜡烛线收市价之上（下），第五天形成一根疲软的黑色实体（坚挺的白色实体），且最终收于第一天蜡烛线的开市价之下（上）。此反转形态仅在与前三天蜡烛线表示的相同趋势中才有意义。", 
+    "cdlcnt": "最少所需的蜡烛线数量: 4", 
+    "desc": "函数原型: integer = CDL3LINESTRIKE(open, high, low, close)"
+  }
+}
