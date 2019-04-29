@@ -10,6 +10,7 @@ def to_list(self):
 
 #600438 13.397
 #600585 42.562
+#601012 23.192
 tks={}
 tks[0]='''
 000001 000089 000333 000651 000681 
@@ -31,7 +32,7 @@ tks[3]='''
 603501 603515 603605 603816
 '''
 tks[4]='''510300 510500 510600 510630 510150 '''
-tks[5]='''002099 600585 600438 600854 601601 600132'''
+tks[5]='''002099 600585 600438 600854 601601 600132 601012'''
 
 
 
@@ -87,10 +88,12 @@ def focus_tick(tk):
         cname = funcname[3:]        
         df[cname]=res_vlu
         cnames.append(cname)
+    df['CDL_Detail']=''
     df['IND_SUM']=df[cnames].sum(axis=1)
     # print df.iloc[-1]
     print df.iloc[-1,-1]
     df.to_csv(fname)
+    # print df.apply(lambda x:type(x))
     # for i,row in df.iterrows():
         # print i#,row
     # df = ts.get_sina_dd(tk, date='2019-04-18',vol=500)
