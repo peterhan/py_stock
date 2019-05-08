@@ -88,7 +88,7 @@ def process_cdl(row):
     
     
 def focus_tick(tk,info):    
-    fname=tk+'.csv'
+    fname='./data/'+tk+'.csv'
     df = ts.get_k_data(tk)
     df.to_csv(fname)
     df = pd.read_csv(fname)
@@ -120,9 +120,10 @@ def focus_tick(tk,info):
     
     
 if __name__ == '__main__':
-    tks=to_list(tks[2])
-    info = rt_ticks(tks)    
-    # print info
-    for tk in tks:
-        focus_tick(tk,info)
+    for id in tks:
+        ttks=to_list(tks[id])
+        info = rt_ticks(ttks)    
+        # print info
+        for tk in ttks:
+            focus_tick(tk,info)
         # break
