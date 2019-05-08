@@ -66,7 +66,8 @@ def rt_ticks(tks):
 
     print rdf.loc[:,:'amount'].sort_values(by='bounce',ascending=False)
     for idx,row in rdf.iterrows():
-        info[row.loc['code']]=row.totuple()
+        dc = dict(zip(row.index,row.values))
+        info[dc['code']] = dc
     # pdb.set_trace()
     # fc=ts.forecast_data(2019,1)
     # print fc
@@ -103,8 +104,8 @@ def focus_tick(tk,info):
     upper,middle,lower=talib.BBANDS(closed,matype=talib.MA_Type.T3)
     # print talib.MACD(closed)
     print ''
-    print tk,info.get(tk)
-    print 'BOLL %s %s,%0.2f,%0.2f,%0.2f'%(tk,''.encode('gbk'),upper[-1],middle[-1],lower[-1])
+    print tk#,info.get(tk).get('name')
+    print 'BOLL %s %s,%0.2f,%0.2f,%0.2f'%(tk,info.get(tk).get('name').encode('gbk'),upper[-1],middle[-1],lower[-1])
     cnames = []
     for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
         func = getattr(talib,funcname) 
