@@ -3,10 +3,11 @@ import tushare as ts
 import pandas as pd
 import talib as talib
 import datetime
+import json
 
 
 def to_list(tks):
-    return tks.strip().replace(',','\n').replace('  ',' ').replace(' ','\n').splitlines()
+    return tks.strip().replace(',','\n').replace(' ','\n').replace('\n\n','\n').splitlines()
 
 #600438 13.397
 #600585 42.562
@@ -24,15 +25,17 @@ tks[2]='''
 300330 300596 300616 300618 300750
 '''
 tks[3]='''
-600004 600009 600025 600029 600131 6001132  
-600183 600201 600311 600438 600459 
-600519 600585 600848 600854 600887 
-601012 601021 601601 600298 601088 601111 601138 
-601222 601636 601888 601985 603259 
+600004 600009 600025 600029 600131 600132
+600183 600201 600311 600438 600459
+600519 600585 600848 600854 600887'''
+
+tks[4]='''
+601012 601021 601601 600298 601088 601111 601138
+601222 601636 601888 601985 603259
 603501 603515 603605 603816 600600
 '''
-tks[4]='''510300 510500 510600 510630 510150 '''
-tks[5]='''002099 600585 600438 600854 601601 600132 601012'''
+tks[5]='''510300 510500 510600 510630 510150 '''
+tks[6]='''002099 600585 600438 600854 601601 600132 601012'''
 
 
 
@@ -63,7 +66,7 @@ def rt_ticks(tks):
 
     print rdf.loc[:,:'amount'].sort_values(by='bounce',ascending=False)
     for idx,row in rdf.iterrows():
-        info[row.loc['code']]=row.loc['name']
+        info[row.loc['code']]=row.totuple()
     # pdb.set_trace()
     # fc=ts.forecast_data(2019,1)
     # print fc
@@ -83,7 +86,7 @@ def process_cdl(row):
     for name,vlu in row.iteritems():
         # pdb.set_trace()
         if vlu!=0 and name in tam:
-            sts.append(', '.join([str(vlu),tam[name]['name']]))
+            sts.append( '[%s:%s]'%(str(vlu),tam[name]['name']) )
     print '; '.join(sts).encode('gbk')
     
     
@@ -92,12 +95,16 @@ def focus_tick(tk,info):
     df = ts.get_k_data(tk)
     df.to_csv(fname)
     df = pd.read_csv(fname)
+    # print df.shape
+    if df.shape[0]==0:
+        return
     closed=df['close'].values
     
     upper,middle,lower=talib.BBANDS(closed,matype=talib.MA_Type.T3)
     # print talib.MACD(closed)
-    print 
-    print 'BOLL %s %s,%0.2f,%0.2f,%0.2f'%(tk,info[tk].encode('gbk'),upper[-1],middle[-1],lower[-1])
+    print ''
+    print tk,info.get(tk)
+    print 'BOLL %s %s,%0.2f,%0.2f,%0.2f'%(tk,''.encode('gbk'),upper[-1],middle[-1],lower[-1])
     cnames = []
     for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
         func = getattr(talib,funcname) 
@@ -107,7 +114,7 @@ def focus_tick(tk,info):
         cnames.append(cname)
     df['IND_SUM']=df[cnames].sum(axis=1)
     # print df.iloc[-1]
-    print df.iloc[-1,-1],
+    print '[TCS:%s]'% df.iloc[-1,-1],
     # pdb.set_trace()
     process_cdl(df.iloc[-1])
     df.to_csv(fname)
@@ -120,10 +127,11 @@ def focus_tick(tk,info):
     
     
 if __name__ == '__main__':
-    for id in tks:
+    for id in [3]:#tks:        
         ttks=to_list(tks[id])
+        print 'ticks:',ttks
         info = rt_ticks(ttks)    
-        # print info
+        print json.dumps(info,ensure_ascii=False).encode('gbk')
         for tk in ttks:
             focus_tick(tk,info)
         # break
