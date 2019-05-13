@@ -7,7 +7,7 @@ import json
 
 
 def to_list(tks):
-    return tks.strip().replace(',','\n').replace(' ','\n').replace('\n\n','\n').splitlines()
+    return set(tks.strip().replace(',','\n').replace(' ','\n').replace('\n\n','\n').splitlines())
 
 #600438 13.397
 #600585 42.562
@@ -17,7 +17,7 @@ tks[0]='''
 000001 000089 000333 000651 000681 
 002008 002027 002202 002258 002338 
 002382 002466 002531 002572 002702 
-002733 002702
+002733
 '''
 tks[1]='''159915 399001 sh000001 399006 sh000300'''
 tks[2]='''
@@ -128,11 +128,11 @@ def focus_tick(tk,info):
     
     
 if __name__ == '__main__':
-    for id in [3]:#tks:        
+    for id in tks:        
         ttks=to_list(tks[id])
         print 'ticks:',ttks
         info = rt_ticks(ttks)    
-        print json.dumps(info,ensure_ascii=False).encode('gbk')
-        for tk in ttks:
-            focus_tick(tk,info)
+        # print json.dumps(info,ensure_ascii=False).encode('gbk')
+        # for tk in ttks:
+            # focus_tick(tk,info)
         # break
