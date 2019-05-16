@@ -17,7 +17,7 @@ tks[0]='''
 000001 000089 000333 000651 000681 
 002008 002027 002202 002258 002338 
 002382 002466 002531 002572 002702 
-002733
+002733 002138
 '''
 tks[1]='''159915 399001 sh000001 399006 sh000300'''
 tks[2]='''
@@ -88,8 +88,8 @@ def process_cdl(row):
     for name,vlu in row.iteritems():
         # pdb.set_trace()
         if vlu!=0 and name in tam:
-            sts.append( '[%s:%s]'%(str(vlu),tam[name]['name']) )
-    print '; '.join(sts).encode('gbk')
+            sts.append( '[%s: %s ]\n%s\n%s\n'%(str(vlu),tam[name]['name'],tam[name]['figure'],tam[name]['intro']) )
+    print ''.join(sts).encode('gbk')
     
     
 def focus_tick(tk,info):    
@@ -103,10 +103,15 @@ def focus_tick(tk,info):
     closed=df['close'].values
     
     upper,middle,lower=talib.BBANDS(closed,matype=talib.MA_Type.T3)
-    # print talib.MACD(closed)
+    macd, macdsignal, macdhist =  talib.MACD(closed)
+    roc = talib.ROCR(closed)
     print ''
-    print tk#,info.get(tk).get('name')
-    print 'BOLL %s %s,%0.2f,%0.2f,%0.2f'%(tk,info.get(tk).get('name').encode('gbk'),upper[-1],middle[-1],lower[-1])
+    name = info.get(tk,{}).get('name','').encode('gbk')
+    # name = ' '
+    print tk,name
+    print 'BOLL: %0.2f,%0.2f,%0.2f'%(upper[-1],middle[-1],lower[-1])
+    print 'MACD: %0.2f,%0.2f,%0.2f'%(macd[-1],macdsignal[-1],macdhist[-1])
+    print 'ROC : %0.2f,%0.2f,%0.2f'%(roc[-3],roc[-2],roc[-1])
     cnames = []
     for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
         func = getattr(talib,funcname) 
@@ -116,7 +121,7 @@ def focus_tick(tk,info):
         cnames.append(cname)
     df['IND_SUM']=df[cnames].sum(axis=1)
     # print df.iloc[-1]
-    print '[TCS:%s]'% df.iloc[-1,-1],
+    print '[TCS:%s]'% df.iloc[-1,-1]
     # pdb.set_trace()
     process_cdl(df.iloc[-1])
     df.to_csv(fname)
@@ -129,11 +134,12 @@ def focus_tick(tk,info):
     
     
 if __name__ == '__main__':
-    for id in tks:        
+    for id in [3]:
+    # for id in tks:
         ttks=to_list(tks[id])
         print 'ticks:',ttks
         info = rt_ticks(ttks)    
         # print json.dumps(info,ensure_ascii=False).encode('gbk')
-        # for tk in ttks:
-            # focus_tick(tk,info)
+        for tk in ttks:
+            focus_tick(tk,info)
         # break
