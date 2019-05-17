@@ -123,9 +123,9 @@ def focus_tick(tk,info):
         cname = funcname[3:]        
         df[cname]=res_vlu
         cnames.append(cname)
-    df['IND_SUM']=df[cnames].sum(axis=1)
+    df['CDLScore']=df[cnames].sum(axis=1)
     # print df.iloc[-1]
-    print '[TCS:%s]'% df.iloc[-1,-1]
+    print '[CDLScore:%s]'% df.iloc[-1,-1]
     # pdb.set_trace()
     process_cdl(df.iloc[-1])
     df.to_csv(fname)
@@ -138,8 +138,8 @@ def focus_tick(tk,info):
     
     
 if __name__ == '__main__':
-    for id in ['idx','candi']:
-    # for id in tks:
+    # for id in ['idx','candi']:
+    for id in tks:
         ttks=to_list(tks[id])
         print '[%s]ticks: %s'%(id,','.join(ttks))
         info = rt_ticks(ttks)    
