@@ -13,29 +13,29 @@ def to_list(tks):
 #600585 42.562
 #601012 23.192
 tks={}
-tks[0]='''
+tks['sz']='''
 000001 000089 000333 000651 000681 
 002008 002027 002202 002258 002338 
 002382 002466 002531 002572 002702 
 002733 002138
 '''
-tks[1]='''159915 399001 sh000001 399006 sh000300'''
-tks[2]='''
+tks['idx']='''159915 399001 sh000001 399006 sh000300'''
+tks['cyb']='''
 300012 300014 300017 300129 300203
 300330 300596 300616 300618 300750
 '''
-tks[3]='''
+tks['sh1']='''
 600004 600009 600025 600029 600131 600132
 600183 600201 600311 600438 600459
 600519 600585 600848 600854 600887'''
 
-tks[4]='''
+tks['sh2']='''
 601012 601021 601601 600298 601088 601111 601138
 601222 601636 601888 601985 603259
 603501 603515 603605 603816 600600
 '''
-tks[5]='''510300 510500 510600 510630 510150 '''
-tks[6]='''002099 600585 600438 600854 601601 600132 601012'''
+tks['etf']='''510300 510500 510600 510630 510150 '''
+tks['candi']='''300012 002099 600585 600438 600854 601601 600132 601012'''
 
 
 
@@ -88,7 +88,7 @@ def process_cdl(row):
     for name,vlu in row.iteritems():
         # pdb.set_trace()
         if vlu!=0 and name in tam:
-            sts.append( '[%s: %s ]\n%s\n%s\n'%(str(vlu),tam[name]['name'],tam[name]['figure'],tam[name]['intro']) )
+            sts.append( '[%s: %s ]\n%s\n%s\n'%(str(vlu),tam[name]['name'],tam[name]['figure'],tam[name]['intro2']) )
     print ''.join(sts).encode('gbk')
     
     
@@ -134,12 +134,11 @@ def focus_tick(tk,info):
     
     
 if __name__ == '__main__':
-    for id in [3]:
+    for id in ['candi']:
     # for id in tks:
         ttks=to_list(tks[id])
-        print 'ticks:',ttks
+        print '[%s]ticks: %s'%(id,','.join(ttks))
         info = rt_ticks(ttks)    
+        for tk in ttks:focus_tick(tk,info)
         # print json.dumps(info,ensure_ascii=False).encode('gbk')
-        for tk in ttks:
-            focus_tick(tk,info)
-        # break
+        print ''
