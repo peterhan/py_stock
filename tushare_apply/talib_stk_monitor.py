@@ -65,7 +65,7 @@ def rt_ticks(tks):
     # rdf.insert(5,'rate2',(rdf['price']-rdf['open'])/(rdf['open'])*100)
     # rdf.insert(6,'rate3',(rdf['price']-rdf['open'])/(rdf['pclose'])*100)
 
-    print rdf.loc[:,:'amount'].sort_values(by='bounce',ascending=False)
+    print rdf.loc[:,:'amount'].sort_values(by='rate',ascending=False)
     for idx,row in rdf.iterrows():
         dc = dict(zip(row.index,row.values))
         info[dc['code']] = dc
@@ -88,7 +88,7 @@ def process_cdl(row):
     for name,vlu in row.iteritems():
         # pdb.set_trace()
         if vlu!=0 and name in tam:
-            sts.append( '[%s: %s ]\n%s\n%s\n'%(str(vlu),tam[name]['name'],tam[name]['figure'],tam[name]['intro2']) )
+            sts.append( '[%s: %s][%s]\n %s\n'%(str(vlu),tam[name]['figure'],tam[name]['name'],tam[name]['intro2']) )
     print ''.join(sts).encode('gbk')
     
     
@@ -101,17 +101,21 @@ def focus_tick(tk,info):
     if df.shape[0]==0:
         return
     closed=df['close'].values
+    high=df['high'].values
+    low=df['low'].values
     
     upper,middle,lower=talib.BBANDS(closed,matype=talib.MA_Type.T3)
     macd, macdsignal, macdhist =  talib.MACD(closed)
     roc = talib.ROCR(closed)
-    print ''
+    slk,sld = talib.STOCH(high,low,closed)
+    print ''    
     name = info.get(tk,{}).get('name','').encode('gbk')
     # name = ' '
     print tk,name
-    print 'BOLL: %0.2f,%0.2f,%0.2f'%(upper[-1],middle[-1],lower[-1])
-    print 'MACD: %0.2f,%0.2f,%0.2f'%(macd[-1],macdsignal[-1],macdhist[-1])
-    print 'ROC : %0.2f,%0.2f,%0.2f'%(roc[-3],roc[-2],roc[-1])
+    print '[BOLL]: %0.2f,%0.2f,%0.2f '%(upper[-1],middle[-1],lower[-1]),
+    print '[MACD]: %0.2f,%0.2f,%0.2f '%(macd[-1],macdsignal[-1],macdhist[-1]),
+    print '[ROC] : %0.2f,%0.2f,%0.2f '%(roc[-3],roc[-2],roc[-1]),
+    print '[KDJ] : %0.2f,%0.2f,%0.2f'%( slk[-1],sld[-1], 3*slk[-1]-2*sld[-1])
     cnames = []
     for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
         func = getattr(talib,funcname) 
@@ -134,7 +138,7 @@ def focus_tick(tk,info):
     
     
 if __name__ == '__main__':
-    for id in ['candi']:
+    for id in ['idx','candi']:
     # for id in tks:
         ttks=to_list(tks[id])
         print '[%s]ticks: %s'%(id,','.join(ttks))
