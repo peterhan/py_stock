@@ -146,3 +146,4 @@ if __name__ == '__main__':
         for tk in ttks:focus_tick(tk,info)
         # print json.dumps(info,ensure_ascii=False).encode('gbk')
         print ''
+    raw_input("pause")
