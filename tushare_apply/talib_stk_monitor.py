@@ -142,8 +142,11 @@ if __name__ == '__main__':
     for id in tks:
         ttks=to_list(tks[id])
         print '[%s]ticks: %s'%(id,','.join(ttks))
-        info = rt_ticks(ttks)    
-        for tk in ttks:focus_tick(tk,info)
+        info = rt_ticks(ttks)
+        flag = raw_input('[ShowDetail?](y/n):')
+        if flag== 'y':
+            for tk in ttks:
+                focus_tick(tk,info)
         # print json.dumps(info,ensure_ascii=False).encode('gbk')
         print ''
     raw_input("pause")
