@@ -5,14 +5,6 @@ import talib as talib
 import datetime
 import json
 
-
-
-#600438 13.397
-#600585 42.562
-#601012 23.192
-
-
-
 pd.set_option('display.max_rows',None)
 pd.set_option('display.max_columns',None)
 pd.set_option('display.width',None)
@@ -131,7 +123,10 @@ def split_stocks(tks):
 def main_loop():
     fname = 'ticks.json'
     tks = json.load(open(fname))
-    tks = split_stocks(tks)
+    tks = split_stocks(tks['ticks'])
+    all = reduce(lambda x,y:x+y, tks.values(),[])
+    all = set(all)
+    tks['All'] = all
     keys = cli_select_keys(tks)
     for id in keys:
         ttks = tks[id]
