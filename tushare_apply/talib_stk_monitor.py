@@ -6,37 +6,10 @@ import datetime
 import json
 
 
-def to_list(tks):
-    return set(tks.strip().replace(',','\n').replace(' ','\n').replace('\n\n','\n').splitlines())
 
 #600438 13.397
 #600585 42.562
 #601012 23.192
-tks={}
-tks['sz']='''
-000001 000089 000333 000651 000681 
-002008 002027 002202 002258 002338 
-002382 002466 002531 002572 002702 
-002733 002138
-'''
-tks['idx']='''159915 399001 sh000001 399006 sh000300'''
-tks['cyb']='''
-300012 300014 300017 300129 300203
-300330 300596 300616 300618 300750
-'''
-tks['sh1']='''
-600004 600009 600025 600029 600131 600132
-600183 600201 600311 600438 600459
-600519 600585 600848 600854 600887'''
-
-tks['sh2']='''
-601012 601021 601601 600298 601088 601111 601138
-601222 601636 601888 601985 603259
-603501 603515 603605 603816 600600
-'''
-tks['etf']='''510300 510500 510600 510630 510150 '''
-tks['candi']='''300012 002099 600585 600438 600854 601601 600132 601012'''
-
 
 
 
@@ -44,7 +17,7 @@ pd.set_option('display.max_rows',None)
 pd.set_option('display.max_columns',None)
 pd.set_option('display.width',None)
 
-def rt_ticks(tks):
+def realtime_ticks(tks):
     info={}
     rdf=  ts.get_realtime_quotes(tks)
     # rdf=  ts.get_today_all()
@@ -137,16 +110,42 @@ def focus_tick(tk,info):
     # df = ts.get_index()
     
     
-if __name__ == '__main__':
-    # for id in ['idx','candi']:
-    for id in tks:
-        ttks=to_list(tks[id])
+def cli_select_keys(dic):
+    idxmap = {}
+    for i,key in enumerate(dic):
+        idxmap[i+1]=key
+        print '(%s) %s'%(i+1,key)
+    res = raw_input('Select>')
+    res_arr=res.replace(',',' ').split(' ')
+    keys = [idxmap[int(i)] for i in res_arr]     
+    return keys
+    
+    
+def split_stocks(tks):
+    ntks = {}
+    for k,v in tks.items():
+        ntks[k] = v.replace(',',' ').replace('  ',' ').split(' ')
+    return ntks
+
+
+def main_loop():
+    fname = 'ticks.json'
+    tks = json.load(open(fname))
+    tks = split_stocks(tks)
+    keys = cli_select_keys(tks)
+    for id in keys:
+        ttks = tks[id]
         print '[%s]ticks: %s'%(id,','.join(ttks))
-        info = rt_ticks(ttks)
-        flag = raw_input('[ShowDetail?](y/n):')
+        info = realtime_ticks(ttks)
+        flag = raw_input('[ShowFocusInfo?](y/n):')
         if flag== 'y':
             for tk in ttks:
                 focus_tick(tk,info)
         # print json.dumps(info,ensure_ascii=False).encode('gbk')
         print ''
-    raw_input("pause")
+    # raw_input("pause")
+    
+
+if __name__ == '__main__':    
+    while 1:
+        main_loop()
