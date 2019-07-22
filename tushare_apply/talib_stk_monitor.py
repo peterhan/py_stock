@@ -76,7 +76,7 @@ def focus_tick(tk,info):
     print ''    
     name = info.get(tk,{}).get('name','').encode('gbk')
     # name = ' '
-    print tk,name
+    print tk,name,df['close'].values[-1]
     print '[BOLL]: %0.2f,%0.2f,%0.2f '%(upper[-1],middle[-1],lower[-1]),
     print '[MACD]: %0.2f,%0.2f,%0.2f '%(macd[-1],macdsignal[-1],macdhist[-1]),
     print '[ROC] : %0.2f,%0.2f,%0.2f '%(roc[-3],roc[-2],roc[-1]),
