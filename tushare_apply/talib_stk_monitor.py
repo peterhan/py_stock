@@ -4,6 +4,7 @@ import pandas as pd
 import talib as talib
 import datetime
 import json
+from collections import OrderedDict
 
 pd.set_option('display.max_rows',None)
 pd.set_option('display.max_columns',None)
@@ -106,15 +107,18 @@ def cli_select_keys(dic):
     idxmap = {}
     for i,key in enumerate(dic):
         idxmap[i+1]=key
-        print '(%s) %s'%(i+1,key)
-    res = raw_input('Select>')
+        print ('(%s) %s'%(i+1,key)).ljust(20),
+        if (i+1)%4==0:
+            print ''
+    print ''
+    res = raw_input('SEL>')
     res_arr=res.replace(',',' ').split(' ')
     keys = [idxmap[int(i)] for i in res_arr]     
     return keys
     
     
 def split_stocks(tks):
-    ntks = {}
+    ntks = OrderedDict()
     for k,v in tks.items():
         ntks[k] = v.replace(',',' ').replace('  ',' ').split(' ')
     return ntks
@@ -132,10 +136,17 @@ def main_loop():
         ttks = tks[id]
         print '[%s]ticks: %s'%(id,','.join(ttks))
         info = realtime_ticks(ttks)
+        # print ttks
+        # print info
         flag = raw_input('[ShowFocusInfo?](y/n):')
         if flag== 'y':
             for tk in ttks:
                 focus_tick(tk,info)
+        if int(flag)  <len(ttks): 
+            focus_tick(ttks[int(flag)],info)
+        if unicode(flag)  in ttks: 
+            focus_tick(unicode(flag),info)
+            
         # print json.dumps(info,ensure_ascii=False).encode('gbk')
         print ''
     # raw_input("pause")
