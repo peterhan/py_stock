@@ -9,6 +9,7 @@ from collections import OrderedDict
 pd.set_option('display.max_rows',None)
 pd.set_option('display.max_columns',None)
 pd.set_option('display.width',None)
+pd.options.display.float_format = '{:.2f}'.format
 
 def realtime_ticks(tks):
     info={}
@@ -155,7 +156,11 @@ def main_loop():
         # print json.dumps(info,ensure_ascii=False).encode('gbk')
         print ''
     # raw_input("pause")
-    
+ 
+def test():
+    ts.get_sz50s()
+    ts.get_hs300s()
+    ts.get_zz500s()
 
 if __name__ == '__main__':    
     while 1:
