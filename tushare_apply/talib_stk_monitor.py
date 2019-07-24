@@ -70,7 +70,7 @@ def focus_tick(tk,info):
     high=df['high'].values
     low=df['low'].values
     
-    upper,middle,lower=talib.BBANDS(closed,matype=talib.MA_Type.T3)
+    upper, middle, lower = talib.BBANDS(closed,matype=talib.MA_Type.T3)
     macd, macdsignal, macdhist =  talib.MACD(closed)
     roc = talib.ROCR(closed)
     slk,sld = talib.STOCH(high,low,closed)
@@ -114,8 +114,7 @@ def cli_select_keys(dic):
     res = raw_input('SEL>')
     res_arr=res.replace(',',' ').split(' ')
     keys = [idxmap[int(i)] for i in res_arr]     
-    return keys
-    
+    return keys    
     
 def split_stocks(tks):
     ntks = OrderedDict()
@@ -123,14 +122,11 @@ def split_stocks(tks):
         ntks[k] = v.replace(',',' ').replace('  ',' ').split(' ')
     return ntks
 
-
 def num(s):
     try:
         return int(s)
     except ValueError:
         return s
-
-
 
 def main_loop():
     fname = 'ticks.json'
