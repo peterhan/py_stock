@@ -130,7 +130,8 @@ def main_loop():
     tks = split_stocks(tks['ticks'])
     all = reduce(lambda x,y:x+y, tks.values(),[])
     all = set(all)
-    tks['All'] = all
+    all.remove("")
+    tks['All'] = list(all)
     keys = cli_select_keys(tks)
     for id in keys:
         ttks = tks[id]
@@ -142,9 +143,9 @@ def main_loop():
         if flag== 'y':
             for tk in ttks:
                 focus_tick(tk,info)
-        if int(flag)  <len(ttks): 
+        elif int(flag)  <len(ttks): 
             focus_tick(ttks[int(flag)],info)
-        if unicode(flag)  in ttks: 
+        elif unicode(flag)  in ttks: 
             focus_tick(unicode(flag),info)
             
         # print json.dumps(info,ensure_ascii=False).encode('gbk')
