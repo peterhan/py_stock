@@ -124,6 +124,14 @@ def split_stocks(tks):
     return ntks
 
 
+def num(s):
+    try:
+        return int(s)
+    except ValueError:
+        return s
+
+
+
 def main_loop():
     fname = 'ticks.json'
     tks = json.load(open(fname))
@@ -143,7 +151,7 @@ def main_loop():
         if flag== 'y':
             for tk in ttks:
                 focus_tick(tk,info)
-        elif int(flag)  <len(ttks): 
+        elif num(flag)  <len(ttks): 
             focus_tick(ttks[int(flag)],info)
         elif unicode(flag)  in ttks: 
             focus_tick(unicode(flag),info)
