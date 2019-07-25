@@ -55,8 +55,9 @@ def process_cdl(row):
     for name,vlu in row.iteritems():
         # pdb.set_trace()
         if vlu!=0 and name in tam:
-            sts.append( '[%s: %s][%s]\n %s\n'%(str(vlu),tam[name]['figure'],tam[name]['name'],tam[name]['intro2']) )
-    print ''.join(sts).encode('gbk')
+            sts.append( '[%s: %s][%s]'%(str(vlu),tam[name]['figure'],tam[name]['name']) )
+            # sts.append( tam[name]['intro2'])
+    print '\n'.join(sts).encode('gbk')
     
     
 def focus_tick(tk,info):    
@@ -96,12 +97,6 @@ def focus_tick(tk,info):
     # pdb.set_trace()
     process_cdl(df.iloc[-1])
     df.to_csv(fname)
-    # print df.apply(lambda x:type(x))
-    # for i,row in df.iterrows():
-        # print i#,row
-    # df = ts.get_sina_dd(tk, date='2019-04-18',vol=500)
-    # print df
-    # df = ts.get_index()
     
     
 def cli_select_keys(dic):
@@ -114,8 +109,11 @@ def cli_select_keys(dic):
     print ''
     res = raw_input('SEL>')
     res_arr=res.replace(',',' ').split(' ')
-    keys = [idxmap[int(i)] for i in res_arr]     
-    return keys    
+    try:
+        keys = [idxmap[int(i)] for i in res_arr]     
+        return keys    
+    except:
+        return []
     
 def split_stocks(tks):
     ntks = OrderedDict()
