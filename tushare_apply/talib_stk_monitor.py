@@ -51,13 +51,14 @@ def load_ta_pat_map():
 tam = load_ta_pat_map()
  
 def process_cdl(row):
-    sts=[]
+    stmts=[]
     for name,vlu in row.iteritems():
         # pdb.set_trace()
         if vlu!=0 and name in tam:
-            sts.append( '[%s: %s][%s]'%(str(vlu),tam[name]['figure'],tam[name]['name']) )
+            stmts.append( '[%s: %s][%s]'%(str(vlu),tam[name]['figure'],tam[name]['name']) )
             # sts.append( tam[name]['intro2'])
-    print '\n'.join(sts).encode('gbk')
+    print '\t'.join(stmts).encode('gbk')
+    return stmts
     
     
 def focus_tick(tk,info):    
@@ -77,13 +78,17 @@ def focus_tick(tk,info):
     roc = talib.ROCR(closed)
     slk,sld = talib.STOCH(high,low,closed)
     print ''    
-    name = info.get(tk,{}).get('name','').encode('gbk')
+    name = info.get(tk,{}).get('name','')
     # name = ' '
-    print tk,name,df['close'].values[-1]
-    print '[BOLL]: %0.2f,%0.2f,%0.2f '%(upper[-1],middle[-1],lower[-1]),
-    print '[MACD]: %0.2f,%0.2f,%0.2f '%(macd[-1],macdsignal[-1],macdhist[-1]),
-    print '[ROC] : %0.2f,%0.2f,%0.2f '%(roc[-3],roc[-2],roc[-1]),
-    print '[KDJ] : %0.2f,%0.2f,%0.2f'%( slk[-1],sld[-1], 3*slk[-1]-2*sld[-1])
+    info = []
+    
+    info.append( 'code:%s, name:%s, price:%s '%(tk,name,df['close'].values[-1]))
+    
+    idx_info = []
+    idx_info.append( '[BOLL]: %0.2f,%0.2f,%0.2f '%(upper[-1],middle[-1],lower[-1]) )
+    idx_info.append( '[MACD]: %0.2f,%0.2f,%0.2f '%(macd[-1],macdsignal[-1],macdhist[-1]) )
+    idx_info.append( '[ROC] : %0.2f,%0.2f,%0.2f '%(roc[-3],roc[-2],roc[-1]))
+    idx_info.append( '[KDJ] : %0.2f,%0.2f,%0.2f'%( slk[-1],sld[-1], 3*slk[-1]-2*sld[-1]) )
     cnames = []
     for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
         func = getattr(talib,funcname) 
@@ -91,12 +96,15 @@ def focus_tick(tk,info):
         cname = funcname[3:]        
         df[cname]=res_vlu
         cnames.append(cname)
-    df['CDLScore']=df[cnames].sum(axis=1)
+    df['CDLScore']=df[cnames].sum(axis=1)    
+    idx_info.append('[CDLScore:%s]'% df.iloc[-1,-1])
+    print '\t'.join(info).encode('gbk')
+    print '\t'.join(idx_info).encode('gbk')
     # print df.iloc[-1]
-    print '[CDLScore:%s]'% df.iloc[-1,-1]
     # pdb.set_trace()
-    process_cdl(df.iloc[-1])
+    stmts = process_cdl(df.iloc[-1])
     df.to_csv(fname)
+    return info,stmts
     
     
 def cli_select_keys(dic):
@@ -108,7 +116,9 @@ def cli_select_keys(dic):
             print ''
     print ''
     res = raw_input('SEL>')
-    res_arr=res.replace(',',' ').split(' ')
+    res_arr = res.replace(',',' ').split(' ')
+    if res == ':q':
+        system.exit()
     try:
         keys = [idxmap[int(i)] for i in res_arr]     
         return keys    
