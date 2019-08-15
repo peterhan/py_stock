@@ -1,4 +1,5 @@
 import pdb
+import sys
 import tushare as ts
 import pandas as pd
 import talib as talib
@@ -69,26 +70,36 @@ def focus_tick(tk,info):
     # print df.shape
     if df.shape[0]==0:
         return
-    closed=df['close'].values
-    high=df['high'].values
-    low=df['low'].values
+    closed = df['close'].values
+    high = df['high'].values
+    low = df['low'].values
+    vol = df['volume'].values
     
-    upper, middle, lower = talib.BBANDS(closed,matype=talib.MA_Type.T3)
+    bl_upper, bl_middle, bl_lower = talib.BBANDS(closed,matype=talib.MA_Type.T3)
     macd, macdsignal, macdhist =  talib.MACD(closed)
     roc = talib.ROCR(closed)
     slk,sld = talib.STOCH(high,low,closed)
+    obv  = talib.OBV(closed,vol)
+    sar  = talib.SAREXT(high,low)
+    slj = 3*slk-2*sld
     print ''    
     name = info.get(tk,{}).get('name','')
     # name = ' '
     info = []
     
-    info.append( 'code:%s, name:%s, price:%s '%(tk,name,df['close'].values[-1]))
+    info.append( 'code:%s, name:%s, price:%0.3f '%(tk,name,df['close'].values[-1]))
+    
+    # pdb.set_trace()
     
     idx_info = []
-    idx_info.append( '[BOLL]: %0.2f,%0.2f,%0.2f '%(upper[-1],middle[-1],lower[-1]) )
+    idx_info.append( '[BOLL]: %0.2f,%0.2f,%0.2f '%(bl_upper[-1],bl_middle[-1],bl_lower[-1]) )
     idx_info.append( '[MACD]: %0.2f,%0.2f,%0.2f '%(macd[-1],macdsignal[-1],macdhist[-1]) )
-    idx_info.append( '[ROC] : %0.2f,%0.2f,%0.2f '%(roc[-3],roc[-2],roc[-1]))
-    idx_info.append( '[KDJ] : %0.2f,%0.2f,%0.2f'%( slk[-1],sld[-1], 3*slk[-1]-2*sld[-1]) )
+    idx_info.append( '[VOL_Rate]: %0.2f'%( vol[-1]*1.0/vol[-2] ) )
+    idx_info.append( '[ROC]: %0.2f,%0.2f,%0.2f '%(roc[-3],roc[-2],roc[-1]))
+    idx_info.append( '[KDJ]: %0.2f,%0.2f,%0.2f'%( slk[-1],sld[-1], slj[-1]) )
+    idx_info.append( '[OBV]: %0.2f'%( obv[-1] ) )
+    idx_info.append( '[SAR]: %0.2f'%( sar[-1] ) )
+    
     cnames = []
     for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
         func = getattr(talib,funcname) 
@@ -97,9 +108,9 @@ def focus_tick(tk,info):
         df[cname]=res_vlu
         cnames.append(cname)
     df['CDLScore']=df[cnames].sum(axis=1)    
-    idx_info.append('[CDLScore:%s]'% df.iloc[-1,-1])
-    print '\t'.join(info).encode('gbk')
-    print '\t'.join(idx_info).encode('gbk')
+    idx_info.insert(0,'[CDLScore]:%s'% df.iloc[-1,-1])
+    print '  '.join(info).encode('gbk')
+    print '  '.join(idx_info).encode('gbk')
     # print df.iloc[-1]
     # pdb.set_trace()
     stmts = process_cdl(df.iloc[-1])
@@ -107,7 +118,7 @@ def focus_tick(tk,info):
     return info,stmts
     
     
-def cli_select_keys(dic):
+def cli_select_keys(dic, input=None):
     idxmap = {}
     for i,key in enumerate(dic):
         idxmap[i+1]=key
@@ -115,7 +126,10 @@ def cli_select_keys(dic):
         if (i+1)%4==0:
             print ''
     print ''
-    res = raw_input('SEL>')
+    if input is None:
+        res = raw_input('SEL>')
+    else:
+        res = input
     res_arr = res.replace(',',' ').split(' ')
     if res == ':q':
         system.exit()
@@ -137,7 +151,7 @@ def num(s):
     except ValueError:
         return s
 
-def main_loop():
+def main_loop(mode):
     fname = 'ticks.json'
     tks = json.load(open(fname))
     tks = split_stocks(tks['ticks'])
@@ -145,18 +159,26 @@ def main_loop():
     all = set(all)
     all.remove("")
     tks['All'] = list(all)
-    keys = cli_select_keys(tks)
+    if '-d' in mode:
+        input = '3'
+        keys  = cli_select_keys(tks,input)        
+    else:
+        keys = cli_select_keys(tks)
     for id in keys:
         ttks = tks[id]
         print '[%s]ticks: %s'%(id,','.join(ttks))
         info = realtime_ticks(ttks)
         # print ttks
         # print info
-        flag = raw_input('[ShowFocusInfo?](y/n):')
+        if '-d' in mode:
+            flag = 'y'
+        else:
+            flag = raw_input('[ShowFocusInfo?](y/n):')
+            
         if flag== 'y':
             for tk in ttks:
                 focus_tick(tk,info)
-        elif num(flag)  <len(ttks): 
+        elif num(flag) < len(ttks): 
             focus_tick(ttks[int(flag)],info)
         elif unicode(flag)  in ttks: 
             focus_tick(unicode(flag),info)
@@ -171,5 +193,6 @@ def test():
     ts.get_zz500s()
 
 if __name__ == '__main__':    
+    mode = sys.argv
     while 1:
-        main_loop()
+        main_loop(mode)
