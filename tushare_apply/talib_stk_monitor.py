@@ -6,6 +6,12 @@ import talib as talib
 import datetime
 import json
 from collections import OrderedDict
+try:
+    import gevent
+    from gevent import monkey
+except:
+    print 'no gevent'
+monkey.patch_all()
 
 pd.set_option('display.max_rows',None)
 pd.set_option('display.max_columns',None)
@@ -115,7 +121,7 @@ def focus_tick(tk,info):
     # pdb.set_trace()
     stmts = process_cdl(df.iloc[-1])
     df.to_csv(fname)
-    return info,stmts
+    return info,idx_info,stmts
     
     
 def cli_select_keys(dic, input=None):
@@ -176,8 +182,13 @@ def main_loop(mode):
             flag = raw_input('[ShowFocusInfo?](y/n):')
             
         if flag== 'y':
-            for tk in ttks:
-                focus_tick(tk,info)
+            if not gevent:
+                for tk in ttks:
+                    res = focus_tick(tk,info)
+            else:
+                jobs = [gevent.spawn(focus_tick,tk,info) for tk in ttks]
+                gevent.joinall(jobs)
+                # print [job.value for job in jobs]
         elif num(flag) < len(ttks): 
             focus_tick(ttks[int(flag)],info)
         elif unicode(flag)  in ttks: 
