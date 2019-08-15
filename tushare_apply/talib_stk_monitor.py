@@ -79,9 +79,13 @@ def candle_analyse(df):
     last_cdlrow = df.iloc[-1]
     for name,cdl_vlu in last_cdlrow.iteritems():        
         if cdl_vlu!=0 and name in TA_PATTERN_MAP:
-            fig = TA_PATTERN_MAP[name]['figure']
-            name = TA_PATTERN_MAP[name]['name']
-            cdl_info['entry'][name]={'figure':fig,'score':cdl_vlu}
+            the_info = TA_PATTERN_MAP[name]
+            fig =  the_info['figure'].split(' ')[1]
+            cn_name = the_info['name'].split(' ')[0]
+            en_name = the_info['name'].split(' ')[1]
+            intro = the_info['intro']
+            intro2 = the_info['intro2']
+            cdl_info['entry'][name]={'figure':fig,'score':cdl_vlu,'cn_name':cn_name,'intro':intro,'intro2':intro2,'en_name':en_name}
     # print jsdump(cdl_info)
     return cdl_info,df
     
@@ -108,7 +112,7 @@ def tech_analyse(info,tk, df):
     idx_info['MACD'] = [ macd[-1],macdsignal[-1],macdhist[-1] ]
     idx_info['ROC'] =  [roc[-3],roc[-2],roc[-1] ]
     idx_info['KDJ'] =  [slk[-1],sld[-1], slj[-1] ]
-    idx_info['OBJ'] = [ obv[-1] ]
+    idx_info['OBV'] = [ obv[-1] ]
     idx_info['SAR'] = [ sar[-1] ]
     idx_info['VOL_Rate']= [vol[-1]*1.0/vol[-2] ]
     return idx_info
@@ -155,12 +159,25 @@ def split_stocks(tks):
         ntks[k] = v.replace(',',' ').replace('  ',' ').split(' ')
     return ntks
 
-def num(s):
+def to_num(s):
     try:
         return int(s)
     except ValueError:
         return s
-
+        
+def print_analyse_res(res):
+    intro = {}
+    for stock in res:
+        idx = stock['idx']
+        cdl = stock['cdl']
+        print "{0} {1} Price:{2}".format(idx['code'],idx['name'].encode('gbk'),idx['price'])
+        
+        cdl_ent_str=','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],info['cn_name'],name) for name,info in cdl['entry'].items()])
+        intro[info['en_name']+info['cn_name']] = info['intro2']
+        print "CDL:{0}; {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
+    for name,intro in intro.items():
+        print u"{}:{}".format(name,intro).encode('gbk')
+        
 def main_loop(mode):
     fname = 'ticks.json'
     tks = json.load(open(fname))
@@ -193,8 +210,9 @@ def main_loop(mode):
                 jobs = [gevent.spawn(focus_tick,tk,info) for tk in ttks]
                 gevent.joinall(jobs)
                 res = [job.value for job in jobs]
+            print_analyse_res(res)
             json.dump(res,open('result.json','w'),indent=2)
-        elif num(flag) < len(ttks): 
+        elif to_num(flag) < len(ttks): 
             focus_tick(ttks[int(flag)],info)
         elif unicode(flag)  in ttks: 
             focus_tick(unicode(flag),info)        
