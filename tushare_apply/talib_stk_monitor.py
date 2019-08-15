@@ -50,32 +50,43 @@ def realtime_ticks(tks):
     # print ttdf[ttdf.volume>=100].groupby(ttdf.type).count()
     # print ttdf[ttdf.volume>=100].groupby(ttdf.type).sum()
     return info
+
+
+def jsdump(info):
+    return json.dumps(info,ensure_ascii=False).encode('gbk')    
     
 def load_ta_pat_map():
     import json
     return json.load(open('talib_pattern_name.json'))
+
+
+TA_PATTERN_MAP = load_ta_pat_map()
  
-tam = load_ta_pat_map()
  
-def process_cdl(row):
-    stmts=[]
-    for name,vlu in row.iteritems():
-        # pdb.set_trace()
-        if vlu!=0 and name in tam:
-            stmts.append( '[%s: %s][%s]'%(str(vlu),tam[name]['figure'],tam[name]['name']) )
-            # sts.append( tam[name]['intro2'])
-    print '\t'.join(stmts).encode('gbk')
-    return stmts
+def candle_analyse(df):
+    cn_names = []
+    for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
+        func = getattr(talib,funcname) 
+        ohlc_data = func(df['open'],df['high'],df['low'],df['close'])
+        cn_name = funcname[3:]        
+        df[cn_name] = ohlc_data
+        cn_names.append(cn_name)
+    total_cdl_score = df[cn_names].sum(axis=1)
+    df['CDLScore'] =  total_cdl_score
+    
+    # pdb.set_trace()
+    cdl_info = {'cdl_total' : '%s'% (total_cdl_score.values[-1]),'entry':{} }
+    last_cdlrow = df.iloc[-1]
+    for name,cdl_vlu in last_cdlrow.iteritems():        
+        if cdl_vlu!=0 and name in TA_PATTERN_MAP:
+            fig = TA_PATTERN_MAP[name]['figure']
+            name = TA_PATTERN_MAP[name]['name']
+            cdl_info['entry'][name]={'figure':fig,'score':cdl_vlu}
+    # print jsdump(cdl_info)
+    return cdl_info,df
     
     
-def focus_tick(tk,info):    
-    fname='./data/'+tk+'.csv'
-    df = ts.get_k_data(tk)
-    df.to_csv(fname)
-    df = pd.read_csv(fname)
-    # print df.shape
-    if df.shape[0]==0:
-        return
+def tech_analyse(info,tk, df):    
     closed = df['close'].values
     high = df['high'].values
     low = df['low'].values
@@ -88,40 +99,33 @@ def focus_tick(tk,info):
     obv  = talib.OBV(closed,vol)
     sar  = talib.SAREXT(high,low)
     slj = 3*slk-2*sld
-    print ''    
+    
     name = info.get(tk,{}).get('name','')
     # name = ' '
-    info = []
+    idx_info = {'code':tk,'name':name,'price':df['close'].values[-1]}         
+    # pdb.set_trace()        
+    idx_info['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
+    idx_info['MACD'] = [ macd[-1],macdsignal[-1],macdhist[-1] ]
+    idx_info['ROC'] =  [roc[-3],roc[-2],roc[-1] ]
+    idx_info['KDJ'] =  [slk[-1],sld[-1], slj[-1] ]
+    idx_info['OBJ'] = [ obv[-1] ]
+    idx_info['SAR'] = [ sar[-1] ]
+    idx_info['VOL_Rate']= [vol[-1]*1.0/vol[-2] ]
+    return idx_info
     
-    info.append( 'code:%s, name:%s, price:%0.3f '%(tk,name,df['close'].values[-1]))
     
-    # pdb.set_trace()
-    
-    idx_info = []
-    idx_info.append( '[BOLL]: %0.2f,%0.2f,%0.2f '%(bl_upper[-1],bl_middle[-1],bl_lower[-1]) )
-    idx_info.append( '[MACD]: %0.2f,%0.2f,%0.2f '%(macd[-1],macdsignal[-1],macdhist[-1]) )
-    idx_info.append( '[VOL_Rate]: %0.2f'%( vol[-1]*1.0/vol[-2] ) )
-    idx_info.append( '[ROC]: %0.2f,%0.2f,%0.2f '%(roc[-3],roc[-2],roc[-1]))
-    idx_info.append( '[KDJ]: %0.2f,%0.2f,%0.2f'%( slk[-1],sld[-1], slj[-1]) )
-    idx_info.append( '[OBV]: %0.2f'%( obv[-1] ) )
-    idx_info.append( '[SAR]: %0.2f'%( sar[-1] ) )
-    
-    cnames = []
-    for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
-        func = getattr(talib,funcname) 
-        res_vlu = func(df['open'],df['high'],df['low'],df['close'])
-        cname = funcname[3:]        
-        df[cname]=res_vlu
-        cnames.append(cname)
-    df['CDLScore']=df[cnames].sum(axis=1)    
-    idx_info.insert(0,'[CDLScore]:%s'% df.iloc[-1,-1])
-    print '  '.join(info).encode('gbk')
-    print '  '.join(idx_info).encode('gbk')
-    # print df.iloc[-1]
-    # pdb.set_trace()
-    stmts = process_cdl(df.iloc[-1])
+def focus_tick(tk,info):    
+    fname='./data/'+tk+'.csv'
+    df = ts.get_k_data(tk)
     df.to_csv(fname)
-    return info,idx_info,stmts
+    df = pd.read_csv(fname)
+    # print df.shape
+    if df.shape[0]==0:
+        return
+    idx_info = tech_analyse(info,tk, df)
+    cdl_info,df = candle_analyse(df )      
+    df.to_csv(fname)
+    return {'idx':idx_info,'cdl':cdl_info}
     
     
 def cli_select_keys(dic, input=None):
@@ -138,7 +142,7 @@ def cli_select_keys(dic, input=None):
         res = input
     res_arr = res.replace(',',' ').split(' ')
     if res == ':q':
-        system.exit()
+        sys.exit()
     try:
         keys = [idxmap[int(i)] for i in res_arr]     
         return keys    
@@ -188,14 +192,13 @@ def main_loop(mode):
             else:
                 jobs = [gevent.spawn(focus_tick,tk,info) for tk in ttks]
                 gevent.joinall(jobs)
-                # print [job.value for job in jobs]
+                res = [job.value for job in jobs]
+            json.dump(res,open('result.json','w'),indent=2)
         elif num(flag) < len(ttks): 
             focus_tick(ttks[int(flag)],info)
         elif unicode(flag)  in ttks: 
-            focus_tick(unicode(flag),info)
-            
-        # print json.dumps(info,ensure_ascii=False).encode('gbk')
-        print ''
+            focus_tick(unicode(flag),info)        
+        
     # raw_input("pause")
  
 def test():
