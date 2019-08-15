@@ -91,18 +91,19 @@ def candle_analyse(df):
     
     
 def tech_analyse(info,tk, df):    
-    closed = df['close'].values
+    close = df['close'].values
     high = df['high'].values
     low = df['low'].values
     vol = df['volume'].values
     
-    bl_upper, bl_middle, bl_lower = talib.BBANDS(closed,matype=talib.MA_Type.T3)
-    macd, macdsignal, macdhist =  talib.MACD(closed)
-    roc = talib.ROCR(closed)
-    slk,sld = talib.STOCH(high,low,closed)
-    obv  = talib.OBV(closed,vol)
+    bl_upper, bl_middle, bl_lower = talib.BBANDS(close,matype=talib.MA_Type.T3)
+    macd, macdsignal, macdhist =  talib.MACD(close)
+    roc = talib.ROCR(close)
+    slk,sld = talib.STOCH(high,low,close)
+    obv  = talib.OBV(close,vol)
     sar  = talib.SAREXT(high,low)
     slj = 3*slk-2*sld
+    rsi = talib.RSI(close)
     
     name = info.get(tk,{}).get('name','')
     # name = ' '
@@ -115,6 +116,7 @@ def tech_analyse(info,tk, df):
     idx_info['OBV'] = [ obv[-1] ]
     idx_info['SAR'] = [ sar[-1] ]
     idx_info['VOL_Rate']= [vol[-1]*1.0/vol[-2] ]
+    idx_info['RSI']= [rsi[-1] ]
     return idx_info
     
     
@@ -136,7 +138,7 @@ def cli_select_keys(dic, input=None):
     idxmap = {}
     for i,key in enumerate(dic):
         idxmap[i+1]=key
-        print ('(%s) %s'%(i+1,key)).ljust(20),
+        print ('(%s) %s'%(i+1,key)).ljust(25),
         if (i+1)%4==0:
             print ''
     print ''
@@ -170,13 +172,13 @@ def print_analyse_res(res):
     for stock in res:
         idx = stock['idx']
         cdl = stock['cdl']
-        print "{0} {1} Price:{2}".format(idx['code'],idx['name'].encode('gbk'),idx['price'])
+        print "[{0} {1} Price:{2}]".format(idx['code'],idx['name'].encode('gbk'),idx['price'])
         
-        cdl_ent_str=','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],info['cn_name'],name) for name,info in cdl['entry'].items()])
+        cdl_ent_str=','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['entry'].items()])
         intro[info['en_name']+info['cn_name']] = info['intro2']
-        print "CDL:{0}; {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
+        print "[CDL:{0}]; {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
     for name,intro in intro.items():
-        print u"{}:{}".format(name,intro).encode('gbk')
+        print u"[{}]:{}".format(name,intro).encode('gbk')
         
 def main_loop(mode):
     fname = 'ticks.json'
