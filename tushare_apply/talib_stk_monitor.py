@@ -116,7 +116,7 @@ def tech_analyse(info,tk, df):
     idx_info['OBV'] = [ obv[-1] ]
     idx_info['SAR'] = [ sar[-1] ]
     idx_info['VOL_Rate'] = [vol[-1]*1.0/vol[-2] ]
-    idx_info['RSI']= [rsi[-1] ]
+    idx_info['RSI'] = [rsi[-1] ]
     return idx_info
     
     
@@ -157,8 +157,8 @@ def cli_select_keys(dic, input=None):
     
 def split_stocks(tks):
     ntks = OrderedDict()
-    for k,v in tks.items():
-        ntks[k] = v.replace(',',' ').replace('  ',' ').split(' ')
+    for k,v in tks.items():        
+        ntks[k] = v.strip().replace(',',' ').replace('  ',' ').split(' ')
     return ntks
 
 def to_num(s):
@@ -212,8 +212,8 @@ def main_loop(mode):
                 jobs = [gevent.spawn(focus_tick,tk,info) for tk in ttks]
                 gevent.joinall(jobs)
                 res = [job.value for job in jobs]
-            print_analyse_res(res)
             json.dump(res,open('result.json','w'),indent=2)
+            print_analyse_res(res)
         elif to_num(flag) < len(ttks): 
             focus_tick(ttks[int(flag)],info)
         elif unicode(flag)  in ttks: 
