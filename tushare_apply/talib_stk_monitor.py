@@ -111,11 +111,11 @@ def tech_analyse(info,tk, df):
     # pdb.set_trace()        
     idx_info['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
     idx_info['MACD'] = [ macd[-1],macdsignal[-1],macdhist[-1] ]
-    idx_info['ROC'] =  [roc[-3],roc[-2],roc[-1] ]
-    idx_info['KDJ'] =  [slk[-1],sld[-1], slj[-1] ]
+    idx_info['ROC'] = [roc[-3],roc[-2],roc[-1] ]
+    idx_info['KDJ'] = [slk[-1],sld[-1], slj[-1] ]
     idx_info['OBV'] = [ obv[-1] ]
     idx_info['SAR'] = [ sar[-1] ]
-    idx_info['VOL_Rate']= [vol[-1]*1.0/vol[-2] ]
+    idx_info['VOL_Rate'] = [vol[-1]*1.0/vol[-2] ]
     idx_info['RSI']= [rsi[-1] ]
     return idx_info
     
@@ -182,7 +182,7 @@ def print_analyse_res(res):
         
 def main_loop(mode):
     fname = 'ticks.json'
-    tks = json.load(open(fname))
+    tks = json.load(open(fname), object_pairs_hook=OrderedDict)
     tks = split_stocks(tks['ticks'])
     all = reduce(lambda x,y:x+y, tks.values(),[])
     all = set(all)
