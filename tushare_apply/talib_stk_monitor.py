@@ -2,7 +2,7 @@ import pdb
 import sys
 import tushare as ts
 import pandas as pd
-import talib as talib
+import talib 
 import datetime
 import json
 from collections import OrderedDict
@@ -75,7 +75,7 @@ def candle_analyse(df):
     df['CDLScore'] =  total_cdl_score
     
     # pdb.set_trace()
-    cdl_info = {'cdl_total' : '%s'% (total_cdl_score.values[-1]),'entry':{} }
+    cdl_info = {'cdl_total' : '%s'% (total_cdl_score.values[-1]),'data':{} }
     last_cdlrow = df.iloc[-1]
     for name,cdl_vlu in last_cdlrow.iteritems():        
         if cdl_vlu!=0 and name in TA_PATTERN_MAP:
@@ -85,7 +85,7 @@ def candle_analyse(df):
             en_name = the_info['name'].split(' ')[1]
             intro = the_info['intro']
             intro2 = the_info['intro2']
-            cdl_info['entry'][name]={'figure':fig,'score':cdl_vlu,'cn_name':cn_name,'intro':intro,'intro2':intro2,'en_name':en_name}
+            cdl_info['data'][name]={'figure':fig,'score':cdl_vlu,'cn_name':cn_name,'intro':intro,'intro2':intro2,'en_name':en_name}
     # print jsdump(cdl_info)
     return cdl_info,df
     
@@ -107,16 +107,17 @@ def tech_analyse(info,tk, df):
     
     name = info.get(tk,{}).get('name','')
     # name = ' '
-    idx_info = {'code':tk,'name':name,'price':df['close'].values[-1]}         
-    # pdb.set_trace()        
-    idx_info['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
-    idx_info['MACD'] = [ macd[-1],macdsignal[-1],macdhist[-1] ]
-    idx_info['ROC'] = [roc[-3],roc[-2],roc[-1] ]
-    idx_info['KDJ'] = [slk[-1],sld[-1], slj[-1] ]
-    idx_info['OBV'] = [ obv[-1] ]
-    idx_info['SAR'] = [ sar[-1] ]
-    idx_info['VOL_Rate'] = [vol[-1]*1.0/vol[-2] ]
-    idx_info['RSI'] = [rsi[-1] ]
+    idx_info = {'code':tk,'name':name,'price':df['close'].values[-1],'data':{}}         
+    # pdb.set_trace()  
+    data = idx_info['data']
+    data['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
+    data['MACD'] = [ macd[-1],macdsignal[-1],macdhist[-1] ]
+    data['ROC'] = [roc[-3],roc[-2],roc[-1] ]
+    data['KDJ'] = [slk[-1],sld[-1], slj[-1] ]
+    data['OBV'] = [ obv[-1] ]
+    data['SAR'] = [ sar[-1] ]
+    data['VOL_Rate'] = [vol[-1]*1.0/vol[-2] ]
+    data['RSI'] = [rsi[-1] ]
     return idx_info
     
     
@@ -170,11 +171,13 @@ def to_num(s):
 def print_analyse_res(res):
     intro = {}
     for stock in res:
+        if stock is None:
+            continue
         idx = stock['idx']
         cdl = stock['cdl']
         print "[{0} {1} Price:{2}]".format(idx['code'],idx['name'].encode('gbk'),idx['price'])
-        
-        cdl_ent_str=','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['entry'].items()])
+        print idx['data']
+        cdl_ent_str=','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
         intro[info['en_name']+info['cn_name']] = info['intro2']
         print "[CDL:{0}]; {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
     for name,intro in intro.items():
