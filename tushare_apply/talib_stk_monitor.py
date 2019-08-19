@@ -73,7 +73,7 @@ def candle_analyse(df):
         cn_names.append(cn_name)
     total_cdl_score = df[cn_names].sum(axis=1)
     df['CDLScore'] =  total_cdl_score
-    
+    df['delta2'] =   df['close'] - df.shift(2)['close'] 
     # pdb.set_trace()
     cdl_info = {'cdl_total' : '%s'% (total_cdl_score.values[-1]),'data':{} }
     last_cdlrow = df.iloc[-1]
@@ -94,7 +94,7 @@ def tech_analyse(info,tk, df):
     close = df['close'].values
     high = df['high'].values
     low = df['low'].values
-    vol = df['volume'].values
+    vol = df['volume'].values    
     
     bl_upper, bl_middle, bl_lower = talib.BBANDS(close,matype=talib.MA_Type.T3)
     macd, macdsignal, macdhist =  talib.MACD(close)
@@ -118,18 +118,18 @@ def tech_analyse(info,tk, df):
     data['SAR'] = [ sar[-1] ]
     data['VOL_Rate'] = [vol[-1]*1.0/vol[-2] ]
     data['RSI'] = [rsi[-1] ]
-    return idx_info
+    return idx_info,df
     
     
 def focus_tick(tk,info):    
     fname='./data/'+tk+'.csv'
     df = ts.get_k_data(tk)
-    df.to_csv(fname)
-    df = pd.read_csv(fname)
+    df.to_csv(fname,index='date')
+    df = pd.read_csv(fname,index_col='date')
     # print df.shape
     if df.shape[0]==0:
         return
-    idx_info = tech_analyse(info,tk, df)
+    idx_info,df = tech_analyse(info,tk, df)
     cdl_info,df = candle_analyse(df )      
     df.to_csv(fname)
     return {'idx':idx_info,'cdl':cdl_info}
@@ -175,8 +175,8 @@ def print_analyse_res(res):
             continue
         idx = stock['idx']
         cdl = stock['cdl']
-        print "[{0} {1} Price:{2}]".format(idx['code'],idx['name'].encode('gbk'),idx['price'])
-        print idx['data']
+        print "[{0}:{1}] Price:{2}".format(idx['code'],idx['name'].encode('gbk'),idx['price'])
+        print jsdump(idx['data'])
         cdl_ent_str=','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
         intro[info['en_name']+info['cn_name']] = info['intro2']
         print "[CDL:{0}]; {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
