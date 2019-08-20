@@ -73,7 +73,6 @@ def candle_analyse(df):
         cn_names.append(cn_name)
     total_cdl_score = df[cn_names].sum(axis=1)
     df['CDLScore'] =  total_cdl_score
-    df['delta2'] =   df['close'] - df.shift(2)['close'] 
     # pdb.set_trace()
     cdl_info = {'cdl_total' : '%s'% (total_cdl_score.values[-1]),'data':{} }
     last_cdlrow = df.iloc[-1]
@@ -89,7 +88,18 @@ def candle_analyse(df):
     # print jsdump(cdl_info)
     return cdl_info,df
     
-    
+def split_stocks(tks):
+    ntks = OrderedDict()
+    for k,v in tks.items():        
+        ntks[k] = v.strip().replace(',',' ').replace('  ',' ').split(' ')
+    return ntks
+
+def to_num(s):
+    try:
+        return int(s)
+    except ValueError:
+        return s
+        
 def tech_analyse(info,tk, df):    
     close = df['close'].values
     high = df['high'].values
@@ -120,17 +130,31 @@ def tech_analyse(info,tk, df):
     data['RSI'] = [rsi[-1] ]
     return idx_info,df
     
+def add_delta_n(df):
+    for i in [1,3,5,10,20,30,60,90]:
+        df['delta_b_%02d'%i] = df['close'] - df.shift(i)['close']    
+    for i in [1,3,5,10,20,30,60,90]:
+        df['vol_delta_b_%02d'%i] = df['volume'] - df.shift(i)['volume']
+    for i in [1,3,5,10,20,30,60,90]:
+        df['delta_f_%02d'%i] =  df.shift(-i)['close']  - df['close']
+    for i in [1,3,5,10,20,30,60,90]:
+        df['vol_delta_f_%02d'%i] =  df.shift(-i)['volume'] - df['volume']
+    return df
     
-def focus_tick(tk,info):    
+def focus_tick_k_data(tk,info):    
     fname='./data/'+tk+'.csv'
     df = ts.get_k_data(tk)
+    add_delta_n(df)
     df.to_csv(fname,index='date')
     df = pd.read_csv(fname,index_col='date')
     # print df.shape
     if df.shape[0]==0:
         return
+    ## technical indicator
     idx_info,df = tech_analyse(info,tk, df)
-    cdl_info,df = candle_analyse(df )      
+    ## japanese candle pattern
+    # cdl_info,df = candle_analyse(df )
+    cdl_info = None
     df.to_csv(fname)
     return {'idx':idx_info,'cdl':cdl_info}
     
@@ -156,30 +180,24 @@ def cli_select_keys(dic, input=None):
     except:
         return []
     
-def split_stocks(tks):
-    ntks = OrderedDict()
-    for k,v in tks.items():        
-        ntks[k] = v.strip().replace(',',' ').replace('  ',' ').split(' ')
-    return ntks
 
-def to_num(s):
-    try:
-        return int(s)
-    except ValueError:
-        return s
         
 def print_analyse_res(res):
     intro = {}
     for stock in res:
         if stock is None:
             continue
-        idx = stock['idx']
-        cdl = stock['cdl']
-        print "[{0}:{1}] Price:{2}".format(idx['code'],idx['name'].encode('gbk'),idx['price'])
-        print jsdump(idx['data'])
-        cdl_ent_str=','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
-        intro[info['en_name']+info['cn_name']] = info['intro2']
-        print "[CDL:{0}]; {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
+        
+        if stock['idx'] != None:
+            idx = stock['idx']
+            print "[{0}:{1}] Price:{2}".format(idx['code'],idx['name'].encode('gbk'),idx['price'])
+            print jsdump(idx['data'])
+            
+        if stock['cdl'] != None:
+            cdl = stock['cdl']
+            cdl_ent_str=','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
+            intro[info['en_name']+info['cn_name']] = info['intro2']
+            print "[CDL:{0}]; {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
     for name,intro in intro.items():
         print u"[{}]:{}".format(name,intro).encode('gbk')
         
@@ -196,31 +214,33 @@ def main_loop(mode):
         keys  = cli_select_keys(tks,input)        
     else:
         keys = cli_select_keys(tks)
+    the_tks=set()
     for id in keys:
-        ttks = tks[id]
-        print '[%s]ticks: %s'%(id,','.join(ttks))
-        info = realtime_ticks(ttks)
-        # print ttks
-        # print info
-        if '-d' in mode:
-            flag = 'y'
+        the_tks.update( tks[id])
+    the_tks=list(the_tks)
+    print '[%s]ticks: %s'%(keys,','.join(the_tks))
+    info = realtime_ticks(the_tks)
+    # print the_tks
+    # print info
+    if '-d' in mode:
+        flag = 'y'
+    else:
+        flag = raw_input('[ShowFocusInfo?](y/n):')
+        
+    if flag== 'y':
+        if not gevent:
+            for tk in the_tks:
+                res = focus_tick_k_data(tk,info)
         else:
-            flag = raw_input('[ShowFocusInfo?](y/n):')
-            
-        if flag== 'y':
-            if not gevent:
-                for tk in ttks:
-                    res = focus_tick(tk,info)
-            else:
-                jobs = [gevent.spawn(focus_tick,tk,info) for tk in ttks]
-                gevent.joinall(jobs)
-                res = [job.value for job in jobs]
-            json.dump(res,open('result.json','w'),indent=2)
-            print_analyse_res(res)
-        elif to_num(flag) < len(ttks): 
-            focus_tick(ttks[int(flag)],info)
-        elif unicode(flag)  in ttks: 
-            focus_tick(unicode(flag),info)        
+            jobs = [gevent.spawn(focus_tick_k_data,tk,info) for tk in the_tks]
+            gevent.joinall(jobs)
+            res = [job.value for job in jobs]
+        json.dump(res,open('result.json','w'),indent=2)
+        print_analyse_res(res)
+    elif to_num(flag) < len(the_tks): 
+        focus_tick(the_tks[int(flag)],info)
+    elif unicode(flag)  in the_tks: 
+        focus_tick(unicode(flag),info)        
         
     # raw_input("pause")
  
