@@ -153,8 +153,8 @@ def focus_tick_k_data(tk,info):
     ## technical indicator
     idx_info,df = tech_analyse(info,tk, df)
     ## japanese candle pattern
-    # cdl_info,df = candle_analyse(df )
-    cdl_info = None
+    cdl_info,df = candle_analyse(df )
+    # cdl_info = None
     df.to_csv(fname)
     return {'idx':idx_info,'cdl':cdl_info}
     
