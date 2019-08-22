@@ -200,8 +200,8 @@ def print_analyse_res(res):
             print "[CDL:{0}]; {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
     for name,intro in intro.items():
         print u"[{}]:{}".format(name,intro).encode('gbk')
-        
-def main_loop(mode):
+
+def load_ticks(mode):
     fname = 'ticks.json'
     tks = json.load(open(fname), object_pairs_hook=OrderedDict)
     tks = split_stocks(tks['ticks'])
@@ -218,29 +218,40 @@ def main_loop(mode):
     for id in keys:
         the_tks.update( tks[id])
     the_tks=list(the_tks)
-    print '[%s]ticks: %s'%(keys,','.join(the_tks))
+    ####
+    print '[%s]ticks: %s'%(keys,','.join(the_tks)) 
     info = realtime_ticks(the_tks)
+    if '-d' in mode:
+        input = 'y'
+    else:
+        input = raw_input('[ShowDetailInfo?](y/n):')
+    ##############
+    if input== 'y':
+        pass
+    elif to_num(input) < len(the_tks): 
+        the_tks = [the_tks[int(input)]]
+    elif unicode(input)  in the_tks: 
+        the_tks = [unicode(input)]   
+    else:
+        the_tks = []
+    return the_tks, info
+    
+def main_loop(mode):
+    the_tks, info = load_ticks(mode)
+       
     # print the_tks
     # print info
-    if '-d' in mode:
-        flag = 'y'
+    if not gevent:
+        for tk in the_tks:
+            res = focus_tick_k_data(tk,info)
     else:
-        flag = raw_input('[ShowFocusInfo?](y/n):')
+        jobs = [gevent.spawn(focus_tick_k_data,tk,info) for tk in the_tks]
+        gevent.joinall(jobs)
+        res = [job.value for job in jobs]
+    json.dump(res,open('result.json','w'),indent=2)
+    print_analyse_res(res)
         
-    if flag== 'y':
-        if not gevent:
-            for tk in the_tks:
-                res = focus_tick_k_data(tk,info)
-        else:
-            jobs = [gevent.spawn(focus_tick_k_data,tk,info) for tk in the_tks]
-            gevent.joinall(jobs)
-            res = [job.value for job in jobs]
-        json.dump(res,open('result.json','w'),indent=2)
-        print_analyse_res(res)
-    elif to_num(flag) < len(the_tks): 
-        focus_tick(the_tks[int(flag)],info)
-    elif unicode(flag)  in the_tks: 
-        focus_tick(unicode(flag),info)        
+       
         
     # raw_input("pause")
  

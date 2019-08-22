@@ -25,6 +25,8 @@ def real_time_tick(tick,use_cache = True):
             print 'Fail On URL'
             pass
     df = pd.read_csv(fname,encoding='utf8',index_col='id')
+    print ''
+    print ''
     print tick
     print df.groupby('type').agg({'volume':'sum','price':'mean','change':'count'})
     print str(df.groupby(['change']).agg({'volume':'sum','price':'mean'})).decode('utf8').encode('gbk')
@@ -38,6 +40,7 @@ def real_time_tick(tick,use_cache = True):
     print pd.crosstab( ccut,df['type'])
     print pd.crosstab( ccut,vcut)
     print pd.crosstab( tcut,vcut)
+    print pd.crosstab( tcut,ccut)
     print df.describe()
     # df2 = ts.get_tick_data(tick,date=dt,src='tt')
     # df3 = ts.get_hist_data(tick)
@@ -68,15 +71,14 @@ def test():
     
 def main():
     dt=datetime.datetime.now().strftime('%Y%m%d')    
-    tick='300072'
-    tick='300330'
-    tick='600868'
-    tick='002384'
-    tick='002430'
-    tick='002382'
-    tick='518800'
-    tick='600438'
-    real_time_tick(tick)
+    
+    from talib_stk_monitor import load_ticks
+    the_ticks = load_ticks('')
+    for tick in the_ticks:
+        try:
+            real_time_tick(tick,False)
+        except:
+            pass
     
     
 if __name__ == '__main__':
