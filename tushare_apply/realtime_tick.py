@@ -1,6 +1,6 @@
 import os
 from datetime import datetime,timedelta
-
+import traceback
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,11 +18,15 @@ def real_time_tick(tick,use_cache = True):
     fname = 'data/today_tick.%s.csv'%tick
     if not use_cache:
         try:
-            df = ts.get_today_ticks(tick)
+            # df = ts.get_today_ticks(tick)
+            dt=datetime.datetime.now().strftime('%Y-%m-%d')
+            print dt
+            df = ts.get_tick_data(tick,date=dt,src='sn')
             df.index.name = 'id'
             df.to_csv(fname,encoding='utf8')
-        except:
-            print 'Fail On URL'
+        except Exception as e:            
+            print e.print_stack()
+            traceback.print_exc()
             pass
     df = pd.read_csv(fname,encoding='utf8',index_col='id')
     print ''
@@ -42,9 +46,8 @@ def real_time_tick(tick,use_cache = True):
     print pd.crosstab( tcut,vcut)
     print pd.crosstab( tcut,ccut)
     print df.describe()
-    # df2 = ts.get_tick_data(tick,date=dt,src='tt')
     # df3 = ts.get_hist_data(tick)
-    rdf = ts.get_realtime_quotes(tick) 
+    quote_df = ts.get_realtime_quotes(tick) 
     # print rdf.melt()
 
 def pro_api():
@@ -82,4 +85,5 @@ def main():
     
     
 if __name__ == '__main__':
-    main()
+    while True:
+        main()
