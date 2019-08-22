@@ -5,22 +5,39 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import tushare as ts
-import seaborn as sns
+# import seaborn as sns
 import datetime
 
+pd.set_option('display.max_rows',None)
+pd.set_option('display.max_columns',None)
+pd.set_option('display.width',None)
+pd.options.display.float_format = '{:.2f}'.format
 
-def real_time_tick(tick):
-    fname = 'data/tick.%s.csv'%tick
-    try:
-        df = ts.get_today_ticks(tick)
-        df.to_csv(fname,encoding='utf8')
-    except:
-        print 'Fail On URL'
-        pass
-    df=pd.read_csv(fname,encoding='utf8')
+
+def real_time_tick(tick,use_cache = True):
+    fname = 'data/today_tick.%s.csv'%tick
+    if not use_cache:
+        try:
+            df = ts.get_today_ticks(tick)
+            df.index.name = 'id'
+            df.to_csv(fname,encoding='utf8')
+        except:
+            print 'Fail On URL'
+            pass
+    df = pd.read_csv(fname,encoding='utf8',index_col='id')
     print tick
     print df.groupby('type').agg({'volume':'sum','price':'mean','change':'count'})
+    print str(df.groupby(['change']).agg({'volume':'sum','price':'mean'})).decode('utf8').encode('gbk')
     print df.corr()
+    
+    df['time'] = pd.to_datetime(df['time'].apply(lambda x:'2019-08-22 '+x))
+    vcut =  pd.cut(df['volume'],5)
+    ccut =  pd.cut(df['change'],5)    
+    tcut =  pd.cut(df['time'],5)
+    print pd.crosstab( vcut,df['type'])
+    print pd.crosstab( ccut,df['type'])
+    print pd.crosstab( ccut,vcut)
+    print pd.crosstab( tcut,vcut)
     print df.describe()
     # df2 = ts.get_tick_data(tick,date=dt,src='tt')
     # df3 = ts.get_hist_data(tick)
@@ -46,7 +63,7 @@ def pro_api():
     
 def test():
     df=pd.DataFrame(np.random.randn(10002,3),columns=['x','y','z'])
-    sns.violinplot(y='y',data=df)
+    # sns.violinplot(y='y',data=df)
     plt.show()
     
 def main():
