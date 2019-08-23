@@ -107,6 +107,10 @@ def tech_analyse(info,tk, df):
     vol = df['volume'].values    
     
     bl_upper, bl_middle, bl_lower = talib.BBANDS(close,timeperiod=15, nbdevup=1, nbdevdn=1, matype=0)
+    u = talib.LINEARREG_ANGLE(bl_upper, timeperiod=2)
+    m = talib.LINEARREG_ANGLE(bl_middle,timeperiod=2)
+    l = talib.LINEARREG_ANGLE(bl_lower, timeperiod=2)
+    print 'Boll',[u[-1],m[-1],l[-1]]
     macd, macdsignal, macdhist =  talib.MACD(close,fastperiod=6, slowperiod=12, signalperiod=9)
     roc = talib.ROCR(close)
     slk,sld = talib.STOCH(high,low,close)
