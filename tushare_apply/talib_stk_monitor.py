@@ -106,8 +106,8 @@ def tech_analyse(info,tk, df):
     low = df['low'].values
     vol = df['volume'].values    
     
-    bl_upper, bl_middle, bl_lower = talib.BBANDS(close,matype=talib.MA_Type.T3)
-    macd, macdsignal, macdhist =  talib.MACD(close)
+    bl_upper, bl_middle, bl_lower = talib.BBANDS(close,timeperiod=15, nbdevup=1, nbdevdn=1, matype=0)
+    macd, macdsignal, macdhist =  talib.MACD(close,fastperiod=6, slowperiod=12, signalperiod=9)
     roc = talib.ROCR(close)
     slk,sld = talib.STOCH(high,low,close)
     obv  = talib.OBV(close,vol)
