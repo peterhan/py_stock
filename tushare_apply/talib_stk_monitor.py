@@ -100,19 +100,32 @@ def to_num(s):
     except ValueError:
         return s
         
+def boll_judge(bl_upper,bl_middle,bl_lower):
+    idx=100.0/bl_middle[-1]
+    u = talib.LINEARREG_ANGLE(bl_upper*idx, timeperiod=2)
+    m = talib.LINEARREG_ANGLE(bl_middle*idx,timeperiod=2)    
+    l = talib.LINEARREG_ANGLE(bl_lower*idx, timeperiod=2)
+    if m[-1]>=0:
+        res = 'up'
+    else:
+        res = ' down '
+    if u[-1]-m[-1]>=0:
+        res+=' expand '
+    else:
+        res+=' shrink'
+    res +='%0.2f %0.2f @ %0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])
+    return res
+    
 def tech_analyse(info,tk, df):    
     close = df['close'].values
     high = df['high'].values
     low = df['low'].values
     vol = df['volume'].values    
     
-    bl_upper, bl_middle, bl_lower = talib.BBANDS(close,timeperiod=15, nbdevup=1, nbdevdn=1, matype=0)
-    idx=100.0/bl_middle[-1]
-    u = talib.LINEARREG_ANGLE(bl_upper*idx, timeperiod=2)
-    m = talib.LINEARREG_ANGLE(bl_middle*idx,timeperiod=2)
-    l = talib.LINEARREG_ANGLE(bl_lower*idx, timeperiod=2)
-    print 'BollAngle',[u[-1],m[-1],l[-1]]
-    macd, macdsignal, macdhist =  talib.MACD(close,fastperiod=6, slowperiod=12, signalperiod=9)
+    bl_upper, bl_middle, bl_lower = talib.BBANDS(close)
+    boll_res = boll_judge(bl_upper, bl_middle, bl_lower )
+    
+    macd, macdsignal, macdhist =  talib.MACD(close)
     roc = talib.ROCR(close)
     slk,sld = talib.STOCH(high,low,close)
     obv  = talib.OBV(close,vol)
@@ -125,14 +138,15 @@ def tech_analyse(info,tk, df):
     idx_info = {'code':tk,'name':name,'price':df['close'].values[-1],'data':{}}         
     # pdb.set_trace()  
     data = idx_info['data']
-    data['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
-    data['MACD'] = [ macd[-1],macdsignal[-1],macdhist[-1] ]
-    data['ROC'] = [roc[-3],roc[-2],roc[-1] ]
-    data['KDJ'] = [slk[-1],sld[-1], slj[-1] ]
-    data['OBV'] = [ obv[-1] ]
-    data['SAR'] = [ sar[-1] ]
-    data['VOL_Rate'] = [vol[-1]*1.0/vol[-2] ]
-    data['RSI'] = [rsi[-1] ]
+    data['BOLL_Res'] = boll_res
+    # data['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
+    data['MACD'] = [ '%0.2f'%macd[-1],'%0.2f'%macdsignal[-1],'%0.2f'%macdhist[-1] ]
+    # data['ROC'] = [roc[-3],roc[-2],roc[-1] ]
+    # data['KDJ'] = [slk[-1],sld[-1], slj[-1] ]
+    # data['OBV'] = [ obv[-1] ]
+    # data['SAR'] = [ sar[-1] ]
+    data['VOL_Rate'] = vol[-1]*1.0/vol[-2]
+    # data['RSI'] = [rsi[-1] ]
     return idx_info,df
     
 def add_delta_n(df):
