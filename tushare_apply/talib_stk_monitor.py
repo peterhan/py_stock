@@ -110,10 +110,10 @@ def boll_judge(bl_upper,bl_middle,bl_lower):
     else:
         res = ['Down']
     if u[-1]-m[-1]>=0:
-        res+='Expand'
+        res += ['Expand']
     else:
-        res+='Shrink'
-    res +='%0.2f %0.2f @ %0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])
+        res += ['Shrink']
+    res += ['%0.2f %0.2f @ %0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])]
     return res
     
 def tech_analyse(info,tk, df):    
