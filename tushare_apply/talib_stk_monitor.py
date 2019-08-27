@@ -99,9 +99,12 @@ def to_num(s):
         return int(s)
     except ValueError:
         return s
-        
+
+def line_cross(line1,line2):
+    diff = line1 - line2
+
 def boll_judge(bl_upper,bl_middle,bl_lower):
-    idx=100.0/bl_middle[-1]
+    idx = 50.0/bl_middle[-1]
     u = talib.LINEARREG_ANGLE(bl_upper*idx, timeperiod=2)
     m = talib.LINEARREG_ANGLE(bl_middle*idx,timeperiod=2)    
     l = talib.LINEARREG_ANGLE(bl_lower*idx, timeperiod=2)
