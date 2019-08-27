@@ -106,13 +106,13 @@ def boll_judge(bl_upper,bl_middle,bl_lower):
     m = talib.LINEARREG_ANGLE(bl_middle*idx,timeperiod=2)    
     l = talib.LINEARREG_ANGLE(bl_lower*idx, timeperiod=2)
     if m[-1]>=0:
-        res = 'up'
+        res = ['Up']
     else:
-        res = ' down '
+        res = ['Down']
     if u[-1]-m[-1]>=0:
-        res+=' expand '
+        res+='Expand'
     else:
-        res+=' shrink'
+        res+='Shrink'
     res +='%0.2f %0.2f @ %0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])
     return res
     
@@ -123,7 +123,7 @@ def tech_analyse(info,tk, df):
     vol = df['volume'].values    
     
     bl_upper, bl_middle, bl_lower = talib.BBANDS(close)
-    boll_res = boll_judge(bl_upper, bl_middle, bl_lower )
+    boll_judge_res = boll_judge(bl_upper, bl_middle, bl_lower )
     
     macd, macdsignal, macdhist =  talib.MACD(close)
     roc = talib.ROCR(close)
@@ -138,7 +138,7 @@ def tech_analyse(info,tk, df):
     idx_info = {'code':tk,'name':name,'price':df['close'].values[-1],'data':{}}         
     # pdb.set_trace()  
     data = idx_info['data']
-    data['BOLL_Res'] = boll_res
+    data['BOLL_Res'] = boll_judge_res
     # data['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
     data['MACD'] = [ '%0.2f'%macd[-1],'%0.2f'%macdsignal[-1],'%0.2f'%macdhist[-1] ]
     # data['ROC'] = [roc[-3],roc[-2],roc[-1] ]
