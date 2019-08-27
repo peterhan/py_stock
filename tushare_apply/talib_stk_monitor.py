@@ -1,4 +1,4 @@
-import pdb
+import ipdb
 import sys
 import tushare as ts
 import pandas as pd
@@ -43,7 +43,7 @@ def realtime_ticks(tks):
     for idx,row in rdf.iterrows():
         dc = dict(zip(row.index,row.values))
         info[dc['code']] = dc
-    # pdb.set_trace()
+    
     # fc=ts.forecast_data(2019,1)
     # print fc
     # ttdf = ts.get_today_ticks(tks[6])
@@ -73,7 +73,7 @@ def candle_analyse(df):
         cn_names.append(cn_name)
     total_cdl_score = df[cn_names].sum(axis=1)
     df['CDLScore'] =  total_cdl_score
-    # pdb.set_trace()
+    
     cdl_info = {'cdl_total' : '%s'% (total_cdl_score.values[-1]),'data':{} }
     last_cdlrow = df.iloc[-1]
     for name,cdl_vlu in last_cdlrow.iteritems():        
@@ -136,7 +136,7 @@ def tech_analyse(info,tk, df):
     name = info.get(tk,{}).get('name','')
     # name = ' '
     idx_info = {'code':tk,'name':name,'price':df['close'].values[-1],'data':{}}         
-    # pdb.set_trace()  
+    
     data = idx_info['data']
     data['BOLL_Res'] = boll_judge_res
     # data['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
@@ -193,6 +193,8 @@ def cli_select_keys(dic, input=None):
     res_arr = res.replace(',',' ').split(' ')
     if res == ':q':
         sys.exit()
+    if res == ':i':
+        ipdb.set_trace()
     try:
         keys = [idxmap[int(i)] for i in res_arr]     
         return keys    
