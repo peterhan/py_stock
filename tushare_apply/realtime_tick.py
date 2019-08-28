@@ -1,3 +1,4 @@
+#!coding:utf8
 import os
 from datetime import datetime,timedelta
 import traceback
@@ -9,7 +10,7 @@ import tushare as ts
 import datetime
 
 pd.set_option('display.max_rows',None)
-pd.set_option('display.max_columns',None)
+pd.set_option('display.max_columns',80)
 pd.set_option('display.width',None)
 pd.options.display.float_format = '{:.2f}'.format
 

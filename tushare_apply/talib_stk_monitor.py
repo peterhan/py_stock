@@ -1,4 +1,5 @@
-import ipdb
+#!coding:utf8
+import pdb
 import sys
 import tushare as ts
 import pandas as pd
@@ -14,7 +15,7 @@ except:
 monkey.patch_all()
 
 pd.set_option('display.max_rows',None)
-pd.set_option('display.max_columns',None)
+pd.set_option('display.max_columns',80)
 pd.set_option('display.width',None)
 pd.options.display.float_format = '{:.2f}'.format
 
@@ -197,7 +198,7 @@ def cli_select_keys(dic, input=None):
     if res == ':q':
         sys.exit()
     if res == ':i':
-        ipdb.set_trace()
+        pdb.set_trace()
     try:
         keys = [idxmap[int(i)] for i in res_arr]     
         return keys    
