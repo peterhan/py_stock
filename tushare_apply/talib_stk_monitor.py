@@ -148,7 +148,7 @@ def tech_analyse(info,tk, df):
     # data['KDJ'] = [slk[-1],sld[-1], slj[-1] ]
     # data['OBV'] = [ obv[-1] ]
     # data['SAR'] = [ sar[-1] ]
-    data['VOL_Rate'] = vol[-1]*1.0/vol[-2]
+    data['VOL_Rate'] = '%0.2f'%(vol[-1]*1.0/vol[-2])
     # data['RSI'] = [rsi[-1] ]
     return idx_info,df
     
