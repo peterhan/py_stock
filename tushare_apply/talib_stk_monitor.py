@@ -27,18 +27,18 @@ def realtime_ticks(tks):
     rdfc=rdf.loc[:,'code']
     # print rdfc
     rdf = rdf.apply(pd.to_numeric,errors='ignore')
-    rdf.rename({'pre_close':'pclose'}, inplace=True, axis=1)
+    rdf.rename({'pre_close':'preclose'}, inplace=True, axis=1)
     rdf['code']=rdfc
     cname = rdf.columns
     # cname[3]='price'
     # rdf.rename(cname,inplace=True)
-    rdf.insert(0,'pre_code',rdf['code'])
+    rdf.insert(0,'code',rdf.pop('code'))
     rdf.insert(1,'bounce',(rdf['price']-rdf['low'])/(rdf['high']-rdf['low'])*100)
     rdf.insert(2,'osc',(rdf['high']-rdf['low'])/(rdf['open'])*100)
-    rdf.insert(3,'gap',(rdf['open']-rdf['pclose'])/(rdf['open'])*100)
-    rdf.insert(4,'rate',(rdf['price']-rdf['pclose'])/(rdf['pclose'])*100)
-    # rdf.insert(5,'rate2',(rdf['price']-rdf['open'])/(rdf['open'])*100)
-    # rdf.insert(6,'rate3',(rdf['price']-rdf['open'])/(rdf['pclose'])*100)
+    rdf.insert(3,'ogap',(rdf['open']-rdf['preclose'])/(rdf['open'])*100)
+    rdf.insert(4,'rate',(rdf['price']-rdf['preclose'])/(rdf['preclose'])*100)
+    # rdf.insert(5,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
+    # rdf.insert(6,'openrisevspreclose',(rdf['price']-rdf['open'])/(rdf['preclose'])*100)
 
     print rdf.loc[:,:'amount'].sort_values(by='rate',ascending=False)
     for idx,row in rdf.iterrows():
