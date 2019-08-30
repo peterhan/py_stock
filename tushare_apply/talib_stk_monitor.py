@@ -41,7 +41,7 @@ def realtime_ticks(tks):
     # rdf.insert(5,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
     # rdf.insert(6,'openrisevspreclose',(rdf['price']-rdf['open'])/(rdf['preclose'])*100)
 
-    rdf['name'] = rdf['name'].str.slice(0,4,5)
+    rdf['name'] = rdf['name'].str.slice(0,4,2)
     print rdf.loc[:,:'amount'].sort_values(by='rate',ascending=False)
     for idx,row in rdf.iterrows():
         dc = dict(zip(row.index,row.values))
