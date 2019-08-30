@@ -11,9 +11,9 @@ try:
     import gevent
     from gevent import monkey
     from gevent.pool import Pool
+    monkey.patch_all()
 except:
     print 'no gevent'
-monkey.patch_all()
 
 pd.set_option('display.max_rows',None)
 pd.set_option('display.max_columns',80)
