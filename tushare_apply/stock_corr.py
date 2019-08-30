@@ -12,7 +12,7 @@ adf = pd.DataFrame()
 for fname in glob.glob('data/[0-9]*.csv'):
     df=pd.read_csv(fname,index_col='date')
     code = 's%06d'%df['code'][0]
-    close = df['close']
+    close = df['volume']
     if close.size<200:
         continue
     adf[code]=close[-100:]
