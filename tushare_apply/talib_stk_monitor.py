@@ -32,6 +32,7 @@ def realtime_ticks(tks):
     cname = rdf.columns
     # cname[3]='price'
     # rdf.rename(cname,inplace=True)
+    rdf.index.name='id'
     rdf.insert(0,'code',rdf.pop('code'))
     rdf.insert(1,'bounce',(rdf['price']-rdf['low'])/(rdf['high']-rdf['low'])*100)
     rdf.insert(2,'osc',(rdf['high']-rdf['low'])/(rdf['open'])*100)
@@ -40,10 +41,13 @@ def realtime_ticks(tks):
     # rdf.insert(5,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
     # rdf.insert(6,'openrisevspreclose',(rdf['price']-rdf['open'])/(rdf['preclose'])*100)
 
+    rdf['name'] = rdf['name'].str.slice(0,4,5)
     print rdf.loc[:,:'amount'].sort_values(by='rate',ascending=False)
     for idx,row in rdf.iterrows():
         dc = dict(zip(row.index,row.values))
+        dc['id'] = str(idx)
         info[dc['code']] = dc
+        
     
     # fc=ts.forecast_data(2019,1)
     # print fc
@@ -119,6 +123,9 @@ def boll_judge(bl_upper,bl_middle,bl_lower):
         res += ['Shrink']
     res += ['%0.2f %0.2f @ %0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])]
     return res
+  
+def round2(lst):
+    return map(lambda x:'%0.2f'%x,lst)
     
 def tech_analyse(info,tk, df):    
     close = df['close'].values
@@ -136,20 +143,24 @@ def tech_analyse(info,tk, df):
     sar  = talib.SAREXT(high,low)
     slj = 3*slk-2*sld
     rsi = talib.RSI(close)
-    
+    ma05  = talib.SMA(close,5)
+    ma10 = talib.SMA(close,10)
+    ma20 = talib.SMA(close,20)
+    ma240 = talib.SMA(close,360)
     name = info.get(tk,{}).get('name','')
     # name = ' '
     idx_info = {'code':tk,'name':name,'price':df['close'].values[-1],'data':{}}         
     
     data = idx_info['data']
-    data['BOLL_Res'] = boll_judge_res
+    data['BOLL_Res'] =  boll_judge_res
     # data['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
-    data['MACD'] = [ '%0.2f'%macd[-1],'%0.2f'%macdsignal[-1],'%0.2f'%macdhist[-1] ]
+    data['MACD'] = round2([ macd[-1],macdsignal[-1],macdhist[-1] ])
     # data['ROC'] = [roc[-3],roc[-2],roc[-1] ]
     # data['KDJ'] = [slk[-1],sld[-1], slj[-1] ]
     # data['OBV'] = [ obv[-1] ]
     # data['SAR'] = [ sar[-1] ]
-    data['VOL_Rate'] = '%0.2f'%(vol[-1]*1.0/vol[-2])
+    data['MA'] = round2([ ma05[-1],ma10[-1],ma20[-1],ma240[-1] ])
+    data['VOL_Rate'] = round2([vol[-1]*1.0/vol[-2]])
     # data['RSI'] = [rsi[-1] ]
     return idx_info,df
     
@@ -255,7 +266,8 @@ def load_ticks(mode):
     if input== 'y':
         pass
     elif to_num(input) < len(the_tks): 
-        the_tks = [the_tks[int(input)]]
+        # pdb.set_trace()
+        the_tks = [ filter(lambda entry:entry[1]['id']==input,info.items())[0][1]['code'] ]
     elif unicode(input)  in the_tks: 
         the_tks = [unicode(input)]   
     else:
