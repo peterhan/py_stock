@@ -10,6 +10,7 @@ from collections import OrderedDict
 try:
     import gevent
     from gevent import monkey
+    from gevent.pool import Pool
 except:
     print 'no gevent'
 monkey.patch_all()
@@ -283,8 +284,14 @@ def main_loop(mode):
         for tk in the_tks:
             res = focus_tick_k_data(tk,info)
     else:
-        jobs = [gevent.spawn(focus_tick_k_data,tk,info) for tk in the_tks]
-        gevent.joinall(jobs)
+        pool = Pool(8)
+        jobs = []
+        for tk in the_tks:
+            job = pool.spawn(focus_tick_k_data,tk,info)
+            jobs.append(job)
+        pool.join()
+        # jobs = [gevent.spawn(focus_tick_k_data,tk,info) for tk in the_tks]
+        # gevent.joinall(jobs)
         res = [job.value for job in jobs]
     json.dump(res,open('result.json','w'),indent=2)
     print_analyse_res(res)
