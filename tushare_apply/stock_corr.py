@@ -29,7 +29,7 @@ def iter_files():
         if close.size<200:
             continue
         adf[code] = close[:]
-        print 'load',code
+    print '[Load Finish]',adf.index.shape
     return adf
 
 
