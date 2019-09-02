@@ -19,10 +19,11 @@ def real_time_tick(tick,use_cache = True):
     fname = 'data/today_tick.%s.csv'%tick
     if not use_cache:
         try:
-            # df = ts.get_today_ticks(tick)
-            dt=datetime.datetime.now().strftime('%Y-%m-%d')
-            print dt
-            df = ts.get_tick_data(tick,date=dt,src='sn')
+            print 'tushare call',tick
+            df = ts.get_today_ticks(tick)
+            # dt=datetime.datetime.now().strftime('%Y-%m-%d')
+            # print dt
+            # df = ts.get_tick_data(tick,date=dt,src='sn')
             df.index.name = 'id'
             df.to_csv(fname,encoding='utf8')
         except Exception as e:            
@@ -77,12 +78,12 @@ def main():
     dt=datetime.datetime.now().strftime('%Y%m%d')    
     
     from talib_stk_monitor import load_ticks
-    the_ticks = load_ticks('')
+    the_ticks,info = load_ticks('')
     for tick in the_ticks:
         try:
             real_time_tick(tick,False)
-        except:
-            pass
+        except Exception as e:
+            print e
     
     
 if __name__ == '__main__':
