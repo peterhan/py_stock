@@ -20,7 +20,47 @@ pd.set_option('display.max_columns',80)
 pd.set_option('display.width',None)
 pd.options.display.float_format = '{:.2f}'.format
 
-def realtime_ticks(tks):
+
+def real_time_ticks(tick,use_cache = True):
+    fname = 'data/today_tick.%s.csv'%tick
+    if not use_cache:
+        try:
+            print 'tushare call',tick
+            df = ts.get_today_ticks(tick)
+            # dt=datetime.datetime.now().strftime('%Y-%m-%d')
+            # print dt
+            # df = ts.get_tick_data(tick,date=dt,src='sn')
+            df.index.name = 'id'
+            df.to_csv(fname,encoding='utf8')
+        except Exception as e:            
+            print e.print_stack()
+            traceback.print_exc()
+            pass
+    df = pd.read_csv(fname,encoding='utf8',index_col='id')
+    print ''
+    print ''
+    print tick
+    print df.groupby('type').agg({'volume':'sum','price':'mean','change':'count'})
+    print str(df.groupby(['change']).agg({'volume':'sum','price':'mean'})).decode('utf8').encode('gbk')
+    print df.corr()
+    
+    df['time'] = pd.to_datetime(df['time'].apply(lambda x:'2019-08-22 '+x))
+    vcut =  pd.cut(df['volume'],5)
+    ccut =  pd.cut(df['change'],5)    
+    tcut =  pd.cut(df['time'],5)
+    df['type'].as_type('category')
+    print pd.crosstab( vcut,df['type'])
+    print pd.crosstab( ccut,df['type'])
+    print pd.crosstab( ccut,vcut)
+    print pd.crosstab( tcut,vcut)
+    print pd.crosstab( tcut,ccut)
+    print pd.crosstab( tcut,df['type'])
+    # print df.describe()
+    # df3 = ts.get_hist_data(tick)
+    quote_df = ts.get_realtime_quotes(tick) 
+    # print rdf.melt()
+    
+def realtime_list_ticks(tks):
     info={}
     rdf=  ts.get_realtime_quotes(tks)
     # rdf=  ts.get_today_all()
@@ -28,7 +68,7 @@ def realtime_ticks(tks):
     rdfc=rdf.loc[:,'code']
     # print rdfc
     rdf = rdf.apply(pd.to_numeric,errors='ignore')
-    rdf.rename({'pre_close':'preclose'}, inplace=True, axis=1)
+    rdf.rename({'pre_close':'pclose'}, inplace=True, axis=1)
     rdf['code']=rdfc
     cname = rdf.columns
     # cname[3]='price'
@@ -37,14 +77,15 @@ def realtime_ticks(tks):
     rdf.insert(0,'code',rdf.pop('code'))
     rdf.insert(1,'n_bounce',(rdf['price']-rdf['low'])/(rdf['high']-rdf['low'])*100)    
     rdf.insert(2,'osc',(rdf['high']-rdf['low'])/(rdf['open'])*100)
-    rdf.insert(3,'opgap',(rdf['open']-rdf['preclose'])/(rdf['open'])*100)
-    rdf.insert(4,'rate',(rdf['price']-rdf['preclose'])/(rdf['preclose'])*100)
+    rdf.insert(3,'opgap',(rdf['open']-rdf['pclose'])/(rdf['open'])*100)
+    rdf.insert(4,'rate',(rdf['price']-rdf['pclose'])/(rdf['pclose'])*100)
     rdf.insert(5,'price',rdf.pop('price'))
     # rdf.insert(6,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
-    # rdf.insert(7,'openrisevspreclose',(rdf['price']-rdf['open'])/(rdf['preclose'])*100)
+    # rdf.insert(7,'openrisevspclose',(rdf['price']-rdf['open'])/(rdf['pclose'])*100)
 
-    rdf['name'] = rdf['name'].str.slice(0,4,1)
+    rdf['name'] = rdf['name'].str.slice(0,10,1)
     print rdf.loc[:,:'amount'].sort_values(by='rate',ascending=False)
+    
     for idx,row in rdf.iterrows():
         dc = dict(zip(row.index,row.values))
         dc['id'] = str(idx)
@@ -240,7 +281,7 @@ def print_analyse_res(res):
     for name,intro in intro.items():
         print u"[{}]:{}".format(name,intro).encode('gbk')
 
-def load_ticks(mode):
+def choose_ticks(mode):
     fname = 'ticks.json'
     tks = json.load(open(fname), object_pairs_hook=OrderedDict)
     tks = split_stocks(tks['ticks'])
@@ -259,7 +300,7 @@ def load_ticks(mode):
     the_tks=list(the_tks)
     ####
     print '[%s]ticks: %s'%(keys,','.join(the_tks)) 
-    info = realtime_ticks(the_tks)
+    info = realtime_list_ticks(the_tks)
     if '-d' in mode:
         input = 'y'
     else:
@@ -277,7 +318,7 @@ def load_ticks(mode):
     return the_tks, info
     
 def main_loop(mode):
-    the_tks, info = load_ticks(mode)
+    the_tks, info = choose_ticks(mode)
        
     # print the_tks
     # print info
@@ -303,7 +344,13 @@ def test():
     ts.get_sz50s()
     ts.get_hs300s()
     ts.get_zz500s()
-
+    ts.realtime_boxoffice()
+    ts.get_latest_news()
+    ts.get_notices()
+    ts.guba_sina()
+    ts.get_cpi()
+    ts.get_stock_basics()
+    ts.get_concept_classified()
 if __name__ == '__main__':    
     mode = sys.argv
     while 1:

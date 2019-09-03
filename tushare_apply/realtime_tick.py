@@ -42,12 +42,14 @@ def real_time_tick(tick,use_cache = True):
     vcut =  pd.cut(df['volume'],5)
     ccut =  pd.cut(df['change'],5)    
     tcut =  pd.cut(df['time'],5)
+    df['type'].as_type('category')
     print pd.crosstab( vcut,df['type'])
     print pd.crosstab( ccut,df['type'])
     print pd.crosstab( ccut,vcut)
     print pd.crosstab( tcut,vcut)
     print pd.crosstab( tcut,ccut)
-    print df.describe()
+    print pd.crosstab( tcut,df['type'])
+    # print df.describe()
     # df3 = ts.get_hist_data(tick)
     quote_df = ts.get_realtime_quotes(tick) 
     # print rdf.melt()
@@ -77,8 +79,8 @@ def test():
 def main():
     dt=datetime.datetime.now().strftime('%Y%m%d')    
     
-    from talib_stk_monitor import load_ticks
-    the_ticks,info = load_ticks('')
+    from talib_stk_monitor import choose_ticks
+    the_ticks,info = choose_ticks('')
     for tick in the_ticks:
         try:
             real_time_tick(tick,False)
