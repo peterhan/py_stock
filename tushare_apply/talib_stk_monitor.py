@@ -21,7 +21,7 @@ pd.set_option('display.width',None)
 pd.options.display.float_format = '{:.2f}'.format
 
 
-def real_time_ticks(tick,use_cache = True):
+def real_time_ticks(tick,dummy,use_cache = True):
     fname = 'data/today_tick.%s.csv'%tick
     if not use_cache:
         try:
@@ -48,7 +48,7 @@ def real_time_ticks(tick,use_cache = True):
     vcut =  pd.cut(df['volume'],5)
     ccut =  pd.cut(df['change'],5)    
     tcut =  pd.cut(df['time'],5)
-    df['type'].as_type('category')
+    df['type'].astype('category')
     print pd.crosstab( vcut,df['type'])
     print pd.crosstab( ccut,df['type'])
     print pd.crosstab( ccut,vcut)
@@ -61,19 +61,21 @@ def real_time_ticks(tick,use_cache = True):
     # print rdf.melt()
     
 def realtime_list_ticks(tks):
-    info={}
-    rdf=  ts.get_realtime_quotes(tks)
+    if len(tks) == 0:
+        return pd.DataFrame()
+    info = {}
+    rdf = ts.get_realtime_quotes(tks)
     # rdf=  ts.get_today_all()
     # print rdf
-    rdfc=rdf.loc[:,'code']
+    rdfc = rdf.loc[:,'code']
     # print rdfc
     rdf = rdf.apply(pd.to_numeric,errors='ignore')
     rdf.rename({'pre_close':'pclose'}, inplace=True, axis=1)
-    rdf['code']=rdfc
+    rdf['code'] = rdfc
     cname = rdf.columns
     # cname[3]='price'
     # rdf.rename(cname,inplace=True)
-    rdf.index.name='id'
+    rdf.index.name = 'id'
     rdf.insert(0,'code',rdf.pop('code'))
     rdf.insert(1,'n_bounce',(rdf['price']-rdf['low'])/(rdf['high']-rdf['low'])*100)    
     rdf.insert(2,'osc',(rdf['high']-rdf['low'])/(rdf['open'])*100)
@@ -125,14 +127,14 @@ def candle_analyse(df):
     cdl_info = {'cdl_total' : '%s'% (total_cdl_score.values[-1]),'data':{} }
     last_cdlrow = df.iloc[-1]
     for name,cdl_vlu in last_cdlrow.iteritems():        
-        if cdl_vlu!=0 and name in TA_PATTERN_MAP:
+        if cdl_vlu != 0 and name in TA_PATTERN_MAP:
             the_info = TA_PATTERN_MAP[name]
-            fig =  the_info['figure'].split(' ')[1]
+            fig = the_info['figure'].split(' ')[1]
             cn_name = the_info['name'].split(' ')[0]
             en_name = the_info['name'].split(' ')[1]
             intro = the_info['intro']
             intro2 = the_info['intro2']
-            cdl_info['data'][name]={'figure':fig,'score':cdl_vlu,'cn_name':cn_name,'intro':intro,'intro2':intro2,'en_name':en_name}
+            cdl_info['data'][name] = {'figure':fig,'score':cdl_vlu,'cn_name':cn_name,'intro':intro,'intro2':intro2,'en_name':en_name}
     # print jsdump(cdl_info)
     return cdl_info,df
     
@@ -182,11 +184,11 @@ def tech_analyse(info,tk, df):
     macd, macdsignal, macdhist =  talib.MACD(close)
     roc = talib.ROCR(close)
     slk,sld = talib.STOCH(high,low,close)
-    obv  = talib.OBV(close,vol)
-    sar  = talib.SAREXT(high,low)
+    obv = talib.OBV(close,vol)
+    sar = talib.SAREXT(high,low)
     slj = 3*slk-2*sld
     rsi = talib.RSI(close)
-    ma05  = talib.SMA(close,5)
+    ma05 = talib.SMA(close,5)
     ma10 = talib.SMA(close,10)
     ma20 = talib.SMA(close,20)
     ma240 = talib.SMA(close,360)
@@ -213,19 +215,19 @@ def add_delta_n(df):
     for i in [1,3,5,10,20,30,60,90]:
         df['vol_delta_b_%02d'%i] = df['volume'] - df.shift(i)['volume']
     for i in [1,3,5,10,20,30,60,90]:
-        df['delta_f_%02d'%i] =  df.shift(-i)['close']  - df['close']
+        df['delta_f_%02d'%i] = df.shift(-i)['close']  - df['close']
     for i in [1,3,5,10,20,30,60,90]:
-        df['vol_delta_f_%02d'%i] =  df.shift(-i)['volume'] - df['volume']
+        df['vol_delta_f_%02d'%i] = df.shift(-i)['volume'] - df['volume']
     return df
     
 def focus_tick_k_data(tk,info):    
-    fname='./data/'+tk+'.csv'
+    fname = './data/'+tk+'.csv'
     df = ts.get_k_data(tk)
     add_delta_n(df)
     df.to_csv(fname,index='date')
     df = pd.read_csv(fname,index_col='date')
     # print df.shape
-    if df.shape[0]==0:
+    if df.shape[0] == 0:
         return
     ## technical indicator
     idx_info,df = tech_analyse(info,tk, df)
@@ -236,29 +238,35 @@ def focus_tick_k_data(tk,info):
     return {'idx':idx_info,'cdl':cdl_info}
     
     
-def cli_select_keys(dic, input=None):
+def cli_select_keys(dic, default_input=None):
     idxmap = {}
     for i,key in enumerate(dic):
-        idxmap[i+1]=key
+        idxmap[i+1] = key
         print ('(%s) %s'%(i+1,key)).ljust(25),
-        if (i+1)%4==0:
+        if (i+1)%4 == 0:
             print ''
     print ''
-    if input is None:
-        res = raw_input('SEL>')
+    if default_input is None:
+        input = raw_input('SEL>')
     else:
-        res = input
-    res_arr = res.replace(',',' ').split(' ')
-    if res == ':q':
-        sys.exit()
-    if res == ':i':
-        pdb.set_trace()
+        input = default_input
+    words = input.replace(',',' ').split(' ')
+    if ':q' in words:
+        flag = 'quit'
+    elif ':i' in words:
+        flag = 'pdb'
+    elif ':n' in words:
+        flag = 'news'
+    elif ':r' in words:
+        flag = 'realtime'
+        words.remove(':r')
+    else:
+        flag = ''
     try:
-        keys = [idxmap[int(i)] for i in res_arr]     
-        return keys    
+        keys = [idxmap[int(word)] for word in words]     
+        return keys, flag
     except:
-        return []
-    
+        return [], flag    
 
         
 def print_analyse_res(res):
@@ -274,7 +282,7 @@ def print_analyse_res(res):
             
         if stock['cdl'] != None:
             cdl = stock['cdl']
-            cdl_ent_str=','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
+            cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
             for name,info in cdl['data'].items():
                 intro[info['en_name']+info['cn_name']] = info['intro2']
             print "[CDL:{0}]; {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
@@ -283,53 +291,65 @@ def print_analyse_res(res):
 
 def choose_ticks(mode):
     fname = 'ticks.json'
-    tks = json.load(open(fname), object_pairs_hook=OrderedDict)
-    tks = split_stocks(tks['ticks'])
-    all = reduce(lambda x,y:x+y, tks.values(),[])
+    conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
+    conf_tks = split_stocks(conf_tks['ticks'])
+    all = reduce(lambda x,y:x+y, conf_tks.values(),[])
     all = set(all)
     all.remove("")
-    tks['All'] = list(all)
+    conf_tks['All'] = list(all)
     if '-d' in mode:
         input = '3'
-        keys  = cli_select_keys(tks,input)        
+        keys,flag = cli_select_keys(conf_tks,input)        
     else:
-        keys = cli_select_keys(tks)
-    the_tks=set()
+        keys,flag = cli_select_keys(conf_tks)
+    #### selected ticks
+    sel_tks=set()
     for id in keys:
-        the_tks.update( tks[id])
-    the_tks=list(the_tks)
-    ####
-    print '[%s]ticks: %s'%(keys,','.join(the_tks)) 
-    info = realtime_list_ticks(the_tks)
+        sel_tks.update( conf_tks[id])
+    sel_tks = list(sel_tks)
+    #####
+    print '[%s]ticks: %s'%(keys,','.join(sel_tks)) 
+    info = realtime_list_ticks(sel_tks)
     if '-d' in mode:
         input = 'y'
     else:
         input = raw_input('[ShowDetailInfo?](y/n):')
-    ##############
-    if input== 'y':
-        pass
-    elif to_num(input) < len(the_tks): 
+    #####
+    if input == 'y':
+        the_tks = sel_tks
+    elif to_num(input) < len(sel_tks): 
         # pdb.set_trace()
-        the_tks = [ filter(lambda entry:entry[1]['id']==input,info.items())[0][1]['code'] ]
-    elif unicode(input)  in the_tks: 
+        the_tks = [ filter(lambda entry:entry[1]['id']==input, info.items())[0][1]['code'] ]
+    elif unicode(input) in sel_tks: 
         the_tks = [unicode(input)]   
     else:
         the_tks = []
-    return the_tks, info
+    #####
+    return the_tks, info, flag
+    
+from stock_latest_news import get_latest_news
+
     
 def main_loop(mode):
-    the_tks, info = choose_ticks(mode)
+    the_tks, info, flag = choose_ticks(mode)
        
     # print the_tks
     # print info
+    exec_func = focus_tick_k_data
+    if flag == 'realtime':
+        exec_func = real_time_ticks        
+    elif flag == 'news':
+        df = get_latest_news()       
+        print df.loc[:,['title','keywords','time']]
+        
     if not gevent:
         for tk in the_tks:
-            res = focus_tick_k_data(tk,info)
+            res = exec_func(tk,info)
     else:
         pool = Pool(8)
         jobs = []
         for tk in the_tks:
-            job = pool.spawn(focus_tick_k_data,tk,info)
+            job = pool.spawn(exec_func,tk,info)
             jobs.append(job)
         pool.join()
         # jobs = [gevent.spawn(focus_tick_k_data,tk,info) for tk in the_tks]
@@ -346,11 +366,13 @@ def test():
     ts.get_zz500s()
     ts.realtime_boxoffice()
     ts.get_latest_news()
-    ts.get_notices()
+    ts.get_notices(tk)
     ts.guba_sina()
     ts.get_cpi()
+    ts.get_ppi()
     ts.get_stock_basics()
     ts.get_concept_classified()
+    
 if __name__ == '__main__':    
     mode = sys.argv
     while 1:

@@ -15,10 +15,15 @@ pageid="153" s_id="2518">美股</a>
 '''
 import re
 import json
-import datetime
+import datetime,time
 from urllib2 import urlopen,Request
 import pandas as pd
 import pdb
+
+pd.set_option('display.max_rows',None)
+pd.set_option('display.max_columns',80)
+pd.set_option('display.width',None)
+
 def _random(n=16):
     from random import randint
     start = 10 ** (n - 1)
@@ -26,11 +31,12 @@ def _random(n=16):
     return str(randint(start, end))
     
 def get_latest_news(lid='2517'):
-    url='https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=%s&k=2&num=50&page=1&r=%s&callback=jQuery1112009218944531062567_1567480608654&_=%s'%(lid,_random(),datetime.datetime.now())
+    url='https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=%s&k=2&num=50&page=1&r=%s&callback=jQuery111200%s_%s&_=%s'%(lid,_random(),_random(),int(time.time()),int(time.time()))
     #2516 fin,2517 stock,2518 US stock
 
     LATEST_COLS_C = ['classify','title','time','url','content']
-    r=Request(url)
+    r=Request(url)    
+    print r.get_full_url()
     content = urlopen(r).read()
     pat=re.compile(r'try\{jQuery\d\d\d\d+_\d\d\d\d+\(')
     content = pat.split(content)[1]
