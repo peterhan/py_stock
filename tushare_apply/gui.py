@@ -37,7 +37,7 @@ class MainUI(tk.Frame):
 # 创建一个MainUI对象
 app = MainUI()
 # 设置窗口标题
-app.master.title('「人人都是Pythonista」')
+app.master.title('「Pythonista」')
 # 设置窗体大小
 app.master.geometry('400x100')
 # 主循环开始

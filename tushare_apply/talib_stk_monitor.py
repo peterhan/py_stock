@@ -372,6 +372,7 @@ def test():
     ts.get_ppi()
     ts.get_stock_basics()
     ts.get_concept_classified()
+    ts.get_money_supply()
     
 if __name__ == '__main__':    
     mode = sys.argv
