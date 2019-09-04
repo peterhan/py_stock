@@ -373,6 +373,7 @@ def test():
     ts.get_stock_basics()
     ts.get_concept_classified()
     ts.get_money_supply()
+    ts.get_gold_and_foreign_reserves()
     
 if __name__ == '__main__':    
     mode = sys.argv
