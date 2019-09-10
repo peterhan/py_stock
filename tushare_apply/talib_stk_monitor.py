@@ -1,25 +1,32 @@
 #!coding:utf8
 # import pdb
 import sys
+print '1'
 import tushare as ts
+print '2'
 import pandas as pd
+print '3'
 import talib 
 import datetime
 import json
 from collections import OrderedDict
+
 try:
     import gevent
     from gevent import monkey
     from gevent.pool import Pool
     monkey.patch_all()
+    print 'gevent ok'
 except:
     print 'no gevent'
+
+
 
 pd.set_option('display.max_rows',None)
 pd.set_option('display.max_columns',80)
 pd.set_option('display.width',None)
 pd.options.display.float_format = '{:.2f}'.format
-
+FLAG = []
 
 def real_time_ticks(tick,dummy,use_cache = True):
     fname = 'data/today_tick.%s.csv'%tick
@@ -84,8 +91,10 @@ def realtime_list_ticks(tks):
     rdf.insert(5,'price',rdf.pop('price'))
     # rdf.insert(6,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
     # rdf.insert(7,'openrisevspclose',(rdf['price']-rdf['open'])/(rdf['pclose'])*100)
-
-    rdf['name'] = rdf['name'].str.slice(0,10,1)
+    if 'stealth' in FLAG:
+        rdf['name'] = rdf['name'].str.slice(0,4,2)
+    else:
+        rdf['name'] = rdf['name'].str.slice(0,10,1)
     print rdf.loc[:,:'amount'].sort_values(by='rate',ascending=False)
     
     for idx,row in rdf.iterrows():
@@ -251,7 +260,7 @@ def cli_select_keys(dic, default_input=None):
     else:
         input = default_input
     words = input.replace(',',' ').split(' ')
-    flag = []
+    flag = ['stealth']
     if ':q' in words:
         flag.append('quit')
     if ':d' in words:        
@@ -263,11 +272,14 @@ def cli_select_keys(dic, default_input=None):
         flag.append('news')
     if ':r' in words:
         flag.append('realtime')
-        words.remove(':r')    
+        words.remove(':r') 
+    if ':s' in words:        
+        words.remove(':s')
     try:
         keys = [idxmap[int(word)] for word in words]     
         return keys, flag
-    except:
+    except Exception as e:
+        print(e)
         return [], flag    
 
         
@@ -290,6 +302,7 @@ def print_analyse_res(res):
             print "[CDL:{0}]; {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
     for name,intro in intro.items():
         print u"[{}]:{}".format(name,intro).encode('gbk')
+
 
 def choose_ticks(mode):
     fname = 'ticks.json'
@@ -329,15 +342,15 @@ def choose_ticks(mode):
     #####
     return the_tks, info, flag
     
-from stock_latest_news import get_latest_news
 
-    
+from stock_latest_news import get_latest_news    
 def main_loop(mode):
-    the_tks, info, flag = choose_ticks(mode)
-       
+    global FLAG
+    the_tks, info, flag = choose_ticks(mode)       
     # print the_tks
     # print info
     exec_func = focus_tick_k_data
+    FLAG = flag
     if 'realtime' in flag :
         exec_func = real_time_ticks        
     elif 'news' in flag :
