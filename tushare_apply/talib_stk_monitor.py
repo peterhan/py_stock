@@ -1,5 +1,6 @@
 #!coding:utf8
 # import pdb
+
 import sys
 import tushare as ts
 import pandas as pd
@@ -7,14 +8,15 @@ import talib
 import datetime
 import json
 from collections import OrderedDict
+
 try:    
+    import gevent
     from gevent import monkey
     from gevent.pool import Pool    
     monkey.patch_all()
-    print 'gevent ok'
+    print '[gevent ok]'
 except:
-    print 'no gevent'
-
+    print '[no gevent]'
 
 
 pd.set_option('display.max_rows',None)
