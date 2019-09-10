@@ -1,20 +1,15 @@
 #!coding:utf8
 # import pdb
 import sys
-print '1'
 import tushare as ts
-print '2'
 import pandas as pd
-print '3'
 import talib 
 import datetime
 import json
 from collections import OrderedDict
-
-try:
-    import gevent
+try:    
     from gevent import monkey
-    from gevent.pool import Pool
+    from gevent.pool import Pool    
     monkey.patch_all()
     print 'gevent ok'
 except:
@@ -115,7 +110,6 @@ def jsdump(info):
     return json.dumps(info,ensure_ascii=False).encode('gbk')    
     
 def load_ta_pat_map():
-    import json
     return json.load(open('talib_pattern_name.json'))
 
 
@@ -359,7 +353,7 @@ def main_loop(mode):
     elif 'quit' in flag:
         sys.exit()
         
-    if not gevent:
+    if not Pool:
         for tk in the_tks:
             res = exec_func(tk,info)
     else:
@@ -394,5 +388,5 @@ def test():
     
 if __name__ == '__main__':    
     mode = sys.argv
-    while 1:
+    while 1:        
         main_loop(mode)

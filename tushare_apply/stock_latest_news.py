@@ -1,4 +1,20 @@
 #!coding:utf8
+
+import re
+import json
+import datetime,time
+from urllib2 import urlopen,Request
+import pandas as pd
+# import pdb
+
+
+def _random(n=16):
+    from random import randint
+    start = 10 ** (n - 1)
+    end = (10 ** n) - 1
+    return str(randint(start, end))
+    
+    
 '''
 pageid="153" s_id="2509">全部</a> 
 pageid="153" s_id="2510">国内</a> 
@@ -13,23 +29,6 @@ pageid="153" s_id="2517">股市</a>
 pageid="153" s_id="2518">美股</a> 
 			
 '''
-import re
-import json
-import datetime,time
-from urllib2 import urlopen,Request
-import pandas as pd
-import pdb
-
-pd.set_option('display.max_rows',None)
-pd.set_option('display.max_columns',80)
-pd.set_option('display.width',None)
-
-def _random(n=16):
-    from random import randint
-    start = 10 ** (n - 1)
-    end = (10 ** n) - 1
-    return str(randint(start, end))
-    
 def get_latest_news(lid='2517'):
     url='https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=%s&k=2&num=50&page=1&r=%s&callback=jQuery111200%s_%s&_=%s'%(lid,_random(),_random(),int(time.time()),int(time.time()))
     #2516 fin,2517 stock,2518 US stock
@@ -52,6 +51,10 @@ def get_latest_news(lid='2517'):
     return df
     
 if __name__ == '__main__':
+    pd.set_option('display.max_rows',None)
+    pd.set_option('display.max_columns',80)
+    pd.set_option('display.width',None)
+
     print get_latest_news()
 
 # pdb.set_trace()
