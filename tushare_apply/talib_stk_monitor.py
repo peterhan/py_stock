@@ -1,5 +1,5 @@
 #!coding:utf8
-import pdb
+# import pdb
 import sys
 import tushare as ts
 import pandas as pd
@@ -194,7 +194,7 @@ def tech_analyse(info,tk, df):
     ma240 = talib.SMA(close,360)
     name = info.get(tk,{}).get('name','')
     # name = ' '
-    idx_info = {'code':tk,'name':name,'price':df['close'].values[-1],'data':{}}         
+    idx_info = OrderedDict({'code':tk,'name':name,'price':df['close'].values[-1],'data':{}})
     
     data = idx_info['data']
     data['BOLL_Res'] =  boll_judge_res
@@ -251,17 +251,19 @@ def cli_select_keys(dic, default_input=None):
     else:
         input = default_input
     words = input.replace(',',' ').split(' ')
+    flag = []
     if ':q' in words:
-        flag = 'quit'
-    elif ':i' in words:
-        flag = 'pdb'
-    elif ':n' in words:
-        flag = 'news'
-    elif ':r' in words:
-        flag = 'realtime'
-        words.remove(':r')
-    else:
-        flag = ''
+        flag.append('quit')
+    if ':d' in words:        
+        flag.append('detail')
+        words.remove(':d')
+    if ':i' in words:
+        flag.append('pdb')        
+    if ':n' in words:
+        flag.append('news')
+    if ':r' in words:
+        flag.append('realtime')
+        words.remove(':r')    
     try:
         keys = [idxmap[int(word)] for word in words]     
         return keys, flag
@@ -308,9 +310,9 @@ def choose_ticks(mode):
         sel_tks.update( conf_tks[id])
     sel_tks = list(sel_tks)
     #####
-    print '[%s]ticks: %s'%(keys,','.join(sel_tks)) 
+    print 'Entries: %s, Ticks: %s'%(keys,','.join(sel_tks)) 
     info = realtime_list_ticks(sel_tks)
-    if '-d' in mode:
+    if '-d' in mode or 'detail' in flag:
         input = 'y'
     else:
         input = raw_input('[ShowDetailInfo?](y/n):')
@@ -336,11 +338,13 @@ def main_loop(mode):
     # print the_tks
     # print info
     exec_func = focus_tick_k_data
-    if flag == 'realtime':
+    if 'realtime' in flag :
         exec_func = real_time_ticks        
-    elif flag == 'news':
+    elif 'news' in flag :
         df = get_latest_news()       
         print df.loc[:,['title','keywords','time']]
+    elif 'quit' in flag:
+        sys.exit()
         
     if not gevent:
         for tk in the_tks:
