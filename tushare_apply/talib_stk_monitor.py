@@ -387,6 +387,11 @@ def test():
     ts.get_concept_classified()
     ts.get_money_supply()
     ts.get_gold_and_foreign_reserves()
+    ts.top_list() #每日龙虎榜列表 
+    ts.cap_tops()  #个股上榜统计
+    ts.broker_tops()  #营业部上榜统计
+    ts.inst_tops() 
+    ts.inst_detail()
     
 if __name__ == '__main__':    
     mode = sys.argv

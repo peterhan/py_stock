@@ -9,7 +9,7 @@
     ,"ticks":
     {
       "Candidate": "300012 002099 600438 601012 000672 300595 601138 518800 161226 600029", 
-      "Holding":"518800 600438 161226",
+      "Holding":"518800 161226",
 	  "Insurance":"601601 601318 601336 601628",      
 	  "BaiMa-BiliBili":"000333 000651 601318 600887 603288 000858 600519 600036 600276 600585 600660 002415",
       "Index": "159915 399001 sh000001 399006 sh000300 518800 161226", 
@@ -54,5 +54,7 @@
   ,"logs":[
      {"date":"2019-08-08","action":"buy","code":"518800","amount":18700,"price":3.370,"reason":"unstable news,trade war bad expectation"}
     ,{"date":"2019-08-14","action":"buy","code":"600438","amount":3200,"price":12.877,"reason":"low price"}
+    ,{"date":"2019-08-30","action":"sell","code":"600438","amount":3200,"price":15.11,"reason":"high position low energy"}
+    ,{"date":"2019-09-06","action":"buy","code":"161226","amount":46300,"price":9.59,"reason":"good trend"}
   ]
 }
