@@ -9,14 +9,14 @@ import datetime
 import json
 from collections import OrderedDict
 
-try:    
-    import gevent
-    from gevent import monkey
-    from gevent.pool import Pool    
-    monkey.patch_all()
-    print '[gevent ok]'
-except:
-    print '[no gevent]'
+# try:    
+import gevent
+from gevent import monkey
+from gevent.pool import Pool    
+monkey.patch_all()
+print '[gevent ok]'
+# except:
+    # print '[no gevent]'
 
 
 pd.set_option('display.max_rows',None)
