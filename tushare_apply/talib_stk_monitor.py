@@ -196,7 +196,7 @@ def tech_analyse(info,tk, df):
     ma05 = talib.SMA(close,5)
     ma10 = talib.SMA(close,10)
     ma20 = talib.SMA(close,20)
-    ma240 = talib.SMA(close,360)
+    ma240 = talib.SMA(close,240)
     name = info.get(tk,{}).get('name','')
     # name = ' '
     idx_info = OrderedDict({'code':tk,'name':name,'price':df['close'].values[-1],'data':{}})
@@ -323,7 +323,7 @@ def choose_ticks(mode):
     info = realtime_list_ticks(sel_tks)
     if '-d' in mode or 'detail' in flag:
         input = 'y'
-    else:
+    elif 'detail' in flag or 'realtime' in flag:
         input = raw_input('[ShowDetailInfo?](y/n):')
     #####
     if input == 'y':
