@@ -9,14 +9,14 @@ import datetime
 import json
 from collections import OrderedDict
 
-# try:    
-import gevent
-from gevent import monkey
-from gevent.pool import Pool    
-monkey.patch_all()
-print '[gevent ok]'
-# except:
-    # print '[no gevent]'
+try:    
+    import gevent
+    from gevent import monkey
+    from gevent.pool import Pool    
+    monkey.patch_all()
+    # print '[gevent ok]'
+except:
+    print '[Not Found gevent]'
 
 
 pd.set_option('display.max_rows',None)
@@ -171,7 +171,7 @@ def boll_judge(bl_upper,bl_middle,bl_lower):
         res += ['Expand']
     else:
         res += ['Shrink']
-    res += ['%0.2f %0.2f @ %0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])]
+    res += ['mid_ang:%0.2f up_dif_ang%0.2f @ middle_price:%0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])]
     return res
   
 def round2(lst):
