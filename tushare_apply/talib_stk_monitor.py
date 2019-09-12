@@ -88,7 +88,7 @@ def realtime_list_ticks(tks):
     rdf.insert(5,'price',rdf.pop('price'))
     # rdf.insert(6,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
     # rdf.insert(7,'openrisevspclose',(rdf['price']-rdf['open'])/(rdf['pclose'])*100)
-    if 'stealth' in FLAG:
+    if 'fullname' in FLAG:
         rdf['name'] = rdf['name'].str.slice(0,4,2)
     else:
         rdf['name'] = rdf['name'].str.slice(0,10,1)
@@ -256,7 +256,7 @@ def cli_select_keys(dic, default_input=None):
     else:
         input = default_input
     words = input.replace(',',' ').split(' ')
-    flag = ['stealth']
+    flag = []
     if ':q' in words:
         flag.append('quit')
     if ':d' in words:        
@@ -269,8 +269,9 @@ def cli_select_keys(dic, default_input=None):
     if ':r' in words:
         flag.append('realtime')
         words.remove(':r') 
-    if ':s' in words:        
-        words.remove(':s')
+    if ':f' in words:        
+        flag.append('fullname')
+        words.remove(':f')
     try:
         keys = [idxmap[int(word)] for word in words]     
         return keys, flag
@@ -323,8 +324,10 @@ def choose_ticks(mode):
     info = realtime_list_ticks(sel_tks)
     if '-d' in mode or 'detail' in flag:
         input = 'y'
-    else:
+    elif 'realtime' in flag:
         input = raw_input('[ShowDetailInfo?](y/n):')
+    else:
+        input = ''
     #####
     if input == 'y':
         the_tks = sel_tks
