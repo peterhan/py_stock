@@ -171,7 +171,7 @@ def boll_judge(bl_upper,bl_middle,bl_lower):
         res += ['Expand']
     else:
         res += ['Shrink']
-    res += ['mid_ang:%0.2f up_dif_ang%0.2f @ middle_price:%0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])]
+    res += ['mid_ang:%0.2f,updif_ang:%0.2f@mid_price:%0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])]
     return res
   
 def round2(lst):
@@ -323,7 +323,7 @@ def choose_ticks(mode):
     info = realtime_list_ticks(sel_tks)
     if '-d' in mode or 'detail' in flag:
         input = 'y'
-    elif 'detail' in flag or 'realtime' in flag:
+    else:
         input = raw_input('[ShowDetailInfo?](y/n):')
     #####
     if input == 'y':
