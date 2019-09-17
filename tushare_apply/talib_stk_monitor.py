@@ -257,21 +257,21 @@ def cli_select_keys(dic, default_input=None):
         input = default_input
     words = input.replace(',',' ').split(' ')
     flag = []
-    if ':q' in words:
+    if 'q' in words:
         flag.append('quit')
-    if ':d' in words:        
+    if 'd' in words:        
         flag.append('detail')
-        words.remove(':d')
-    if ':i' in words:
+        words.remove('d')
+    if 'i' in words:
         flag.append('pdb')        
-    if ':n' in words:
+    if 'n' in words:
         flag.append('news')
-    if ':r' in words:
+    if 'r' in words:
         flag.append('realtime')
-        words.remove(':r') 
-    if ':f' in words:        
+        words.remove('r') 
+    if 'f' in words:        
         flag.append('fullname')
-        words.remove(':f')
+        words.remove('f')
     try:
         keys = [idxmap[int(word)] for word in words]     
         return keys, flag
