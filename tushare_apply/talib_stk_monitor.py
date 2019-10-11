@@ -6,6 +6,7 @@ import tushare as ts
 import pandas as pd
 import talib 
 import datetime
+import time
 import json
 from collections import OrderedDict
 
@@ -244,6 +245,7 @@ def focus_tick_k_data(tk,info):
     
     
 def cli_select_keys(dic, default_input=None):
+    
     idxmap = {}
     for i,key in enumerate(dic):
         idxmap[i+1] = key
@@ -322,6 +324,7 @@ def choose_ticks(mode):
     #####
     print 'Entries: %s, Ticks: %s'%(keys,','.join(sel_tks)) 
     info = realtime_list_ticks(sel_tks)
+    time.sleep(3)
     if '-d' in mode or 'detail' in flag:
         input = 'y'
     elif 'realtime' in flag:
