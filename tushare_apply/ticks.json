@@ -11,7 +11,7 @@
     ,"ticks":
     {
       "Candidate": "518800 161226 300012 002099 600438 601012 000672 300595 601138 518800 161226 600029", 
-      "Holding":"600438 002236",
+      "Holding":"510600 002236",
 	  "LED":"600703 300323 603515 900938 688368 688099 688018 688008",
       "Realstate":"600048 600606 600340",
 	  "Medicine":"603259 002099 600276 300357",
@@ -63,5 +63,7 @@
     ,{"date":"2019-08-14","action":"buy","code":"600438","amount":3200,"price":12.877,"reason":"low price"}
     ,{"date":"2019-08-30","action":"sell","code":"600438","amount":3200,"price":15.11,"reason":"high position low energy"}
     ,{"date":"2019-09-06","action":"buy","code":"161226","amount":46300,"price":9.59,"reason":"good trend"}
+    ,{"date":"2019-10-10","action":"buy","code":"002236","amount":1300,"price":15.98,"reason":"good trend"}
+    ,{"date":"2019-11-23","action":"buy","code":"510600","amount":28200,"price":3.065,"reason":"good trend"}
   ]
 }
