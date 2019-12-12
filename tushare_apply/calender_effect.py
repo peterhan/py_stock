@@ -17,6 +17,9 @@ def prep_df(tks):
     df['date']=pd.to_datetime(df['date'])
     df['weekday'] = df['date'].apply(lambda x:x.dayofweek)
     df['week'] = df['date'].apply(lambda x:x.week)
+    df['month'] = df['date'].apply(lambda x:x.month)
+    df['year'] = df['date'].apply(lambda x:x.year)
+    df['p_raise'] = df['p_change']>=0
     print(df.columns)
     return df
     
@@ -28,9 +31,10 @@ def analyze_ols(df):
     .summary()
     print(ols_result)
     #embed()
-    print df.groupby('weekday')['volume'].sum()
-    print df.groupby('weekday')['volume'].agg([('avg',np.mean),('count','count'),('pchange','std')])
-    print df.groupby('weekday')['volume'].count()
+    # print df.groupby(['weekday','p_raise'])['volume'].sum()
+    # print df.groupby(['year','month','p_raise'])['volume'].agg([('volume_avg',np.mean),('count','count'),('std','std'),('max','max'),('min','min')])
+    print df.groupby(['year','month','p_raise'])['p_change'].agg([('p_change_avg',np.mean),('count','count'),('std','std'),('max','max'),('min','min')])
+    # print df.groupby(['weekday','p_raise'])['volume'].count()
     for i,row in df.iterrows():
         # print row['date']    
         dt=row['date']
@@ -40,6 +44,9 @@ def analyze_ols(df):
             break
             
 if __name__ == '__main__':
-    tks='510600'
+    # tks='510600'
+    tks='000001'
+    # tks='600438'
+    # tks='601012'
     df = prep_df(tks)
     analyze_ols(df)
