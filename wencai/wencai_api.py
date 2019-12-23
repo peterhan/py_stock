@@ -35,10 +35,10 @@ def combinate_rate():
         df = get_query_comb(equerys)
         res[equerys] = df
         
-    cPickle.dump(res, open('stra.p','w'))
+    cPickle.dump(res, open('stra.pickle','w'))
 
 def sum_rate():
-    res = cPickle.load(open('stra.p','r'))
+    res = cPickle.load(open('stra.pickle','r'))
     print 'Records:',len(res)    
     df = pd.concat(res.values())        
     df.to_csv('data.csv', encoding='gbk')
