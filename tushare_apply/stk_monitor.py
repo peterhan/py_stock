@@ -305,7 +305,7 @@ def print_analyse_res(res):
 
 
 def choose_ticks(mode):
-    fname = 'ticks.json'
+    fname = 'stk_monitor.json'
     conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
     conf_tks = split_stocks(conf_tks['ticks'])
     all = reduce(lambda x,y:x+y, conf_tks.values(),[])
