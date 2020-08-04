@@ -244,8 +244,7 @@ def focus_tick_k_data(tk,info):
     return {'idx':idx_info,'cdl':cdl_info}
     
     
-def cli_select_keys(dic, default_input=None):
-    
+def cli_select_keys(dic, default_input=None):    
     idxmap = {}
     for i,key in enumerate(dic):
         idxmap[i+1] = key
