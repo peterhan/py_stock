@@ -265,7 +265,9 @@ def cli_select_keys(dic, default_input=None):
         flag.append('detail')
         words.remove('d')
     if 'i' in words:
-        flag.append('pdb')        
+        flag.append('pdb')
+    if 's' in words:
+        flag.append('onestock') 
     if 'n' in words:
         flag.append('news')
     if 'r' in words:
@@ -333,28 +335,31 @@ def choose_ticks(mode):
         input = ''
     #####
     if input == 'y':
-        the_tks = sel_tks
+        the_ticks = sel_tks
     elif to_num(input) < len(sel_tks): 
         # pdb.set_trace()
-        the_tks = [ filter(lambda entry:entry[1]['id']==input, info.items())[0][1]['code'] ]
+        the_ticks = [ filter(lambda entry:entry[1]['id']==input, info.items())[0][1]['code'] ]
     elif unicode(input) in sel_tks: 
-        the_tks = [unicode(input)]   
+        the_ticks = [unicode(input)]   
     else:
-        the_tks = []
+        the_ticks = []
     #####
-    return the_tks, info, flag
+    return the_ticks, info, flag
     
 
-from stock_latest_news import get_latest_news    
+from stock_latest_news import get_latest_news  
+  
 def main_loop(mode):
     global FLAG
-    the_tks, info, flag = choose_ticks(mode)       
-    # print the_tks
+    the_ticks, info, flag = choose_ticks(mode)       
+    # print the_ticks
     # print info
     exec_func = focus_tick_k_data
     FLAG = flag
     if 'realtime' in flag :
-        exec_func = real_time_ticks        
+        exec_func = real_time_ticks   
+    elif 'onestock' in flag:
+        exec_func = real_time_ticks
     elif 'news' in flag :
         df = get_latest_news()       
         print df.loc[:,['title','keywords','time']]
@@ -362,12 +367,12 @@ def main_loop(mode):
         sys.exit()
         
     if not Pool:
-        for tk in the_tks:
+        for tk in the_ticks:
             res = exec_func(tk,info)
     else:
         pool = Pool(8)
         jobs = []
-        for tk in the_tks:
+        for tk in the_ticks:
             job = pool.spawn(exec_func,tk,info)
             jobs.append(job)
         pool.join()
