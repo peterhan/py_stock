@@ -72,6 +72,8 @@ def realtime_list_ticks(tks):
     rdf = ts.get_realtime_quotes(tks)
     # rdf=  ts.get_today_all()
     # print rdf
+    if rdf is None:
+        return
     rdfc = rdf.loc[:,'code']
     # print rdfc
     rdf = rdf.apply(pd.to_numeric,errors='ignore')
