@@ -200,6 +200,7 @@ def tech_analyse(info,tk, df):
     ma10 = talib.SMA(close,10)
     ma20 = talib.SMA(close,20)
     ma240 = talib.SMA(close,240)
+    atr14 = talib.ATR(high,low,close,timeperiod =14)
     name = info.get(tk,{}).get('name','')
     # name = ' '
     idx_info = OrderedDict({'code':tk,'name':name,'price':df['close'].values[-1],'data':{}})
