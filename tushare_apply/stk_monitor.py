@@ -84,9 +84,9 @@ def realtime_list_ticks(tks):
     # rdf.rename(cname,inplace=True)
     rdf.index.name = 'id'
     rdf.insert(0,'code',rdf.pop('code'))
-    rdf.insert(1,'n_bounce',(rdf['price']-rdf['low'])/(rdf['high']-rdf['low'])*100)    
-    rdf.insert(2,'osc',(rdf['high']-rdf['low'])/(rdf['open'])*100)
-    rdf.insert(3,'opgap',(rdf['open']-rdf['pclose'])/(rdf['open'])*100)
+    rdf.insert(1,'op_gap',(rdf['open']-rdf['pclose'])/(rdf['open'])*100)
+    rdf.insert(2,'hi_lo',(rdf['high']-rdf['low'])/(rdf['open'])*100)
+    rdf.insert(3,'bounce',(rdf['price']-rdf['low'])/(rdf['high']-rdf['low'])*100)
     rdf.insert(4,'rate',(rdf['price']-rdf['pclose'])/(rdf['pclose'])*100)
     rdf.insert(5,'price',rdf.pop('price'))
     # rdf.insert(6,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
