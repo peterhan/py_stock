@@ -8,6 +8,7 @@ import talib
 import datetime
 import time
 import json
+import pdb
 from collections import OrderedDict
 
 try:    
@@ -201,6 +202,7 @@ def tech_analyse(info,tk, df):
     ma20 = talib.SMA(close,20)
     ma240 = talib.SMA(close,240)
     atr14 = talib.ATR(high,low,close,timeperiod =14)
+    atr28 = talib.ATR(high,low,close,timeperiod =28)
     name = info.get(tk,{}).get('name','')
     # name = ' '
     idx_info = OrderedDict({'code':tk,'name':name,'price':df['close'].values[-1],'data':{}})
@@ -215,6 +217,9 @@ def tech_analyse(info,tk, df):
     # data['SAR'] = [ sar[-1] ]
     data['MA'] = round2([ ma05[-1],ma10[-1],ma20[-1],ma240[-1] ])
     data['VOL_Rate'] = round2([vol[-1]*1.0/vol[-2]])
+    data['ATR14'] = atr14[-1]
+    data['ATR28'] = atr28[-1]
+    # pdb.set_trace()
     # data['RSI'] = [rsi[-1] ]
     return idx_info,df
     
