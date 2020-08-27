@@ -10,6 +10,7 @@ import time
 import json
 import pdb
 from collections import OrderedDict
+from stock_latest_news import get_latest_news  
 
 try:    
     import gevent
@@ -83,19 +84,28 @@ def realtime_list_ticks(tks):
     cname = rdf.columns
     # cname[3]='price'
     # rdf.rename(cname,inplace=True)
-    rdf.index.name = 'id'
-    rdf.insert(0,'code',rdf.pop('code'))
-    rdf.insert(1,'op_gap',(rdf['open']-rdf['pclose'])/(rdf['open'])*100)
-    rdf.insert(2,'hi_lo',(rdf['high']-rdf['low'])/(rdf['open'])*100)
-    rdf.insert(3,'bounce',(rdf['price']-rdf['low'])/(rdf['high']-rdf['low'])*100)
-    rdf.insert(4,'rate',(rdf['price']-rdf['pclose'])/(rdf['pclose'])*100)
-    rdf.insert(5,'price',rdf.pop('price'))
-    # rdf.insert(6,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
-    # rdf.insert(7,'openrisevspclose',(rdf['price']-rdf['open'])/(rdf['pclose'])*100)
     if 'fullname' in FLAG:
         rdf['name'] = rdf['name'].str.slice(0,4,2)
     else:
         rdf['name'] = rdf['name'].str.slice(0,10,1)
+    
+    rdf.index.name = 'id'
+    r3,r2,r1,pivot,s1,s2,s3 = pivot_line(rdf['high'],rdf['low'],rdf['open'],rdf['pclose'])
+    rdf.insert(0,'code',rdf.pop('code'))
+    rdf.insert(1,'op_gap',(rdf['open']-rdf['pclose'])/(rdf['open'])*100)
+    rdf.insert(2,'max_up',(rdf['high']-rdf['low'])/(rdf['open'])*100)
+    rdf.insert(3,'bounce',(rdf['price']-rdf['low'])/(rdf['high']-rdf['low'])*100)
+    rdf.insert(4,'rate',(rdf['price']-rdf['pclose'])/(rdf['pclose'])*100)
+    # rdf.insert(5,'r2',r2)
+    rdf.insert(6,'r1',r1)
+    rdf.insert(7,'price',rdf.pop('price'))
+    rdf.insert(8,'pivot',pivot)
+    rdf.insert(9,'s1',s1)
+    # rdf.insert(10,'s2',s2)
+    # rdf.insert(16,'name',rdf.pop('name'))
+    # rdf.insert(6,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
+    # rdf.insert(7,'openrisevspclose',(rdf['price']-rdf['open'])/(rdf['pclose'])*100)
+
     print rdf.loc[:,:'amount'].sort_values(by='rate',ascending=False)
     
     for idx,row in rdf.iterrows():
@@ -112,15 +122,14 @@ def realtime_list_ticks(tks):
     return info
 
 
-def jsdump(info):
-    return json.dumps(info,ensure_ascii=False).encode('gbk')    
+def jsdump(info, indent=None):
+    return json.dumps(info, ensure_ascii=False, indent=indent).encode('gbk')    
     
 def load_ta_pat_map():
     return json.load(open('talib_pattern_name.json'))
 
 
 TA_PATTERN_MAP = load_ta_pat_map()
- 
  
 def candle_analyse(df):
     cn_names = []
@@ -181,6 +190,22 @@ def boll_judge(bl_upper,bl_middle,bl_lower):
 def round2(lst):
     return map(lambda x:'%0.2f'%x,lst)
     
+def pivot_line(high,low,open,close, mode='classic'):
+    pivot = (high + low + 2* close )/4
+    r1 = pivot*2 - low 
+    s1 = pivot*2 - high
+    r2 = pivot + r1 - s1
+    s2 = pivot - (r1 - s1)
+    r3 = high + 2*(pivot - low)
+    s3 = low - 2*(high - pivot)
+    sm1 = (pivot+s1)/2
+    sm2 = (s1+s2)/2
+    sm3 = (s2+s3)/2
+    rm1 = (pivot+r1)/2
+    rm2 = (r1+r2)/2
+    rm3 = (r2+r3)/2
+    return r3,r2,r1,pivot,s1,s2,s3
+    
 def tech_analyse(info,tk, df):    
     close = df['close'].values
     high = df['high'].values
@@ -203,6 +228,7 @@ def tech_analyse(info,tk, df):
     ma240 = talib.SMA(close,240)
     atr14 = talib.ATR(high,low,close,timeperiod =14)
     atr28 = talib.ATR(high,low,close,timeperiod =28)
+    pivot_point = map(lambda x:round(x[-1],2) , pivot_line(high,low,open,close) )
     name = info.get(tk,{}).get('name','')
     # name = ' '
     idx_info = OrderedDict({'code':tk,'name':name,'price':df['close'].values[-1],'data':{}})
@@ -219,10 +245,32 @@ def tech_analyse(info,tk, df):
     data['VOL_Rate'] = round2([vol[-1]*1.0/vol[-2]])
     data['ATR14'] = atr14[-1]
     data['ATR28'] = atr28[-1]
+    data['PIVOT'] = pivot_point
     # pdb.set_trace()
     # data['RSI'] = [rsi[-1] ]
     return idx_info,df
-    
+
+def print_analyse_res(res):
+    intro = {}
+    for stock in res:
+        if stock is None:
+            continue
+        
+        if stock['tech'] != None:
+            tech = stock['tech']
+            print "[{0}:{1}] Price:{2}".format(tech['code'],tech['name'].encode('gbk'),tech['price'])
+            for key,vlu in tech['data'].items():
+                print ' [%s]'%key,jsdump(vlu)
+            
+        if stock['cdl'] != None:
+            cdl = stock['cdl']
+            cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
+            for name,info in cdl['data'].items():
+                intro[info['en_name']+info['cn_name']] = info['intro2']
+            print "  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
+    for name,intro in intro.items():
+        print u"[{}]:{}".format(name,intro).encode('gbk')
+
 def add_delta_n(df):
     for i in [1,3,5,10,20,30,60,90]:
         df['delta_b_%02d'%i] = df['close'] - df.shift(i)['close']    
@@ -244,12 +292,12 @@ def focus_tick_k_data(tk,info):
     if df.shape[0] == 0:
         return
     ## technical indicator
-    idx_info,df = tech_analyse(info,tk, df)
+    tech_info,df = tech_analyse(info,tk, df)
     ## japanese candle pattern
     cdl_info,df = candle_analyse(df )
     # cdl_info = None
     df.to_csv(fname)
-    return {'idx':idx_info,'cdl':cdl_info}
+    return {'tech':tech_info,'cdl':cdl_info}
     
     
 def cli_select_keys(dic, default_input=None):    
@@ -291,27 +339,6 @@ def cli_select_keys(dic, default_input=None):
         return [], flag    
 
         
-def print_analyse_res(res):
-    intro = {}
-    for stock in res:
-        if stock is None:
-            continue
-        
-        if stock['idx'] != None:
-            idx = stock['idx']
-            print "[{0}:{1}] Price:{2}".format(idx['code'],idx['name'].encode('gbk'),idx['price'])
-            print jsdump(idx['data'])
-            
-        if stock['cdl'] != None:
-            cdl = stock['cdl']
-            cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
-            for name,info in cdl['data'].items():
-                intro[info['en_name']+info['cn_name']] = info['intro2']
-            print "[CDL_Total:{0}] || {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
-    for name,intro in intro.items():
-        print u"[{}]:{}".format(name,intro).encode('gbk')
-
-
 def choose_ticks(mode):
     fname = 'stk_monitor.json'
     conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
@@ -354,7 +381,7 @@ def choose_ticks(mode):
     return the_ticks, info, flag
     
 
-from stock_latest_news import get_latest_news  
+
   
 def main_loop(mode):
     global FLAG
