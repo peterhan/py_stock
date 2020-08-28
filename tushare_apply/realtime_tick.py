@@ -79,8 +79,8 @@ def test():
 def main():
     dt=datetime.datetime.now().strftime('%Y%m%d')    
     
-    from talib_stk_monitor import choose_ticks
-    the_ticks,info = choose_ticks('')
+    from stk_monitor import choose_ticks
+    the_ticks,info,flag = choose_ticks('')
     for tick in the_ticks:
         try:
             real_time_tick(tick,False)

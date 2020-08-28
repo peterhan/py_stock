@@ -98,9 +98,9 @@ def realtime_list_ticks(tks):
     rdf.insert(4,'rate',(rdf['price']-rdf['pclose'])/(rdf['pclose'])*100)
     # rdf.insert(5,'r2',r2)
     rdf.insert(5,'price',rdf.pop('price'))
-    rdf.insert(6,'pivot',pivot)
-    rdf.insert(7,'r1',r1)
-    rdf.insert(8,'s1',s1)
+    rdf.insert(7,'pivot',pivot)
+    rdf.insert(8,'r1',r1)
+    rdf.insert(9,'s1',s1)
     # rdf.insert(10,'s2',s2)
     # rdf.insert(16,'name',rdf.pop('name'))
     # rdf.insert(6,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
@@ -267,7 +267,7 @@ def print_analyse_res(res):
             cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
             for name,info in cdl['data'].items():
                 intro[info['en_name']+info['cn_name']] = info['intro2']
-            print "  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
+            print " [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
     for name,intro in intro.items():
         print u"[{}]:{}".format(name,intro).encode('gbk')
 
