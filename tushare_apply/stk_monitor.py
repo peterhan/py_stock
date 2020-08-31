@@ -300,37 +300,26 @@ def focus_tick_k_data(tk,info):
     return {'tech':tech_info,'cdl':cdl_info}
     
     
-def cli_select_keys(dic, default_input=None):    
+def cli_select_keys(dic, default_input=None, menu_width=6, opt_map = None):    
     idxmap = {}
     for i,key in enumerate(dic):
         idxmap[i+1] = key
         print ('(%s) %s'%(i+1,key)).ljust(25),
-        if (i+1)%4 == 0:
+        if (i+1)%menu_width == 0:
             print ''
     print ''
     if default_input is None:
-        input = raw_input('SEL>')
+        this_input = raw_input('SEL>')
     else:
-        input = default_input
-    words = input.replace(',',' ').split(' ')
+        this_input = default_input
+    words = this_input.replace(',',' ').split(' ')
     flag = []
-    if 'q' in words:
-        flag.append('quit')
-    if 'd' in words:        
-        flag.append('detail')
-        words.remove('d')
-    if 'i' in words:
-        flag.append('pdb')
-    if 's' in words:
-        flag.append('onestock') 
-    if 'n' in words:
-        flag.append('news')
-    if 'r' in words:
-        flag.append('realtime')
-        words.remove('r') 
-    if 'f' in words:        
-        flag.append('fullname')
-        words.remove('f')
+    if opt_map is None:
+        opt_map = {'q':'quit','d':'detail','i':'pdb','s':'onestock','n':'news','r':'realtime','f':'fullname'}
+    for k,v in opt_map.items():
+        if k in words:
+            flag.append(v)
+            words.remove(k)    
     try:
         keys = [idxmap[int(word)] for word in words]     
         return keys, flag
@@ -349,16 +338,16 @@ def choose_ticks(mode):
     conf_tks['All'] = list(all)
     if '-d' in mode:
         input = '3'
-        keys,flag = cli_select_keys(conf_tks,input)        
+        ticks,flag = cli_select_keys(conf_tks,input)        
     else:
-        keys,flag = cli_select_keys(conf_tks)
+        ticks,flag = cli_select_keys(conf_tks)
     #### selected ticks
     sel_tks=set()
-    for id in keys:
+    for id in ticks:
         sel_tks.update( conf_tks[id])
     sel_tks = list(sel_tks)
     #####
-    print 'Entries: %s, Ticks: %s'%(keys,','.join(sel_tks)) 
+    print 'Entries: %s, Ticks: %s'%(ticks,','.join(sel_tks)) 
     info = realtime_list_ticks(sel_tks)
     time.sleep(3)
     if '-d' in mode or 'detail' in flag:
@@ -409,6 +398,7 @@ def main_loop(mode):
         for tk in the_ticks:
             job = pool.spawn(exec_func,tk,info)
             jobs.append(job)
+        # pool.close()
         pool.join()
         # jobs = [gevent.spawn(focus_tick_k_data,tk,info) for tk in the_tks]
         # gevent.joinall(jobs)
