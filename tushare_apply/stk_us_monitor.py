@@ -48,13 +48,14 @@ def choose_ticks(mode):
     conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
     conf_tks = conf_tks['yf_tks']
     opt_map = {'q':'quit','d':'detail','i':'pdb','s':'onestock','n':'news','r':'realtime'
-        ,'f':'fullname','av':'av'
+        ,'f':'fullname','a':'alpha_vantage','y':"yf"
         ,'ia':'intraday','id':'day','im':'month'}
-    ticks,flags = cli_select_keys(dict(zip(conf_tks,conf_tks)),default_input= None,opt_map=opt_map) 
+    ticks,flags = cli_select_keys(OrderedDict(zip(map(lambda x:x.upper(),conf_tks),conf_tks)),default_input= None,opt_map=opt_map) 
     print ticks,flags
     for tk in ticks:
         ytk = yf.Ticker(tk)
-        if 'av' in flags:
+        if 'yf' not in flags:
+            mode = 'day'
             if 'month' in flags:
                 mode='month'
             if 'day' in flags:

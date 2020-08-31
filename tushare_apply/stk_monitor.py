@@ -312,7 +312,7 @@ def cli_select_keys(dic, default_input=None, menu_width=6, opt_map = None):
         this_input = raw_input('SEL>')
     else:
         this_input = default_input
-    words = this_input.replace(',',' ').split(' ')
+    words = this_input.strip().replace(',',' ').replace('  ',' ').split(' ')
     flag = []
     if opt_map is None:
         opt_map = {'q':'quit','d':'detail','i':'pdb','s':'onestock','n':'news','r':'realtime','f':'fullname'}
