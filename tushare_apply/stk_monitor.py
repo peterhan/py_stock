@@ -285,7 +285,7 @@ def add_delta_n(df):
 def focus_tick_k_data(tk,info):    
     fname = './data/'+tk+'.csv'
     df = ts.get_k_data(tk)
-    add_delta_n(df)
+    # add_delta_n(df)
     df.to_csv(fname,index='date')
     df = pd.read_csv(fname,index_col='date')
     # print df.shape
