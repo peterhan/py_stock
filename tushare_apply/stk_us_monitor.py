@@ -74,7 +74,7 @@ def choose_ticks(mode):
         ndf = get_pivot(his_df)
         print his_df
         if 'graph' in flags:
-            his_df[['close','open','high','low']].plot(figsize(8,3))
+            his_df[['close','open','high','low']].plot(figsize=(8,3))
             plt.show()
         if 'pdb' in flags:
             pdb.set_trace()
