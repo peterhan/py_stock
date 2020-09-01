@@ -300,11 +300,11 @@ def focus_tick_k_data(tk,info):
     return {'tech':tech_info,'cdl':cdl_info}
     
     
-def cli_select_keys(dic, default_input=None, menu_width=5, opt_map = None):    
+def cli_select_keys(dic, default_input=None, menu_width=5, column_width=25, opt_map = None):    
     idxmap = {}
     for i,key in enumerate(dic):
         idxmap[i+1] = key
-        print ('(%s) %s'%(i+1,key)).ljust(25),
+        print ('(%s) %s'%(i+1,key)).ljust(column_width),
         if (i+1)%menu_width == 0:
             print ''
     print ''
@@ -315,7 +315,9 @@ def cli_select_keys(dic, default_input=None, menu_width=5, opt_map = None):
     words = this_input.strip().replace(',',' ').replace('  ',' ').split(' ')
     flag = []
     if opt_map is None:
-        opt_map = {'q':'quit','d':'detail','i':'pdb','s':'onestock','n':'news','r':'realtime','f':'fullname'}
+        opt_map = {'q':'quit','d':'detail','i':'pdb'
+        ,'s':'onestock','n':'news'
+        ,'r':'realtime','f':'fullname','g':'graph'}
     for k,v in opt_map.items():
         if k in words:
             flag.append(v)

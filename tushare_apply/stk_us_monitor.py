@@ -5,6 +5,7 @@ import traceback
 from collections import OrderedDict
 import keyring
 from alpha_vantage.timeseries import TimeSeries
+from matplotlib import pyplot as plt
 import yfinance as yf
 from stk_monitor import cli_select_keys
 
@@ -29,6 +30,13 @@ def get_ticker_df_alpha_vantage(ticker,mode='day'):
     df = df.stack()
     df = pd.to_numeric(df)
     df = df.unstack(0)
+
+    # print ndf.cov()
+    # print ndf.describe()
+    # print ndf
+    return df
+    
+def get_pivot(df):
     ndf =  pd.DataFrame()
     ndf['pivot']=(df['high']+df['low']+df['close']*2)/4
     ndf['r1']=  2*ndf['pivot']-df['low']
@@ -37,9 +45,6 @@ def get_ticker_df_alpha_vantage(ticker,mode='day'):
     ndf['s2']=  ndf['pivot']-ndf['r1']+ndf['s1']
     ndf['r3']=  df['high']+2*(ndf['pivot']-df['low'])
     ndf['s3']=  df['low']-2*(df['high']-ndf['pivot'])
-    # print ndf.cov()
-    # print ndf.describe()
-    # print ndf
     return ndf
     
 
@@ -48,9 +53,10 @@ def choose_ticks(mode):
     conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
     conf_tks = conf_tks['yf_tks']
     opt_map = {'q':'quit','d':'detail','i':'pdb','s':'onestock','n':'news','r':'realtime'
-        ,'f':'fullname','a':'alpha_vantage','y':"yf"
+        ,'f':'fullname','a':'alpha_vantage','y':"yf",'g':"graph"
         ,'ia':'intraday','id':'day','im':'month'}
-    ticks,flags = cli_select_keys(OrderedDict(zip(map(lambda x:x.upper(),conf_tks),conf_tks)),default_input= None,opt_map=opt_map) 
+    menu_dict = OrderedDict(zip(map(lambda x:x.upper(),conf_tks),conf_tks))
+    ticks,flags = cli_select_keys(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
     print ticks,flags
     for tk in ticks:
         ytk = yf.Ticker(tk)
@@ -65,7 +71,13 @@ def choose_ticks(mode):
             his_df = get_ticker_df_alpha_vantage(tk,mode)
         else:
             his_df = ytk.history()
+        ndf = get_pivot(his_df)
         print his_df
+        if 'graph' in flags:
+            his_df[['close','open','high','low']].plot(figsize(8,3))
+            plt.show()
+        if 'pdb' in flags:
+            pdb.set_trace()
         
         if  'detail' in flags:
             info = ytk.info
