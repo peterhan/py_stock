@@ -10,6 +10,7 @@ import time
 import json
 import pdb
 from collections import OrderedDict
+from matplotlib import pyplot as plt
 from stock_latest_news import get_latest_news  
 
 try:    
@@ -26,9 +27,9 @@ pd.set_option('display.max_rows',None)
 pd.set_option('display.max_columns',80)
 pd.set_option('display.width',None)
 pd.options.display.float_format = '{:.2f}'.format
-FLAG = []
 
-def real_time_ticks(tick,dummy,use_cache = True):
+
+def real_time_ticks(tick,info,flags,use_cache = True):
     fname = 'data/today_tick.%s.csv'%tick
     if not use_cache:
         try:
@@ -51,7 +52,7 @@ def real_time_ticks(tick,dummy,use_cache = True):
     print str(df.groupby(['change']).agg({'volume':'sum','price':'mean'})).decode('utf8').encode('gbk')
     print df.corr()
     
-    df['time'] = pd.to_datetime(df['time'].apply(lambda x:'2019-08-22 '+x))
+    df['time'] = pd.to_datetime(df['time'].apply(lambda x:' '+x))
     vcut =  pd.cut(df['volume'],5)
     ccut =  pd.cut(df['change'],5)    
     tcut =  pd.cut(df['time'],5)
@@ -67,7 +68,7 @@ def real_time_ticks(tick,dummy,use_cache = True):
     quote_df = ts.get_realtime_quotes(tick) 
     # print rdf.melt()
     
-def realtime_list_ticks(tks):
+def realtime_list_ticks(tks,flags):
     if len(tks) == 0:
         return pd.DataFrame()
     info = {}
@@ -84,7 +85,7 @@ def realtime_list_ticks(tks):
     cname = rdf.columns
     # cname[3]='price'
     # rdf.rename(cname,inplace=True)
-    if 'fullname' in FLAG:
+    if 'fullname' in flags:
         rdf['name'] = rdf['name'].str.slice(0,4,2)
     else:
         rdf['name'] = rdf['name'].str.slice(0,10,1)
@@ -159,7 +160,7 @@ def candle_analyse(df):
 def split_stocks(tks):
     ntks = OrderedDict()
     for k,v in tks.items():        
-        ntks[k] = v.strip().replace(',',' ').replace('  ',' ').split(' ')
+        ntks[k] = v.replace('   ',' ').replace('  ',' ').strip().replace(',',' ').split(' ')
     return ntks
 
 def to_num(s):
@@ -282,7 +283,7 @@ def add_delta_n(df):
         df['vol_delta_f_%02d'%i] = df.shift(-i)['volume'] - df['volume']
     return df
     
-def focus_tick_k_data(tk,info):    
+def get_one_ticker_k_data(tk,info,flags):    
     fname = './data/'+tk+'.csv'
     df = ts.get_k_data(tk)
     # add_delta_n(df)
@@ -296,11 +297,12 @@ def focus_tick_k_data(tk,info):
     ## japanese candle pattern
     cdl_info,df = candle_analyse(df )
     # cdl_info = None
-    df.to_csv(fname)
+    df.to_csv(fname)    
+    df['close'].plot(grid=True)
     return {'tech':tech_info,'cdl':cdl_info}
     
     
-def cli_select_keys(dic, default_input=None, menu_width=5, column_width=25, opt_map = None):    
+def cli_select_menu(dic, default_input=None, menu_width=5, column_width=25, opt_map = None):    
     idxmap = {}
     for i,key in enumerate(dic):
         idxmap[i+1] = key
@@ -313,24 +315,24 @@ def cli_select_keys(dic, default_input=None, menu_width=5, column_width=25, opt_
     else:
         this_input = default_input
     words = this_input.strip().replace(',',' ').replace('  ',' ').split(' ')
-    flag = []
+    flags = []
     if opt_map is None:
         opt_map = {'q':'quit','d':'detail','i':'pdb'
         ,'s':'onestock','n':'news'
         ,'r':'realtime','f':'fullname','g':'graph'}
     for k,v in opt_map.items():
         if k in words:
-            flag.append(v)
+            flags.append(v)
             words.remove(k)    
     try:
         keys = [idxmap[int(word)] for word in words]     
-        return keys, flag
+        return keys, flags
     except Exception as e:
         print(e)
-        return [], flag    
+        return [], flags   
 
         
-def choose_ticks(mode):
+def interact_choose_ticks(mode):
     fname = 'stk_monitor.json'
     conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
     conf_tks = split_stocks(conf_tks['ticks'])
@@ -340,21 +342,21 @@ def choose_ticks(mode):
     conf_tks['All'] = list(all)
     if '-d' in mode:
         input = '3'
-        ticks,flag = cli_select_keys(conf_tks,input)        
+        ticks,flags = cli_select_menu(conf_tks,input)        
     else:
-        ticks,flag = cli_select_keys(conf_tks)
+        ticks,flags = cli_select_menu(conf_tks)
     #### selected ticks
     sel_tks=set()
     for id in ticks:
         sel_tks.update( conf_tks[id])
     sel_tks = list(sel_tks)
     #####
-    print 'Entries: %s, Ticks: %s'%(ticks,','.join(sel_tks)) 
-    info = realtime_list_ticks(sel_tks)
+    print 'Input: %s, Ticks: %s'%(ticks,','.join(sel_tks)) 
+    info = realtime_list_ticks(sel_tks,flags)
     time.sleep(3)
-    if '-d' in mode or 'detail' in flag:
+    if '-d' in mode or 'detail' in flags:
         input = 'y'
-    elif 'realtime' in flag:
+    elif 'realtime' in flags:
         input = raw_input('[ShowDetailInfo?](y/n):')
     else:
         input = ''
@@ -369,26 +371,22 @@ def choose_ticks(mode):
     else:
         the_ticks = []
     #####
-    return the_ticks, info, flag
-    
-
+    return the_ticks, info, flags
 
   
 def main_loop(mode):
-    global FLAG
-    the_ticks, info, flag = choose_ticks(mode)       
+    the_ticks, info, flags = interact_choose_ticks(mode)       
     # print the_ticks
     # print info
-    exec_func = focus_tick_k_data
-    FLAG = flag
-    if 'realtime' in flag :
+    exec_func = get_one_ticker_k_data
+    if 'realtime' in flags :
         exec_func = real_time_ticks   
-    elif 'onestock' in flag:
+    elif 'onestock' in flags:
         exec_func = real_time_ticks
-    elif 'news' in flag :
+    elif 'news' in flags :
         df = get_latest_news()       
         print df.loc[:,['title','keywords','time']]
-    elif 'quit' in flag:
+    elif 'quit' in flags:
         sys.exit()
         
     if not Pool:
@@ -398,15 +396,17 @@ def main_loop(mode):
         pool = Pool(8)
         jobs = []
         for tk in the_ticks:
-            job = pool.spawn(exec_func,tk,info)
+            job = pool.spawn(exec_func,tk,info,flags)
             jobs.append(job)
         # pool.close()
         pool.join()
-        # jobs = [gevent.spawn(focus_tick_k_data,tk,info) for tk in the_tks]
+        # jobs = [gevent.spawn(get_one_ticker_k_data,tk,info,flags) for tk in the_tks]
         # gevent.joinall(jobs)
         res = [job.value for job in jobs]
     json.dump(res,open('result.json','w'),indent=2)
     print_analyse_res(res)
+    if 'graph' in flags:
+        plt.show()
         
     # raw_input("pause")
  

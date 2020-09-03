@@ -7,7 +7,7 @@ import keyring
 from alpha_vantage.timeseries import TimeSeries
 from matplotlib import pyplot as plt
 import yfinance as yf
-from stk_monitor import cli_select_keys
+from stk_monitor import cli_select_menu
 
 pd.set_option('display.max_columns',80)
 
@@ -53,14 +53,13 @@ def choose_ticks(mode):
     conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
     conf_tks = conf_tks['yf_tks']
     opt_map = {'q':'quit','d':'detail','i':'pdb','s':'onestock','n':'news','r':'realtime'
-        ,'f':'fullname','a':'alpha_vantage','y':"yf",'g':"graph"
+        ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'g':"graph"
         ,'ia':'intraday','id':'day','im':'month'}
     menu_dict = OrderedDict(zip(map(lambda x:x.upper(),conf_tks),conf_tks))
-    ticks,flags = cli_select_keys(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
+    ticks,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
     print ticks,flags
     for tk in ticks:
-        ytk = yf.Ticker(tk)
-        if 'yf' not in flags:
+        if 'yfinance' not in flags:
             mode = 'day'
             if 'month' in flags:
                 mode='month'
@@ -70,15 +69,18 @@ def choose_ticks(mode):
                 mode='intraday'
             his_df = get_ticker_df_alpha_vantage(tk,mode)
         else:
+            ytk = yf.Ticker(tk)
             his_df = ytk.history()
+            his_df[['close','open','high','low']]=his_df[['Close','Open','High','Low']]
+            # pdb.set_trace()
         ndf = get_pivot(his_df)
         print his_df
         if 'graph' in flags:
             his_df[['close','open','high','low']].plot()
         if 'pdb' in flags:
             pdb.set_trace()
-        
         if  'detail' in flags:
+            ytk = yf.Ticker(tk)
             info = ytk.info
             opt = ytk.option_chain()
             print json.dumps(info ,indent=2)
