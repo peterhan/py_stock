@@ -65,14 +65,15 @@ def real_time_ticks(tick,info,flags,use_cache = True):
     print pd.crosstab( tcut,df['type'])
     # print df.describe()
     # df3 = ts.get_hist_data(tick)
-    quote_df = ts.get_realtime_quotes(tick) 
+    # quote_df = ts.get_realtime_quotes(tick) 
+    quote_df =  ts.get_today_ticks()
     # print rdf.melt()
     
 def realtime_list_ticks(tks,flags):
     if len(tks) == 0:
         return pd.DataFrame()
     info = {}
-    rdf = ts.get_realtime_quotes(tks)
+    rdf = ts.get_realtime_quotes(tks)    
     # rdf=  ts.get_today_all()
     # print rdf
     if rdf is None:

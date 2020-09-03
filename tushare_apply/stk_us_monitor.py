@@ -89,8 +89,7 @@ def choose_ticks(mode):
             info = {}
             opt = {}
     plt.show()
-        
-        
+
     
 if __name__ == '__main__':
     while True:
