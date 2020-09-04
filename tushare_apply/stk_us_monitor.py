@@ -71,12 +71,12 @@ def choose_ticks(mode):
         else:
             ytk = yf.Ticker(tk)
             his_df = ytk.history()
-            his_df[['close','open','high','low']]=his_df[['Close','Open','High','Low']]
+            his_df[['close','open','high','low','volume']]=his_df[['Close','Open','High','Low','Volume']]
             # pdb.set_trace()
         ndf = get_pivot(his_df)
         print his_df
         if 'graph' in flags:
-            his_df[['close','open','high','low']].plot(title=tk)
+            his_df[['close','volume']].plot(title=tk,subplots=True)
         if 'pdb' in flags:
             pdb.set_trace()
         if  'detail' in flags:
