@@ -9,6 +9,7 @@ import datetime
 import time
 import json
 import pdb
+import traceback
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 from stock_latest_news import get_latest_news  
@@ -28,20 +29,78 @@ pd.set_option('display.max_columns',80)
 pd.set_option('display.width',None)
 pd.options.display.float_format = '{:.2f}'.format
 
+def get_mkt(tks):
+    if tks[0] in ('0','3'):
+        return '0'
+    if tks[0] in ('6','5'):
+        return '1'
 
+def _random(n=13):
+    from random import randint
+    start = 10**(n-1)
+    end = (10**n)-1
+    return str(randint(start, end))
+
+from urllib2 import urlopen, Request
+def get_today_ticks(code=None, mkt='1', retry_count=3, pause=0.001):
+    """
+        获取分笔数据
+    Parameters
+    ------
+        code:string
+                  股票代码 e.g. 600848
+                  如遇网络等问题重复执行的次数
+        pause : int, 默认 0
+                 重复请求数据过程中暂停的秒数，防止请求间隔时间太短出现的问题
+        src : 数据源选择，可输入sn(新浪)、tt(腾讯)、nt(网易)，默认sn
+     return
+     -------
+        DataFrame 当日所有股票交易数据(DataFrame)
+              属性:成交时间、成交价格、价格变动，成交手、成交金额(元)，买卖类型
+    """
+    url = 'http://push2ex.eastmoney.com/getStockFenShi?pagesize=6644&ut=7eea3edcaed734bea9cbfc24409ed989&dpt=wzfscj&pageindex=0&id=%s&sort=1&ft=1&code=%s&market=%s&_=%s'
+    for _ in range(retry_count):
+        time.sleep(pause)
+        try:
+            rurl =  url%(code, code, mkt, _random())
+            # print(rurl)
+            re = Request(rurl)            
+            lines = urlopen(re, timeout=10).read()
+#             if ct.PY3:
+#                 lines = lines.decode('GBK') 
+            lines = json.loads(lines)
+            lines = lines['data']['data']
+            df = pd.DataFrame(lines)   
+            df = df.rename(columns={'t': 'time', 'p': 'price', 'v': 'vol', 'bs': 'type'})
+            df = df[['time', 'price', 'vol', 'type']]
+            df['price'] = df['price'].map(lambda x: x*1.0/1000)
+            df['type'] = df['type'].map(lambda x: bs_type[str(x)])
+            df['time'] = df['time'].map(lambda x: str(x).zfill(6))
+        except Exception as e:
+            import traceback,pdb
+            traceback.print_exc()
+            # pdb.set_trace()
+            print(e)
+        else:
+            return df
+    raise IOError(ct.NETWORK_URL_ERROR_MSG)
+
+bs_type = {'1':u'买入', 
+           '2': u'卖出', 
+           '4': u'-'}
+    
 def real_time_ticks(tick,info,flags,use_cache = False):
-    fname = 'data/today_tick.%s.csv'%tick
+    fname = 'data/realtime.%s.csv'%tick
     if not use_cache:
         try:
             print 'tushare call',tick
-            df = ts.get_today_ticks(tick)
+            df = get_today_ticks(tick,mkt =get_mkt(tick))
             # dt=datetime.datetime.now().strftime('%Y-%m-%d')
             # print dt
             # df = ts.get_tick_data(tick,date=dt,src='sn')
             df.index.name = 'id'
             df.to_csv(fname,encoding='utf8')
-        except Exception as e:            
-            print e.print_stack()
+        except Exception as e:
             traceback.print_exc()
             pass
     df = pd.read_csv(fname,encoding='utf8',index_col='id')
@@ -49,15 +108,16 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     print ''
     print ''
     print tick
+    
     print df.groupby('type').agg({'volume':'sum','price':'mean' })
     # print df.groupby('type').agg({'volume':'sum','price':'mean','change':'count'})
     # print str(df.groupby(['change']).agg({'volume':'sum','price':'mean'}))
+    
     print df.corr()
     layout_dd = pd.crosstab(pd.cut(df.price,10),df.type)
     print layout_dd
     if 'graph' in flags:
-        df[['price','vol']].plot(subplots=True)
-        plt.show()
+        df[['price','vol']].plot(subplots=True,title=tick)        
     
     # df['time'] = pd.to_datetime(df['time'].apply(lambda x:' '+x))
     vcut =  pd.cut(df['volume'],5)
