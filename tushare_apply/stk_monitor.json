@@ -86,7 +86,8 @@
     ,"tal","gsx","edu"
     ,"spy","qqq","sqqq"
     ,"jnj","pfe","pg","cl","mrk","gild","abbv","azn","mrna","bntx","nvax","ubx","amgn"
-    ,"jpm","gs","ma","v"
+    ,"jpm","gs","ma","v","bac"
+    ,"nem","gld"
     ,"niu"
     ,"uvxy","svxy"
     ,"noc","lmt","rtx","hon"
@@ -103,7 +104,7 @@
     ,"msci","yang"
     ,"athm","bita"
     ,"vsto","swbi"
-    ,"xom","vlo","nem","gld"
+    ,"xom","vlo","oxy"
     ]
   ,"logs":[
      {"date":"2019-08-08","action":"buy","code":"518800","amount":18700,"price":3.370,"reason":"unstable news,trade war bad expectation"}

@@ -29,7 +29,7 @@ pd.set_option('display.width',None)
 pd.options.display.float_format = '{:.2f}'.format
 
 
-def real_time_ticks(tick,info,flags,use_cache = True):
+def real_time_ticks(tick,info,flags,use_cache = False):
     fname = 'data/today_tick.%s.csv'%tick
     if not use_cache:
         try:
@@ -45,28 +45,35 @@ def real_time_ticks(tick,info,flags,use_cache = True):
             traceback.print_exc()
             pass
     df = pd.read_csv(fname,encoding='utf8',index_col='id')
+    df['volume'] = df['vol']    
     print ''
     print ''
     print tick
-    print df.groupby('type').agg({'volume':'sum','price':'mean','change':'count'})
-    print str(df.groupby(['change']).agg({'volume':'sum','price':'mean'})).decode('utf8').encode('gbk')
+    print df.groupby('type').agg({'volume':'sum','price':'mean' })
+    # print df.groupby('type').agg({'volume':'sum','price':'mean','change':'count'})
+    # print str(df.groupby(['change']).agg({'volume':'sum','price':'mean'}))
     print df.corr()
+    layout_dd = pd.crosstab(pd.cut(df.price,10),df.type)
+    print layout_dd
+    if 'graph' in flags:
+        df[['price','vol']].plot(subplots=True)
+        plt.show()
     
-    df['time'] = pd.to_datetime(df['time'].apply(lambda x:' '+x))
+    # df['time'] = pd.to_datetime(df['time'].apply(lambda x:' '+x))
     vcut =  pd.cut(df['volume'],5)
-    ccut =  pd.cut(df['change'],5)    
+    # ccut =  pd.cut(df['change'],5)    
     tcut =  pd.cut(df['time'],5)
     df['type'].astype('category')
     print pd.crosstab( vcut,df['type'])
-    print pd.crosstab( ccut,df['type'])
-    print pd.crosstab( ccut,vcut)
+    # print pd.crosstab( ccut,df['type'])
+    # print pd.crosstab( ccut,vcut)
     print pd.crosstab( tcut,vcut)
-    print pd.crosstab( tcut,ccut)
+    # print pd.crosstab( tcut,ccut)
     print pd.crosstab( tcut,df['type'])
     # print df.describe()
     # df3 = ts.get_hist_data(tick)
     # quote_df = ts.get_realtime_quotes(tick) 
-    quote_df =  ts.get_today_ticks()
+    # quote_df =  ts.get_today_ticks()
     # print rdf.melt()
     
 def realtime_list_ticks(tks,flags):
@@ -94,15 +101,16 @@ def realtime_list_ticks(tks,flags):
     rdf.index.name = 'id'
     r3,r2,r1,pivot,s1,s2,s3 = pivot_line(rdf['high'],rdf['low'],rdf['open'],rdf['pclose'])
     rdf.insert(0,'code',rdf.pop('code'))
-    rdf.insert(1,'op_gap',(rdf['open']-rdf['pclose'])/(rdf['open'])*100)
-    rdf.insert(2,'max_up',(rdf['high']-rdf['low'])/(rdf['open'])*100)
-    rdf.insert(3,'bounce',(rdf['price']-rdf['low'])/(rdf['high']-rdf['low'])*100)
-    rdf.insert(4,'rate',(rdf['price']-rdf['pclose'])/(rdf['pclose'])*100)
+    rdf.insert(1,'op_gp',(rdf['open']-rdf['pclose'])/(rdf['open'])*100)
+    rdf.insert(2,'mx_up',(rdf['high']-rdf['open'])/(rdf['open'])*100)
+    rdf.insert(3,'mx_dwn',(rdf['low']-rdf['open'])/(rdf['open'])*100)
+    rdf.insert(4,'bunc',(rdf['price']-rdf['low'])/(rdf['high']-rdf['low'])*100)
+    rdf.insert(5,'rate',(rdf['price']-rdf['pclose'])/(rdf['pclose'])*100)
     # rdf.insert(5,'r2',r2)
-    rdf.insert(5,'price',rdf.pop('price'))
-    rdf.insert(7,'pivot',pivot)
-    rdf.insert(8,'r1',r1)
-    rdf.insert(9,'s1',s1)
+    rdf.insert(6,'price',rdf.pop('price'))
+    rdf.insert(8,'pivot',pivot)
+    rdf.insert(9,'r1',r1)
+    rdf.insert(10,'s1',s1)
     # rdf.insert(10,'s2',s2)
     # rdf.insert(16,'name',rdf.pop('name'))
     # rdf.insert(6,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
@@ -358,7 +366,8 @@ def interact_choose_ticks(mode):
     if '-d' in mode or 'detail' in flags:
         input = 'y'
     elif 'realtime' in flags:
-        input = raw_input('[ShowDetailInfo?](y/n):')
+        # input = raw_input('[ShowDetailInfo?](y/n):')
+        input = 'y'
     else:
         input = ''
     #####
