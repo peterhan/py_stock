@@ -70,8 +70,7 @@
     }
   ,"yf_tks":[
     "600438.ss"
-    ,"002481.sz","002515.sz" 
-    ,"002409.sz"
+    ,"002481.sz","002515.sz" ,"002409.sz"
     ,"1810.hk"
     ,"0868.hk"
     ,"2382.HK"
@@ -82,7 +81,7 @@
     ,"baba","se","jd","pdd","ntes"
     ,"bili","iq"
     ,"amd","nvda","intc","tsm","asml"
-    ,"csco","eric","t","ibm","cme"
+    ,"csco","eric","t","ibm","cme","qrvo","nok","avgo","swks"
     ,"bigc","shop","etsy"
     ,"xpev","nio","li","nkla"
     ,"tal","gsx","edu"
@@ -105,7 +104,7 @@
     ,"zm"
     ,"wm","sci"
     ,"msci","yang"
-    ,"athm","bita"
+    ,"athm","bita","bek"
     ,"doyu","huya","2u"
     ,"vsto","swbi"
     ,"xom","vlo","oxy"
