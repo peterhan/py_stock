@@ -47,7 +47,11 @@ def get_pivot(df):
     ndf['s3']=  df['low']-2*(df['high']-ndf['pivot'])
     return ndf
     
-
+def stock_map():
+    "https://finviz.com/js/maps/sec_788.js?rev=226"
+    "https://finviz.com/api/map_perf.ashx?t=sec"
+    return 
+    
 def choose_ticks(mode):
     fname = 'stk_monitor.json'
     conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
