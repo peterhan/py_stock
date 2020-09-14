@@ -251,10 +251,10 @@ def boll_judge(bl_upper,bl_middle,bl_lower):
     else:
         res = ['Down']
     if u[-1]-m[-1]>=0:
-        res += ['Expand']
+        res[0] += '-Expand'
     else:
-        res += ['Shrink']
-    res += ['mid_ang:%0.2f,updif_ang:%0.2f@mid_price:%0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])]
+        res[0] += '-Shrink'
+    res += ['mid_ang:%0.2f, up_ang:%0.2f, mid_prc:%0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])]
     return res
   
 def round2(lst):
@@ -292,16 +292,23 @@ def tech_analyse(info,tk, df):
     sar = talib.SAREXT(high,low)
     slj = 3*slk-2*sld
     rsi = talib.RSI(close)
-    ma05 = talib.SMA(close,5)
-    ma10 = talib.SMA(close,10)
-    ma20 = talib.SMA(close,20)
-    ma240 = talib.SMA(close,240)
+    ##
+    ema05  = talib.EMA(close,5)
+    ema10  = talib.EMA(close,10)
+    ema20  = talib.EMA(close,20)
+    ema240 = talib.EMA(close,240)
+    ##
+    sma05  = talib.SMA(close,5)
+    sma10  = talib.SMA(close,10)
+    sma20  = talib.SMA(close,20)
+    sma240 = talib.SMA(close,240)    
+    ##
     atr14 = talib.ATR(high,low,close,timeperiod =14)
     atr28 = talib.ATR(high,low,close,timeperiod =28)
     pivot_point = map(lambda x:round(x[-1],2) , pivot_line(high,low,open,close) )
     name = info.get(tk,{}).get('name','')
     # name = ' '
-    idx_info = OrderedDict({'code':tk,'name':name,'price':df['close'].values[-1],'data':{}})
+    idx_info = OrderedDict({'code':tk,'name':name,'price':df['close'].values[-1],'data':OrderedDict()})
     
     data = idx_info['data']
     data['BOLL_Res'] =  boll_judge_res
@@ -311,10 +318,11 @@ def tech_analyse(info,tk, df):
     # data['KDJ'] = [slk[-1],sld[-1], slj[-1] ]
     # data['OBV'] = [ obv[-1] ]
     # data['SAR'] = [ sar[-1] ]
-    data['MA'] = round2([ ma05[-1],ma10[-1],ma20[-1],ma240[-1] ])
+    data['EMA'] = round2([ ema05[-1],ema10[-1],ema20[-1],ema240[-1] ])
+    data['SMA'] = round2([ sma05[-1],sma10[-1],sma20[-1],sma240[-1] ])
     data['VOL_Rate'] = round2([vol[-1]*1.0/vol[-2]])
-    data['ATR14'] = atr14[-1]
-    data['ATR28'] = atr28[-1]
+    data['ATR14'] = round2(list(atr14[-10::2]))
+    data['ATR28'] = round2(list(atr28[-10::2]))
     data['PIVOT'] = pivot_point
     # pdb.set_trace()
     # data['RSI'] = [rsi[-1] ]
