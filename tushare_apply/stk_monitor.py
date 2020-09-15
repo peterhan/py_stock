@@ -241,7 +241,7 @@ def to_num(s):
 def line_cross(line1,line2):
     diff = line1 - line2
 
-def boll_judge(bl_upper,bl_middle,bl_lower):
+def boll_analyse(bl_upper,bl_middle,bl_lower):
     idx = 50.0/bl_middle[-1]
     u = talib.LINEARREG_ANGLE(bl_upper*idx, timeperiod=2)
     m = talib.LINEARREG_ANGLE(bl_middle*idx,timeperiod=2)    
@@ -283,7 +283,7 @@ def tech_analyse(info,tk, df):
     vol = df['volume'].values    
     
     bl_upper, bl_middle, bl_lower = talib.BBANDS(close)
-    boll_judge_res = boll_judge(bl_upper, bl_middle, bl_lower )
+    boll_analyse_res = boll_analyse(bl_upper, bl_middle, bl_lower )
     
     macd, macdsignal, macdhist =  talib.MACD(close)
     roc = talib.ROCR(close)
@@ -308,16 +308,16 @@ def tech_analyse(info,tk, df):
     pivot_point = map(lambda x:round(x[-1],2) , pivot_line(high,low,open,close) )
     name = info.get(tk,{}).get('name','')
     # name = ' '
-    idx_info = OrderedDict({'code':tk,'name':name,'price':df['close'].values[-1],'data':OrderedDict()})
+    analyse_info = OrderedDict({'code':tk,'name':name,'price':df['close'].values[-1],'data':OrderedDict()})
     
-    data = idx_info['data']
-    data['BOLL_Res'] =  boll_judge_res
+    data = analyse_info['data']
+    data['BOLL_Res'] =  boll_analyse_res
     # data['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
     data['MACD'] = round2([ macd[-1],macdsignal[-1],macdhist[-1] ])
-    # data['ROC'] = [roc[-3],roc[-2],roc[-1] ]
-    # data['KDJ'] = [slk[-1],sld[-1], slj[-1] ]
-    # data['OBV'] = [ obv[-1] ]
-    # data['SAR'] = [ sar[-1] ]
+    data['ROC'] = [roc[-3],roc[-2],roc[-1] ]
+    data['KDJ'] = [slk[-1],sld[-1], slj[-1] ]
+    data['OBV'] = [ obv[-1] ]
+    data['SAR'] = [ sar[-1] ]
     data['EMA'] = round2([ ema05[-1],ema10[-1],ema20[-1],ema240[-1] ])
     data['SMA'] = round2([ sma05[-1],sma10[-1],sma20[-1],sma240[-1] ])
     data['VOL_Rate'] = round2([vol[-1]*1.0/vol[-2]])
@@ -326,7 +326,7 @@ def tech_analyse(info,tk, df):
     data['PIVOT'] = pivot_point
     # pdb.set_trace()
     # data['RSI'] = [rsi[-1] ]
-    return idx_info,df
+    return analyse_info,df
 
 def print_analyse_res(res):
     intro = {}
@@ -430,7 +430,10 @@ def interact_choose_ticks(mode):
     #### selected ticks
     sel_tks=set()
     for id in ticks:
-        sel_tks.update( conf_tks[id])
+        if id in conf_tks:
+            sel_tks.update( conf_tks[id])
+        else:
+            sel_tks.add( id)
     sel_tks = list(sel_tks)
     #####
     print 'Input: %s, Ticks: %s'%(ticks,','.join(sel_tks)) 

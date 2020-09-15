@@ -2,7 +2,9 @@ import pdb
 import pandas as pd
 import json
 import traceback
+import datetime,time
 from collections import OrderedDict
+
 import keyring
 from alpha_vantage.timeseries import TimeSeries
 from matplotlib import pyplot as plt
@@ -79,7 +81,8 @@ def choose_ticks(mode):
             his_df = get_ticker_df_alpha_vantage(tk,mode)
         else:
             ytk = yf.Ticker(tk)
-            his_df = ytk.history()
+            start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
+            his_df = ytk.history(start=start)
             his_df[['close','open','high','low','volume']]=his_df[['Close','Open','High','Low','Volume']]
             # pdb.set_trace()
         ndf = get_pivot(his_df)
