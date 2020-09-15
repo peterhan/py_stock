@@ -338,14 +338,14 @@ def print_analyse_res(res):
             tech = stock['tech']
             print "[{0}:{1}] Price:{2}".format(tech['code'],tech['name'].encode('gbk'),tech['price'])
             for key,vlu in tech['data'].items():
-                print ' [%s]'%key,jsdump(vlu)
+                print '  [%s]'%key,jsdump(vlu)
             
         if stock['cdl'] != None:
             cdl = stock['cdl']
             cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
             for name,info in cdl['data'].items():
                 intro[info['en_name']+info['cn_name']] = info['intro2']
-            print " [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
+            print "  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
     for name,intro in intro.items():
         print u"[{}]:{}".format(name,intro).encode('gbk')
 
