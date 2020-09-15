@@ -63,7 +63,12 @@ def choose_ticks(mode):
     ticks,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
     print ticks,flags
     for tk in ticks:
-        if 'yfinance' not in flags:
+        yfinance = False
+        if tk.split('.')[0].isdigit():
+            yfinance = True
+        if 'yfinance' in flags:
+            yfinance = True
+        if not yfinance:
             mode = 'day'
             if 'month' in flags:
                 mode='month'

@@ -379,10 +379,10 @@ def get_one_ticker_k_data(tk,info,flags):
     return {'tech':tech_info,'cdl':cdl_info}
     
     
-def cli_select_menu(dic, default_input=None, menu_width=5, column_width=25, opt_map = None):    
-    idxmap = {}
-    for i,key in enumerate(dic):
-        idxmap[i+1] = key
+def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=25, opt_map = None):    
+    select_map = {}
+    for i,key in enumerate(select_dic):
+        select_map[i+1] = key
         print ('(%s) %s'%(i+1,key)).ljust(column_width),
         if (i+1)%menu_width == 0:
             print ''
@@ -402,8 +402,13 @@ def cli_select_menu(dic, default_input=None, menu_width=5, column_width=25, opt_
             flags.append(v)
             words.remove(k)    
     try:
-        keys = [idxmap[int(word)] for word in words]     
-        return keys, flags
+        selected_keys = []
+        for word in words:
+            if len(word)<=3 and word.isdigit():
+                selected_keys.append(select_map[int(word)]) 
+            else:
+                selected_keys.append(word)
+        return selected_keys, flags
     except Exception as e:
         print(e)
         return [], flags   
