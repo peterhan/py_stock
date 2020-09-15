@@ -276,7 +276,7 @@ def pivot_line(high,low,open,close, mode='classic'):
     rm3 = (r2+r3)/2
     return r3,r2,r1,pivot,s1,s2,s3
     
-def tech_analyse(info,tk, df):    
+def tech_analyse(info, tk, df):    
     close = df['close'].values
     high = df['high'].values
     low = df['low'].values

@@ -10,6 +10,7 @@ from alpha_vantage.timeseries import TimeSeries
 from matplotlib import pyplot as plt
 import yfinance as yf
 from stk_monitor import cli_select_menu
+import talib
 
 pd.set_option('display.max_columns',80)
 
@@ -39,7 +40,7 @@ def get_ticker_df_alpha_vantage(ticker,mode='day'):
     return df
     
 def get_pivot(df):
-    ndf =  pd.DataFrame()
+    ndf =  df
     ndf['pivot']=(df['high']+df['low']+df['close']*2)/4
     ndf['r1']=  2*ndf['pivot']-df['low']
     ndf['s1']=  2*ndf['pivot']-df['high']
@@ -47,6 +48,16 @@ def get_pivot(df):
     ndf['s2']=  ndf['pivot']-ndf['r1']+ndf['s1']
     ndf['r3']=  df['high']+2*(ndf['pivot']-df['low'])
     ndf['s3']=  df['low']-2*(df['high']-ndf['pivot'])
+    ndf['sma10'] = talib.SMA(df['close'],10)
+    ndf['sma20'] = talib.SMA(df['close'],20)
+    ndf['sma30'] = talib.SMA(df['close'],30)
+    ndf['sma60'] = talib.SMA(df['close'],60)
+    ndf['sma120'] = talib.SMA(df['close'],120)
+    ndf['ema10'] = talib.EMA(df['close'],10)
+    ndf['ema20'] = talib.EMA(df['close'],20)
+    ndf['ema30'] = talib.EMA(df['close'],30)
+    ndf['ema60'] = talib.EMA(df['close'],60)
+    ndf['ema120'] = talib.EMA(df['close'],120)
     return ndf
     
 def stock_map():
@@ -66,6 +77,7 @@ def choose_ticks(mode):
     print ticks,flags
     for tk in ticks:
         yfinance = False
+        start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
         if tk.split('.')[0].isdigit():
             yfinance = True
         if 'yfinance' in flags:
@@ -80,15 +92,23 @@ def choose_ticks(mode):
                 mode='intraday'
             his_df = get_ticker_df_alpha_vantage(tk,mode)
         else:
-            ytk = yf.Ticker(tk)
-            start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
+            ytk = yf.Ticker(tk)            
             his_df = ytk.history(start=start)
             his_df[['close','open','high','low','volume']]=his_df[['Close','Open','High','Low','Volume']]
             # pdb.set_trace()
         ndf = get_pivot(his_df)
-        print his_df
-        if 'graph' in flags:
-            his_df[['close','volume']].plot(title=tk,subplots=True)
+        print his_df[['close','volume']]
+        if 'graph' in flags:           
+            fig, ax = plt.subplots(nrows=2, ncols=2, sharex=False)
+            his_df[['close','sma10','ema10','sma20','ema20','sma30','ema30']].plot(title=tk,ax= ax[0,0])
+            his_df[['volume']].plot(title=tk,ax = ax[0,1])
+            try:
+                his_df = get_ticker_df_alpha_vantage(tk,'intraday')
+                get_pivot(his_df)
+                his_df[['close','sma10','ema10','sma20','ema20','sma30','ema30']].plot(title=tk,ax= ax[1,0])
+                his_df[['volume']].plot(title=tk,ax = ax[1,1])
+            except:
+                pass
         if 'pdb' in flags:
             pdb.set_trace()
         if  'detail' in flags:
