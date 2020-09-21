@@ -100,12 +100,12 @@ def choose_ticks(mode):
         print his_df[['close','volume']]
         if 'graph' in flags:           
             fig, ax = plt.subplots(nrows=2, ncols=2, sharex=False)
-            his_df[['close','sma10','ema10','sma20','ema20','sma30','ema30']].plot(title=tk,ax= ax[0,0])
+            his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[0,0])
             his_df[['volume']].plot(title=tk,ax = ax[0,1])
             try:
                 his_df = get_ticker_df_alpha_vantage(tk,'intraday')
                 get_pivot(his_df)
-                his_df[['close','sma10','ema10','sma20','ema20','sma30','ema30']].plot(title=tk,ax= ax[1,0])
+                his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[1,0])
                 his_df[['volume']].plot(title=tk,ax = ax[1,1])
             except:
                 pass
