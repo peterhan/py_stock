@@ -171,13 +171,13 @@ def realtime_list_ticks(tks,flags):
     rdf.insert(8,'pivot',pivot)
     rdf.insert(9,'r1',r1)
     rdf.insert(10,'s1',s1)
-    rdf.insert(11,'volume',rdf.pop('volume'))
+    rdf.insert(11,'amount',rdf.pop('amount'))
     # rdf.insert(10,'s2',s2)
     # rdf.insert(16,'name',rdf.pop('name'))
     # rdf.insert(6,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
     # rdf.insert(7,'openrisevspclose',(rdf['price']-rdf['open'])/(rdf['pclose'])*100)
 
-    print rdf.loc[:,:'volume'].sort_values(by='rate',ascending=False)
+    print rdf.loc[:,:'amount'].sort_values(by='rate',ascending=False)
     
     for idx,row in rdf.iterrows():
         dc = dict(zip(row.index,row.values))
