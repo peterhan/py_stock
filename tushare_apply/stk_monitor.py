@@ -171,7 +171,7 @@ def realtime_list_ticks(tks,flags):
     rdf.insert(8,'pivot',pivot)
     rdf.insert(9,'r1',r1)
     rdf.insert(10,'s1',s1)
-    rdf.insert(11,'amount',rdf.pop('amount'))
+    rdf.insert(11,'amount',rdf.pop('amount')/100000000.0)
     # rdf.insert(10,'s2',s2)
     # rdf.insert(16,'name',rdf.pop('name'))
     # rdf.insert(6,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
@@ -491,9 +491,12 @@ def main_loop(mode):
         result = [job.value for job in jobs]
     json.dump(result,open('result.json','w'),indent=2)
     print_analyse_res(result)
-    if 'graph' in flags:        
+    if 'graph' in flags:
+        cols = len(result)
+        if cols<2:
+            cols = 2
+        fig, ax = plt.subplots(nrows=3, ncols=cols, sharex=False)
         for i,onestk in enumerate(result):
-            fig, ax = plt.subplots(nrows=3, ncols=1, sharex=False)
             tick = onestk['tech']['code']
             name = onestk['tech']['name']
             fname = FNAME_PAT_HIST%tick
@@ -504,10 +507,10 @@ def main_loop(mode):
             df['sma10']=talib.SMA(df['close'],10)
             df['ema10']=talib.EMA(df['close'],10)
             df['diff']=df['ema10']-df['sma10']
-            df[['close','sma10','ema10']].plot(title=title,ax = ax[0])
-            df[['diff']].plot(title=title,ax = ax[1])
-            df[['volume']].plot(title=title,ax = ax[2])
-            plt.show()
+            df[['close','sma10','ema10']].plot(title=title,ax = ax[0,i])
+            df[['diff']].plot(title=title,ax = ax[1,i])
+            df[['volume']].plot(title=title,ax = ax[2,i])
+        plt.show()
     
  
 def test():
