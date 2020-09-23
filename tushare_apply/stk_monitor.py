@@ -23,6 +23,8 @@ try:
 except:
     print '[Not Found gevent]'
 
+FNAME_PAT_RT = 'data/realtime.%s.csv'
+FNAME_PAT_HIST = 'data/hist.%s.csv'
 
 pd.set_option('display.max_rows',None)
 pd.set_option('display.max_columns',80)
@@ -88,9 +90,9 @@ def get_today_ticks(code=None, mkt='1', retry_count=3, pause=0.001):
 bs_type = {'1':u'买入', 
            '2': u'卖出', 
            '4': u'-'}
-    
+
 def real_time_ticks(tick,info,flags,use_cache = False):
-    fname = 'data/realtime.%s.csv'%tick
+    fname = FNAME_PAT_RT%tick
     if not use_cache:
         try:
             print 'tushare call',tick
@@ -116,8 +118,6 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     print df.corr()
     layout_dd = pd.crosstab(pd.cut(df.price,10),df.type)
     print layout_dd
-    if 'graph' in flags:
-        df[['price','vol']].plot(subplots=True,title=tick)        
     
     # df['time'] = pd.to_datetime(df['time'].apply(lambda x:' '+x))
     vcut =  pd.cut(df['volume'],5)
@@ -171,12 +171,13 @@ def realtime_list_ticks(tks,flags):
     rdf.insert(8,'pivot',pivot)
     rdf.insert(9,'r1',r1)
     rdf.insert(10,'s1',s1)
+    rdf.insert(11,'volume',rdf.pop('volume'))
     # rdf.insert(10,'s2',s2)
     # rdf.insert(16,'name',rdf.pop('name'))
     # rdf.insert(6,'openrise',(rdf['price']-rdf['open'])/(rdf['open'])*100)
     # rdf.insert(7,'openrisevspclose',(rdf['price']-rdf['open'])/(rdf['pclose'])*100)
 
-    print rdf.loc[:,:'amount'].sort_values(by='rate',ascending=False)
+    print rdf.loc[:,:'volume'].sort_values(by='rate',ascending=False)
     
     for idx,row in rdf.iterrows():
         dc = dict(zip(row.index,row.values))
@@ -361,7 +362,7 @@ def add_delta_n(df):
     return df
     
 def get_one_ticker_k_data(tk,info,flags):    
-    fname = './data/'+tk+'.csv'
+    fname =  FNAME_PAT_HIST%tk
     df = ts.get_k_data(tk)
     # add_delta_n(df)
     df.to_csv(fname,index='date')
@@ -374,12 +375,11 @@ def get_one_ticker_k_data(tk,info,flags):
     ## japanese candle pattern
     cdl_info,df = candle_analyse(df )
     # cdl_info = None
-    df.to_csv(fname)    
-    df['close'].plot(grid=True)
+    df.to_csv(fname)
     return {'tech':tech_info,'cdl':cdl_info}
     
     
-def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=25, opt_map = None):    
+def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=22, opt_map = None):    
     select_map = {}
     for i,key in enumerate(select_dic):
         select_map[i+1] = key
@@ -477,7 +477,7 @@ def main_loop(mode):
         
     if not Pool:
         for tk in the_ticks:
-            res = exec_func(tk,info)
+            result = exec_func(tk,info)
     else:
         pool = Pool(8)
         jobs = []
@@ -488,13 +488,27 @@ def main_loop(mode):
         pool.join()
         # jobs = [gevent.spawn(get_one_ticker_k_data,tk,info,flags) for tk in the_tks]
         # gevent.joinall(jobs)
-        res = [job.value for job in jobs]
-    json.dump(res,open('result.json','w'),indent=2)
-    print_analyse_res(res)
-    if 'graph' in flags:
-        plt.show()
-        
-    # raw_input("pause")
+        result = [job.value for job in jobs]
+    json.dump(result,open('result.json','w'),indent=2)
+    print_analyse_res(result)
+    if 'graph' in flags:        
+        for i,onestk in enumerate(result):
+            fig, ax = plt.subplots(nrows=3, ncols=1, sharex=False)
+            tick = onestk['tech']['code']
+            name = onestk['tech']['name']
+            fname = FNAME_PAT_HIST%tick
+            df = pd.read_csv(fname,encoding='utf8',index_col='date')
+            df = df[-50:]
+            title = '%s'%(tick)
+            df['atr']=talib.ATR(df['high'],df['low'],df['close'])
+            df['sma10']=talib.SMA(df['close'],10)
+            df['ema10']=talib.EMA(df['close'],10)
+            df['diff']=df['ema10']-df['sma10']
+            df[['close','sma10','ema10']].plot(title=title,ax = ax[0])
+            df[['diff']].plot(title=title,ax = ax[1])
+            df[['volume']].plot(title=title,ax = ax[2])
+            plt.show()
+    
  
 def test():
     ts.get_sz50s()
