@@ -111,6 +111,8 @@
     ,"stmp","kcg"
     ,"xom","vlo","oxy","ntdoy","jks"
     ,"gbtc","ethe"
+    ,"ES=F","YM=F","NQ=F","RTY=F","CL=F","GC=F","SI=F","^TNX","^VIX"
+    ,"EURUSD=X","GBPUSD=X","JPY=X","BTC-USD","^CMC200","^FTSE","^N225"
     ]
   ,"logs":[
      {"date":"2019-08-08","action":"buy","code":"518800","amount":18700,"price":3.370,"reason":"unstable news,trade war bad expectation"}

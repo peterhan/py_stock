@@ -78,7 +78,7 @@ def choose_ticks(mode):
     for tk in ticks:
         yfinance = False
         start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
-        if tk.split('.')[0].isdigit():
+        if tk.split('.')[0].isdigit() or '=' in tk or '^' in tk:
             yfinance = True
         if 'yfinance' in flags:
             yfinance = True
