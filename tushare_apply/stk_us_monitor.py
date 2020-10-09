@@ -5,7 +5,7 @@ import json
 import traceback
 import datetime,time
 from collections import OrderedDict
-
+import sys
 import keyring
 from alpha_vantage.timeseries import TimeSeries
 from matplotlib import pyplot as plt
@@ -75,8 +75,12 @@ def choose_ticks(mode):
         ,'ia':'intraday','id':'day','im':'month'}
     menu_dict = OrderedDict(zip(map(lambda x:x.upper(),conf_tks),conf_tks))
     ticks,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
-    print ticks,flags
-    for tk in ticks:
+    print 'ticks:',ticks,'flags:',flags
+    if 'quit' in flags:
+        sys.exit()
+    if 'graph' in flags:
+        fig, ax = plt.subplots(nrows=2, ncols=2*len(ticks), sharex=False)
+    for i,tk in enumerate(ticks):
         yfinance = False
         start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
         if tk.split('.')[0].isdigit() or '=' in tk or '^' in tk:
@@ -99,17 +103,16 @@ def choose_ticks(mode):
             # pdb.set_trace()
         ndf = get_pivot(his_df)
         print his_df[['close','volume']]
-        if 'graph' in flags:           
-            fig, ax = plt.subplots(nrows=2, ncols=2, sharex=False)
-            his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[0,0])
-            his_df[['volume']].plot(title=tk,ax = ax[0,1])
+        if 'graph' in flags:
+            his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[0,0+i*2])
+            his_df[['volume']].plot(title=tk,ax = ax[0,1+i*2])
             try:
                 his_df = get_ticker_df_alpha_vantage(tk,'intraday')
                 get_pivot(his_df)
-                his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[1,0])
-                his_df[['volume']].plot(title=tk,ax = ax[1,1])
+                his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[1,0+i*2])
+                his_df[['volume']].plot(title=tk,ax = ax[1,1+i*2])
             except:
-                pass
+                pass        
         if 'pdb' in flags:
             pdb.set_trace()
         if  'detail' in flags:
@@ -121,14 +124,13 @@ def choose_ticks(mode):
         else:
             info = {}
             opt = {}
-    plt.show()
+    if 'graph' in flags:
+        plt.show()
 
     
 if __name__ == '__main__':
-    while True:
-        try:
-            choose_ticks('')
-        except:
-            traceback.print_exc()    
+    while True:        
+        choose_ticks('')
+        
     
    
