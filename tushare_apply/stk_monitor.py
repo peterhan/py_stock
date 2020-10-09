@@ -492,9 +492,7 @@ def main_loop(mode):
     json.dump(result,open('result.json','w'),indent=2)
     print_analyse_res(result)
     if 'graph' in flags:
-        cols = len(result)
-        if cols<2:
-            cols = 2
+        cols = len(result)        
         fig, ax = plt.subplots(nrows=3, ncols=cols, sharex=False)
         for i,onestk in enumerate(result):
             tick = onestk['tech']['code']
@@ -507,9 +505,13 @@ def main_loop(mode):
             df['sma10']=talib.SMA(df['close'],10)
             df['ema10']=talib.EMA(df['close'],10)
             df['diff']=df['ema10']-df['sma10']
-            df[['close','sma10','ema10']].plot(title=title,ax = ax[0,i])
-            df[['diff']].plot(title=title,ax = ax[1,i])
-            df[['volume']].plot(title=title,ax = ax[2,i])
+            if cols>1:
+                aax=[ax[0,i],ax[1,i],ax[2,i]]
+            else:
+                aax=[ax[0],ax[1],ax[2]]
+            df[['close','sma10','ema10']].plot(title=title,ax = aax[0])
+            df[['diff']].plot(title=title,ax = aax[1])
+            df[['volume']].plot(title=title,ax = aax[2])
         plt.show()
     
  
