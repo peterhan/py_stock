@@ -40,8 +40,7 @@ def _random(n=13):
     start = 10**(n-1)
     end = (10**n)-1
     return str(randint(start, end))
-
-
+    
 
 def real_time_ticks(tick,info,flags,use_cache = False):
     fname = FNAME_PAT_RT%tick
@@ -87,6 +86,12 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     # quote_df = ts.get_realtime_quotes(tick) 
     # quote_df =  ts.get_today_ticks()
     # print rdf.melt()
+    # pdb.set_trace()
+    if 'graph' in flags:
+        df.pop('time')
+        df.pop('vol')
+        df.plot(subplots=True,title=tick)
+        plt.show()
     return df.to_dict()
     
 def realtime_list_ticks(tks,flags):
@@ -442,9 +447,9 @@ def main_loop(mode):
         # jobs = [gevent.spawn(get_one_ticker_k_data,tk,info,flags) for tk in the_tks]
         # gevent.joinall(jobs)
         result = [job.value for job in jobs]
-    json.dump(result,open('result.json','w'),indent=2)
+    json.dump(result,open('result.%s.json'%exec_func.func_name,'w'),indent=2)
     print_analyse_res(result)
-    if 'graph' in flags:
+    if 'graph' in flags and exec_func.func_name=='get_one_ticker_k_data':
         cols = len(result)        
         fig, ax = plt.subplots(nrows=3, ncols=cols, sharex=False)
         for i,onestk in enumerate(result):
