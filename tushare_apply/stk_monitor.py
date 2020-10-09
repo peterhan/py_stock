@@ -86,13 +86,14 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     # quote_df = ts.get_realtime_quotes(tick) 
     # quote_df =  ts.get_today_ticks()
     # print rdf.melt()
-    # pdb.set_trace()
+    if 'pdb' in flags:
+        pdb.set_trace()
     if 'graph' in flags:
         df.pop('time')
         df.pop('vol')
         df.plot(subplots=True,title=tick)
         plt.show()
-    return df.to_dict()
+    return {'tech':{'code':tick,'name':'','price':'','data':{}}}
     
 def realtime_list_ticks(tks,flags):
     if len(tks) == 0:
