@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from jsonpath_rw import jsonpath,parse
 import webbrowser
 import json
-import ipdb
+# import ipdb
 import tushare as ts
 from urllib2 import urlopen, Request
 # import jieba
