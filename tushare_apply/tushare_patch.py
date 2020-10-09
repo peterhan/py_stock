@@ -100,6 +100,8 @@ pageid="153" s_id="2517">股市</a>
 pageid="153" s_id="2518">美股</a> 
 			
 '''
+
+
 def get_latest_news(lid='2517'):
     url='https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=%s&k=2&num=50&page=1&r=%s&callback=jQuery111200%s_%s&_=%s'%(lid,_random(),_random(),int(time.time()),int(time.time()))
     #2516 fin,2517 stock,2518 US stock
@@ -137,6 +139,9 @@ def get_today_ticks(code=None, mkt='1', retry_count=3, pause=0.001):
         DataFrame 当日所有股票交易数据(DataFrame)
               属性:成交时间、成交价格、价格变动，成交手、成交金额(元)，买卖类型
     """
+    bs_type = {'1':u'买入', 
+           '2': u'卖出', 
+           '4': u'-'}
     url = 'http://push2ex.eastmoney.com/getStockFenShi?pagesize=6644&ut=7eea3edcaed734bea9cbfc24409ed989&dpt=wzfscj&pageindex=0&id=%s&sort=1&ft=1&code=%s&market=%s&_=%s'
     for _ in range(retry_count):
         time.sleep(pause)
@@ -162,7 +167,7 @@ def get_today_ticks(code=None, mkt='1', retry_count=3, pause=0.001):
             print(e)
         else:
             return df
-    raise IOError(ct.NETWORK_URL_ERROR_MSG)
+    raise IOError("ct.NETWORK_URL_ERROR_MSG")
     
 if __name__=='__main__':
     headmark()

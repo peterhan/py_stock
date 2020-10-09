@@ -43,10 +43,6 @@ def _random(n=13):
 
 
 
-bs_type = {'1':u'买入', 
-           '2': u'卖出', 
-           '4': u'-'}
-
 def real_time_ticks(tick,info,flags,use_cache = False):
     fname = FNAME_PAT_RT%tick
     if not use_cache:
@@ -91,7 +87,7 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     # quote_df = ts.get_realtime_quotes(tick) 
     # quote_df =  ts.get_today_ticks()
     # print rdf.melt()
-    return df
+    return df.to_dict()
     
 def realtime_list_ticks(tks,flags):
     if len(tks) == 0:
@@ -119,8 +115,8 @@ def realtime_list_ticks(tks,flags):
     r3,r2,r1,pivot,s1,s2,s3 = pivot_line(rdf['high'],rdf['low'],rdf['open'],rdf['pclose'])
     rdf.insert(0,'code',rdf.pop('code'))
     rdf.insert(1,'op_gp',(rdf['open']-rdf['pclose'])/(rdf['open'])*100)
-    rdf.insert(2,'mx_up',(rdf['high']-rdf['open'])/(rdf['open'])*100)
-    rdf.insert(3,'mx_dwn',(rdf['low']-rdf['open'])/(rdf['open'])*100)
+    rdf.insert(2,'mx_up',(rdf['high']-rdf['pclose'])/(rdf['pclose'])*100)
+    rdf.insert(3,'mx_dwn',(rdf['low']-rdf['pclose'])/(rdf['pclose'])*100)
     rdf.insert(4,'bunc',(rdf['price']-rdf['low'])/(rdf['high']-rdf['low'])*100)
     rdf.insert(5,'rate',(rdf['price']-rdf['pclose'])/(rdf['pclose'])*100)
     # rdf.insert(5,'r2',r2)
@@ -292,13 +288,13 @@ def print_analyse_res(res):
         if stock is None:
             continue
         
-        if stock['tech'] != None:
+        if 'tech' in stock and stock['tech'] != None:
             tech = stock['tech']
             print "[{0}:{1}] Price:{2}".format(tech['code'],tech['name'],tech['price'])
             for key,vlu in tech['data'].items():
                 print '  [%s]'%key,jsdump(vlu)
             
-        if stock['cdl'] != None:
+        if 'cdl' in stock and stock['cdl'] != None:
             cdl = stock['cdl']
             cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
             for name,info in cdl['data'].items():
