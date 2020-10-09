@@ -1,6 +1,4 @@
 #!coding:utf8
-# import pdb
-
 import sys
 import tushare as ts
 import pandas as pd
@@ -53,7 +51,7 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     fname = FNAME_PAT_RT%tick
     if not use_cache:
         try:
-            print 'tushare call',tick
+            print '[tushare call]',tick
             df = get_today_ticks(tick,mkt =get_mkt(tick))
             # dt=datetime.datetime.now().strftime('%Y-%m-%d')
             # print dt
@@ -153,7 +151,7 @@ def realtime_list_ticks(tks,flags):
 
 
 def jsdump(info, indent=None):
-    return json.dumps(info, ensure_ascii=False, indent=indent).encode('gbk')    
+    return json.dumps(info, ensure_ascii=False, indent=indent)
     
 def load_ta_pat_map():
     return json.load(open('talib_pattern_name.json'))
@@ -296,7 +294,7 @@ def print_analyse_res(res):
         
         if stock['tech'] != None:
             tech = stock['tech']
-            print "[{0}:{1}] Price:{2}".format(tech['code'],tech['name'].encode('gbk'),tech['price'])
+            print "[{0}:{1}] Price:{2}".format(tech['code'],tech['name'],tech['price'])
             for key,vlu in tech['data'].items():
                 print '  [%s]'%key,jsdump(vlu)
             
@@ -305,9 +303,9 @@ def print_analyse_res(res):
             cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
             for name,info in cdl['data'].items():
                 intro[info['en_name']+info['cn_name']] = info['intro2']
-            print "  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode('gbk'))
+            print "  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str )
     for name,intro in intro.items():
-        print u"[{}]:{}".format(name,intro).encode('gbk')
+        print u"[{}]:{}".format(name,intro) 
 
 def add_delta_n(df):
     for i in [1,3,5,10,20,30,60,90]:

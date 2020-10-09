@@ -1,3 +1,4 @@
+#!coding:utf8
 import pdb 
 import pandas as pd
 import json
