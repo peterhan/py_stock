@@ -12,7 +12,7 @@ import pdb
 import traceback
 from collections import OrderedDict
 from matplotlib import pyplot as plt
-from stock_latest_news import get_latest_news  
+from tushare_patch import get_latest_news,get_today_ticks
 
 try:    
     import gevent
@@ -43,49 +43,7 @@ def _random(n=13):
     end = (10**n)-1
     return str(randint(start, end))
 
-from urllib2 import urlopen, Request
-def get_today_ticks(code=None, mkt='1', retry_count=3, pause=0.001):
-    """
-        获取分笔数据
-    Parameters
-    ------
-        code:string
-                  股票代码 e.g. 600848
-                  如遇网络等问题重复执行的次数
-        pause : int, 默认 0
-                 重复请求数据过程中暂停的秒数，防止请求间隔时间太短出现的问题
-        src : 数据源选择，可输入sn(新浪)、tt(腾讯)、nt(网易)，默认sn
-     return
-     -------
-        DataFrame 当日所有股票交易数据(DataFrame)
-              属性:成交时间、成交价格、价格变动，成交手、成交金额(元)，买卖类型
-    """
-    url = 'http://push2ex.eastmoney.com/getStockFenShi?pagesize=6644&ut=7eea3edcaed734bea9cbfc24409ed989&dpt=wzfscj&pageindex=0&id=%s&sort=1&ft=1&code=%s&market=%s&_=%s'
-    for _ in range(retry_count):
-        time.sleep(pause)
-        try:
-            rurl =  url%(code, code, mkt, _random())
-            # print(rurl)
-            re = Request(rurl)            
-            lines = urlopen(re, timeout=10).read()
-#             if ct.PY3:
-#                 lines = lines.decode('GBK') 
-            lines = json.loads(lines)
-            lines = lines['data']['data']
-            df = pd.DataFrame(lines)   
-            df = df.rename(columns={'t': 'time', 'p': 'price', 'v': 'vol', 'bs': 'type'})
-            df = df[['time', 'price', 'vol', 'type']]
-            df['price'] = df['price'].map(lambda x: x*1.0/1000)
-            df['type'] = df['type'].map(lambda x: bs_type[str(x)])
-            df['time'] = df['time'].map(lambda x: str(x).zfill(6))
-        except Exception as e:
-            import traceback,pdb
-            traceback.print_exc()
-            # pdb.set_trace()
-            print(e)
-        else:
-            return df
-    raise IOError(ct.NETWORK_URL_ERROR_MSG)
+
 
 bs_type = {'1':u'买入', 
            '2': u'卖出', 
@@ -135,6 +93,7 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     # quote_df = ts.get_realtime_quotes(tick) 
     # quote_df =  ts.get_today_ticks()
     # print rdf.melt()
+    return df
     
 def realtime_list_ticks(tks,flags):
     if len(tks) == 0:
