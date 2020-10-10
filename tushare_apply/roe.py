@@ -15,7 +15,10 @@ def fetch_to_csv(ystart,yend,qend):
             qend=5
         for q in range(1,qend):
             print '\n',y,q
-            rdf = get_p_df(y,q)
+            try:
+                rdf = get_p_df(y,q)
+            except:
+                continue
             if df is None:
                 df = rdf
             else:
@@ -23,8 +26,10 @@ def fetch_to_csv(ystart,yend,qend):
                 
     df.to_csv('roe_5y.csv',encoding='utf8')
 
-def analyze():
+def analyze_roe():
     df = pd.read_csv('roe_5y.csv',encoding='utf8')
+    print df.columns
     
 if __name__ == '__main__':
-    fetch_to_csv(2015,2020,2)
+    # fetch_to_csv(2015,2020,2)
+    analyze_roe()
