@@ -66,13 +66,14 @@ def stock_map():
     "https://finviz.com/api/map_perf.ashx?t=sec"
     return 
     
-def choose_ticks(mode):
+def us_main_loop(mode):
     fname = 'stk_monitor.json'
     conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
     conf_tks = conf_tks['yf_tks']
     opt_map = {'q':'quit','d':'detail','i':'pdb','s':'onestock','n':'news','r':'realtime'
         ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'g':"graph"
-        ,'ia':'intraday','id':'day','im':'month'}
+        ,'ia':'intraday','id':'day','im':'month'
+        ,'u':'us','z':'zh'}
     menu_dict = OrderedDict(zip(map(lambda x:x.upper(),conf_tks),conf_tks))
     ticks,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
     print 'ticks:',ticks,'flags:',flags
@@ -125,12 +126,17 @@ def choose_ticks(mode):
             info = {}
             opt = {}
     if 'graph' in flags:
-        plt.show()
+        plt.show()    
+    return flags
 
     
 if __name__ == '__main__':
-    while True:        
-        choose_ticks('')
+    while 1:        
+        try:
+            us_main_loop('')
+        except Exception as e:
+            print e
+            
         
     
    

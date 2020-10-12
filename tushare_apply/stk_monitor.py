@@ -12,6 +12,7 @@ from collections import OrderedDict
 from matplotlib import pyplot as plt
 from tushare_patch import get_latest_news,get_today_ticks
 
+
 try:    
     import gevent
     from gevent import monkey
@@ -23,6 +24,7 @@ except:
 
 FNAME_PAT_RT = 'data/realtime.%s.csv'
 FNAME_PAT_HIST = 'data/hist.%s.csv'
+ECODE='gbk'
 
 pd.set_option('display.max_rows',None)
 pd.set_option('display.max_columns',80)
@@ -296,7 +298,7 @@ def print_analyse_res(res):
         
         if 'tech' in stock and stock['tech'] != None:
             tech = stock['tech']
-            print "[{0}:{1}] Price:{2}".format(tech['code'],tech['name'],tech['price'])
+            print "[{0}:{1}] Price:{2}".format(tech['code'],tech['name'].encode(ECODE),tech['price'])
             for key,vlu in tech['data'].items():
                 print '  [%s]'%key,jsdump(vlu)
             
@@ -305,7 +307,7 @@ def print_analyse_res(res):
             cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
             for name,info in cdl['data'].items():
                 intro[info['en_name']+info['cn_name']] = info['intro2']
-            print "  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str )
+            print "  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(ECODE) )
     for name,intro in intro.items():
         print u"[{}]:{}".format(name,intro) 
 
@@ -338,8 +340,10 @@ def get_one_ticker_k_data(tk,info,flags):
     return {'tech':tech_info,'cdl':cdl_info}
     
     
+
 def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=22, opt_map = None):    
     select_map = {}
+    flags = set()
     for i,key in enumerate(select_dic):
         select_map[i+1] = key
         print ('(%s) %s'%(i+1,key)).ljust(column_width),
@@ -350,16 +354,17 @@ def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=2
         this_input = raw_input('SEL>')
     else:
         this_input = default_input
-    words = this_input.strip().replace(',',' ').replace('  ',' ').split(' ')
-    flags = []
+    words = this_input.strip().replace(',',' ').replace('  ',' ').split(' ')    
     if opt_map is None:
         opt_map = {'q':'quit','d':'detail','i':'pdb'
         ,'s':'onestock','n':'news'
-        ,'r':'realtime','f':'fullname','g':'graph'}
+        ,'r':'realtime','f':'fullname','g':'graph','u':'us','z':'zh'}
+    
     for k,v in opt_map.items():
         if k in words:
-            flags.append(v)
+            flags.add(v)
             words.remove(k)    
+          
     try:
         selected_keys = []
         for word in words:
@@ -419,7 +424,7 @@ def interact_choose_ticks(mode):
     return the_ticks, info, flags
 
   
-def main_loop(mode):
+def zh_main_loop(mode):
     the_ticks, info, flags = interact_choose_ticks(mode)       
     # print the_ticks
     # print info
@@ -433,7 +438,7 @@ def main_loop(mode):
         print df.loc[:,['title','keywords','time']]
     elif 'quit' in flags:
         sys.exit()
-        
+      
     if not Pool:
         for tk in the_ticks:
             result = exec_func(tk,info)
@@ -472,6 +477,7 @@ def main_loop(mode):
             df[['diff']].plot(title=title,ax = aax[1])
             df[['volume']].plot(title=title,ax = aax[2])
         plt.show()
+    return flags
     
  
 def test():
@@ -496,5 +502,16 @@ def test():
     
 if __name__ == '__main__':    
     mode = sys.argv
-    while 1:        
-        main_loop(mode)
+    main_loop = zh_main_loop
+    from stk_us_monitor import us_main_loop   
+    flags = set()
+    while 1:
+        print 'MENU_FLAG:',flags
+        if 'us' in flags:            
+            main_loop = us_main_loop
+        if 'zh' in flags:        
+            main_loop = zh_main_loop  
+        try:
+            flags = main_loop(mode)
+        except Exception as e:
+            print e
