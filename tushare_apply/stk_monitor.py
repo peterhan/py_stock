@@ -68,7 +68,7 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     # print df.groupby('type').agg({'volume':'sum','price':'mean','change':'count'})
     # print str(df.groupby(['change']).agg({'volume':'sum','price':'mean'}))
     
-    print df.corr()
+    # print df.corr()
     layout_dd = pd.crosstab(pd.cut(df.price,10),df.type)
     print layout_dd
     
@@ -76,13 +76,13 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     vcut =  pd.cut(df['volume'],5)
     # ccut =  pd.cut(df['change'],5)    
     tcut =  pd.cut(df['time'],5)
-    df['type'].astype('category')
+    # df['type'].astype('category')
     print pd.crosstab( vcut,df['type'])
     # print pd.crosstab( ccut,df['type'])
     # print pd.crosstab( ccut,vcut)
-    print pd.crosstab( tcut,vcut)
+    # print pd.crosstab( tcut,vcut)
     # print pd.crosstab( tcut,ccut)
-    print pd.crosstab( tcut,df['type'])
+    # print pd.crosstab( tcut,df['type'])
     # print df.describe()
     # df3 = ts.get_hist_data(tick)
     # quote_df = ts.get_realtime_quotes(tick) 
@@ -122,10 +122,10 @@ def realtime_list_ticks(tks,flags):
     rdf.index.name = 'id'
     r3,r2,r1,pivot,s1,s2,s3 = pivot_line(rdf['high'],rdf['low'],rdf['open'],rdf['pclose'])
     rdf.insert(0,'code',rdf.pop('code'))
-    rdf.insert(1,'op_gp',(rdf['open']-rdf['pclose'])/(rdf['open'])*100)
+    rdf.insert(1,'op_gp',(rdf['open']-rdf['pclose'])/(rdf['pclose'])*100)
     rdf.insert(2,'mx_up',(rdf['high']-rdf['pclose'])/(rdf['pclose'])*100)
-    rdf.insert(3,'mx_dwn',(rdf['low']-rdf['pclose'])/(rdf['pclose'])*100)
-    rdf.insert(4,'bunc',(rdf['price']-rdf['low'])/(rdf['high']-rdf['low'])*100)
+    rdf.insert(3,'mx_dn',(rdf['low']-rdf['pclose'])/(rdf['pclose'])*100)
+    rdf.insert(4,'bunce',(rdf['price']-rdf['low'])/(rdf['high']-rdf['low'])*100)
     rdf.insert(5,'rate',(rdf['price']-rdf['pclose'])/(rdf['pclose'])*100)
     # rdf.insert(5,'r2',r2)
     rdf.insert(6,'price',rdf.pop('price'))
@@ -358,7 +358,10 @@ def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=2
     if opt_map is None:
         opt_map = {'q':'quit','d':'detail','i':'pdb'
         ,'s':'onestock','n':'news'
-        ,'r':'realtime','f':'fullname','g':'graph','u':'us','z':'zh'}
+        ,'top':'top','inst':'inst'
+        ,'r':'realtime','f':'fullname','g':'graph'
+        ,'u':'us','z':'zh'
+        }
     
     for k,v in opt_map.items():
         if k in words:
@@ -436,6 +439,15 @@ def zh_main_loop(mode):
     elif 'news' in flags :
         df = get_latest_news()       
         print df.loc[:,['title','keywords','time']]
+    elif 'top' in flags:
+        df = ts.top_list()       
+        print df.sort_values('amount',ascending=False)
+    elif 'inst' in flags:
+        df = ts.inst_tops()
+        print df.sort_values('net',ascending=False)
+        raw_input('pause')
+        df = ts.inst_detail()
+        print df.sort_values('bamount',ascending=False)
     elif 'quit' in flags:
         sys.exit()
       
@@ -497,8 +509,8 @@ def test():
     ts.top_list() #每日龙虎榜列表 
     ts.cap_tops()  #个股上榜统计
     ts.broker_tops()  #营业部上榜统计
-    ts.inst_tops() 
-    ts.inst_detail()
+    ts.inst_tops() # 获取机构席位追踪统计数据
+    ts.inst_detail() 
     
 if __name__ == '__main__':    
     mode = sys.argv
