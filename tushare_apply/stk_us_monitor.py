@@ -67,13 +67,15 @@ def stock_map():
     return 
     
 def us_main_loop(mode):
-    fname = 'stk_monitor.json'
+    fname = 'stk_monitor.v01.json'
     conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
     conf_tks = conf_tks['yf_tks']
-    opt_map = {'q':'quit','d':'detail','i':'pdb','s':'onestock','n':'news','r':'realtime'
+    opt_map = {
+        'q':'quit','d':'detail','i':'pdb'
+        ,'s':'onestock','n':'news','r':'realtime'
         ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'g':"graph"
-        ,'ia':'intraday','id':'day','im':'month'
-        ,'u':'us','z':'zh'}
+        ,'ia':'intraday','id':'day','im':'month','u':'us','z':'zh'
+    }
     menu_dict = OrderedDict(zip(map(lambda x:x.upper(),conf_tks),conf_tks))
     ticks,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
     print 'ticks:',ticks,'flags:',flags

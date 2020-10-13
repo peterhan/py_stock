@@ -379,7 +379,7 @@ def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=2
 
         
 def interact_choose_ticks(mode):
-    fname = 'stk_monitor.json'
+    fname = 'stk_monitor.v01.json'
     conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
     conf_tks = split_stocks(conf_tks['ticks'])
     all = reduce(lambda x,y:x+y, conf_tks.values(),[])
@@ -506,7 +506,7 @@ if __name__ == '__main__':
     from stk_us_monitor import us_main_loop   
     flags = set()
     while 1:
-        print 'MENU_FLAG:',flags
+        # print 'MENU_FLAG:',flags
         if 'us' in flags:            
             main_loop = us_main_loop
         if 'zh' in flags:        
