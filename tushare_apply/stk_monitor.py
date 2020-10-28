@@ -209,13 +209,13 @@ def boll_analyse(bl_upper,bl_middle,bl_lower):
     m = talib.LINEARREG_ANGLE(bl_middle*idx,timeperiod=2)    
     l = talib.LINEARREG_ANGLE(bl_lower*idx, timeperiod=2)
     if m[-1]>=0:
-        res = ['Up']
+        res = ['UP']
     else:
-        res = ['Down']
+        res = ['DOWN']
     if u[-1]-m[-1]>=0:
-        res[0] += '-Expand'
+        res[0] += '-EXPAND'
     else:
-        res[0] += '-Shrink'
+        res[0] += '-SHRINK'
     res += ['mid_ang:%0.2f, up_ang:%0.2f, mid_prc:%0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])]
     return res
   
@@ -258,11 +258,13 @@ def tech_analyse(info, tk, df):
     ema05  = talib.EMA(close,5)
     ema10  = talib.EMA(close,10)
     ema20  = talib.EMA(close,20)
+    ema60  = talib.EMA(close,60)
     ema240 = talib.EMA(close,240)
     ##
     sma05  = talib.SMA(close,5)
     sma10  = talib.SMA(close,10)
     sma20  = talib.SMA(close,20)
+    sma60  = talib.SMA(close,60)
     sma240 = talib.SMA(close,240)    
     ##
     atr14 = talib.ATR(high,low,close,timeperiod =14)
@@ -280,8 +282,8 @@ def tech_analyse(info, tk, df):
     data['KDJ'] = [slk[-1],sld[-1], slj[-1] ]
     data['OBV'] = [ obv[-1] ]
     data['SAR'] = [ sar[-1] ]
-    data['EMA'] = round2([ ema05[-1],ema10[-1],ema20[-1],ema240[-1] ])
-    data['SMA'] = round2([ sma05[-1],sma10[-1],sma20[-1],sma240[-1] ])
+    data['EMA'] = round2([ ema05[-1],ema10[-1],ema20[-1],ema60[-1],ema240[-1] ])
+    data['SMA'] = round2([ sma05[-1],sma10[-1],sma20[-1],sma60[-1],sma240[-1] ])
     data['VOL_Rate'] = round2([vol[-1]*1.0/vol[-2]])
     data['ATR14'] = round2(list(atr14[-10::2]))
     data['ATR28'] = round2(list(atr28[-10::2]))
@@ -384,7 +386,7 @@ def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=2
 def interact_choose_ticks(mode):
     fname = 'stk_monitor.v01.json'
     conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
-    conf_tks = split_stocks(conf_tks['ticks'])
+    conf_tks = split_stocks(conf_tks['cn-ticks'])
     all = reduce(lambda x,y:x+y, conf_tks.values(),[])
     all = set(all)
     all.remove("")
