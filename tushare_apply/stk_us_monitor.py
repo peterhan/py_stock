@@ -59,8 +59,8 @@ def add_analyse_columns(df):
     ndf['ema30'] = talib.EMA(df['close'],30)
     ndf['ema60'] = talib.EMA(df['close'],60)
     ndf['ema120'] = talib.EMA(df['close'],120)
-    ndf['pchange'] = df['close'].pct_change()
-    ndf['vchange'] = df['volume'].pct_change()
+    ndf['pchange'] = df['close'].pct_change()*100
+    ndf['vchange'] = df['volume'].pct_change()*100
     return ndf
     
 def stock_map():
@@ -87,7 +87,7 @@ def us_main_loop(mode):
     if 'quit' in flags:
         sys.exit()
     if 'graph' in flags:
-        fig, ax = plt.subplots(nrows=2, ncols=2*len(ticks), sharex=False)
+        fig, ax = plt.subplots(nrows=2, ncols=2*len(s_ticks), sharex=False)
     for i,tk in enumerate(s_ticks):
         yfinance = True
         start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
