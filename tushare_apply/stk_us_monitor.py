@@ -40,7 +40,7 @@ def get_ticker_df_alpha_vantage(ticker,mode='day'):
     # print ndf
     return df
     
-def get_pivot(df):
+def add_analyse_columns(df):
     ndf =  df
     ndf['pivot']=(df['high']+df['low']+df['close']*2)/4
     ndf['r1']=  2*ndf['pivot']-df['low']
@@ -59,6 +59,8 @@ def get_pivot(df):
     ndf['ema30'] = talib.EMA(df['close'],30)
     ndf['ema60'] = talib.EMA(df['close'],60)
     ndf['ema120'] = talib.EMA(df['close'],120)
+    ndf['pchange'] = df['close'].pct_change()
+    ndf['vchange'] = df['volume'].pct_change()
     return ndf
     
 def stock_map():
@@ -68,28 +70,31 @@ def stock_map():
     
 def us_main_loop(mode):
     fname = 'stk_monitor.v01.json'
-    conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
-    conf_tks = conf_tks['yf_tks']
+    conf_ticks = json.load(open(fname), object_pairs_hook=OrderedDict)
+    conf_ticks = conf_ticks['us-ticks']
     opt_map = {
         'q':'quit','d':'detail','i':'pdb'
         ,'s':'onestock','n':'news','r':'realtime'
-        ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'g':"graph"
-        ,'ia':'intraday','id':'day','im':'month','u':'us','z':'zh'
+        ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'v':"vantage"
+        ,'g':"graph",'ia':'intraday','id':'day','im':'month','u':'us','z':'zh'
     }
-    menu_dict = OrderedDict(zip(map(lambda x:x.upper(),conf_tks),conf_tks))
+    menu_dict = conf_ticks
     ticks,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
-    print 'ticks:',ticks,'flags:',flags
+    s_ticks = []
+    for tk in ticks:
+        s_ticks.extend(conf_ticks[tk].split())    
+    print 'ticks:',s_ticks,'flags:',flags
     if 'quit' in flags:
         sys.exit()
     if 'graph' in flags:
         fig, ax = plt.subplots(nrows=2, ncols=2*len(ticks), sharex=False)
-    for i,tk in enumerate(ticks):
-        yfinance = False
+    for i,tk in enumerate(s_ticks):
+        yfinance = True
         start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
         if tk.split('.')[0].isdigit() or '=' in tk or '^' in tk:
             yfinance = True
-        if 'yfinance' in flags:
-            yfinance = True
+        if 'vantage' in flags:
+            yfinance = False
         if not yfinance:
             mode = 'day'
             if 'month' in flags:
@@ -102,16 +107,18 @@ def us_main_loop(mode):
         else:
             ytk = yf.Ticker(tk)            
             his_df = ytk.history(start=start)
-            his_df[['close','open','high','low','volume']]=his_df[['Close','Open','High','Low','Volume']]
-            # pdb.set_trace()
-        ndf = get_pivot(his_df)
-        print his_df[['close','volume']]
+            his_df = his_df.rename(columns={'Close':'close','Open':'open','High':'high','Low':'low','Volume':'volume'})
+        if 'pdb' in flags:            
+            pdb.set_trace()
+        ndf = add_analyse_columns(his_df)
+        ndf['code']=tk
+        print ndf[['code','close','volume','pchange','vchange']].tail(5)
         if 'graph' in flags:
             his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[0,0+i*2])
             his_df[['volume']].plot(title=tk,ax = ax[0,1+i*2])
             try:
                 his_df = get_ticker_df_alpha_vantage(tk,'intraday')
-                get_pivot(his_df)
+                add_analyse_columns(his_df)
                 his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[1,0+i*2])
                 his_df[['volume']].plot(title=tk,ax = ax[1,1+i*2])
             except:
@@ -137,7 +144,7 @@ if __name__ == '__main__':
         try:
             us_main_loop('')
         except Exception as e:
-            print e
+            traceback.print_exc()
             
         
     
