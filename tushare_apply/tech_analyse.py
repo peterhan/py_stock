@@ -1,5 +1,7 @@
 import json
 import talib 
+import pandas as pd
+import pdb
 from collections import OrderedDict
 
 def load_ta_pat_map():
@@ -12,15 +14,17 @@ def candle_analyse(df):
     input:OHLC dataframe
     '''
     cn_names = []
+    ## calc all candle score
     for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
         func = getattr(talib,funcname) 
-        ohlc_data = func(df['open'],df['high'],df['low'],df['close'])
+        score_data = func(df['open'],df['high'],df['low'],df['close'])
         cn_name = funcname[3:]        
-        df[cn_name] = ohlc_data
+        df[cn_name] = score_data
         cn_names.append(cn_name)
+    
+    ###
     total_cdl_score = df[cn_names].sum(axis=1)
     df['CDLScore'] =  total_cdl_score
-    
     cdl_info = {'cdl_total' : '%s'% (total_cdl_score.values[-1]),'data':{} }
     last_cdlrow = df.iloc[-1]
     for name,cdl_vlu in last_cdlrow.iteritems():        
@@ -35,23 +39,6 @@ def candle_analyse(df):
     # print jsdump(cdl_info)
     return cdl_info,df
     
-def boll_analyse(bl_upper,bl_middle,bl_lower):
-    idx = 50.0/bl_middle[-1]
-    u = talib.LINEARREG_ANGLE(bl_upper*idx, timeperiod=2)
-    m = talib.LINEARREG_ANGLE(bl_middle*idx,timeperiod=2)    
-    l = talib.LINEARREG_ANGLE(bl_lower*idx, timeperiod=2)
-    if m[-1]>=0:
-        res = ['UP']
-    else:
-        res = ['DOWN']
-    if u[-1]-m[-1]>=0:
-        res[0] += '-EXPAND'
-    else:
-        res[0] += '-SHRINK'
-    res += ['mid_ang:%0.2f, up_ang:%0.2f, mid_prc:%0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])]
-    return res
- 
-
 def pivot_line(high,low,open,close, mode='classic'):
     pivot = (high + low + 2* close )/4
     r1 = pivot*2 - low 
@@ -68,20 +55,51 @@ def pivot_line(high,low,open,close, mode='classic'):
     rm3 = (r2+r3)/2
     return r3,r2,r1,pivot,s1,s2,s3    
     
-def tech_analyse( df):    
+def boll_analyse(ohlcv):
+    boll_up, boll_mid, boll_low = talib.BBANDS(ohlcv['close'])
+    df = pd.DataFrame({'boll_up': boll_up, 'boll_mid':boll_mid, 'boll_low':boll_low })    
+    idx = 50.0/boll_mid[-1]
+    u = talib.LINEARREG_ANGLE(boll_up*idx, timeperiod=2)
+    m = talib.LINEARREG_ANGLE(boll_mid*idx,timeperiod=2)    
+    l = talib.LINEARREG_ANGLE(boll_low*idx, timeperiod=2)
+    if m[-1]>=0:
+        res = ['UP']
+    else:
+        res = ['DOWN']
+    if u[-1]-m[-1]>=0:
+        res[0] += '-EXPAND'
+    else:
+        res[0] += '-SHRINK'
+    res += ['ANG(MID:%0.2f, UP:%0.2f), MID_PRC:%0.2f'%(m[-1], u[-1]-m[-1], boll_mid[-1])]
+    return res,df
+    
+def macd_analyse(ohlcv):
+    dif, dea, hist =  talib.MACD(ohlcv['close'])    
+    df = pd.DataFrame({'macd_dif': dif, 'macd_dea':dea, 'macd_hist':hist })    
+    # pdb.set_trace()
+    res = ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(dif[-1],dea[-1],hist[-1]*2)]    
+    return res,df
+     
+def tech_analyse(df):    
     '''
     input:OHLC dataframe
     '''
-    close = df['close'].values
+    open = df['open'].values
     high = df['high'].values
     low = df['low'].values
-    vol = df['volume'].values    
+    close = df['close'].values
+    vol = df['volume'].values
+    ohlcv= {'open':open,'high':high,'low':low,'close':close,'vol':vol}
+    
     ana_res = OrderedDict()
     
-    bl_upper, bl_middle, bl_lower = talib.BBANDS(close)
-    boll_analyse_res = boll_analyse(bl_upper, bl_middle, bl_lower )
+    
     ##
-    macd, macdsignal, macdhist =  talib.MACD(close)
+    boll_anly_res,bdf = boll_analyse(ohlcv)
+    df= pd.concat([df,bdf],axis=1)
+    ##
+    macd_anly_res,mdf = macd_analyse(ohlcv)
+    df= pd.concat([df,mdf],axis=1)
     ##
     roc = talib.ROCR(close)
     ##
@@ -113,9 +131,9 @@ def tech_analyse( df):
     # name = ' '
     analyse_info = OrderedDict({'price':df['close'].values[-1]})
     
-    ana_res['BOLL_Res'] =  boll_analyse_res
+    ana_res['BOLL'] =  boll_anly_res
     # ana_res['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
-    ana_res['MACD'] = round_float([ macd[-1],macdsignal[-1],macdhist[-1] ])
+    ana_res['MACD'] = macd_anly_res
     ana_res['ROC'] = round_float([roc[-3],roc[-2],roc[-1]  ])
     ana_res['KDJ'] = round_float([slk[-1],sld[-1], slj[-1] ])
     ana_res['RSI'] = round_float([ rsi[-1] ])
@@ -138,12 +156,18 @@ def round_float(lst):
  
 def test():
     import tushare as ts
-    import pdb
-    df = ts.get_hist_data('002409')
-    pdb.set_trace()
-    candle_analyse(df)
-    tech_analyse(df)
     
+    def pprint(info, indent=None):
+        print json.dumps(info, ensure_ascii=False, indent=2).encode('gbk')
+    
+    df = ts.get_hist_data('002409')
+    df = df.sort_values('date')
+    # pdb.set_trace()
+    tinfo,df = tech_analyse(df)
+    pprint(tinfo)
+    print df.to_csv('test.csv')
+    # cinfo,df = candle_analyse(df)
+    # pprint(cinfo)
     
 if __name__ == '__main__':
     test()
