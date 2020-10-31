@@ -11,7 +11,7 @@ import traceback
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 from tushare_patch import get_latest_news,get_today_ticks
-
+from tech_analyse import tech_analyse,candle_analyse,pivot_line
 
 try:    
     import gevent
@@ -24,7 +24,6 @@ except:
 
 FNAME_PAT_RT = 'data/realtime.%s.csv'
 FNAME_PAT_HIST = 'data/hist.%s.csv'
-ECODE='gbk'
 
 pd.set_option('display.max_rows',None)
 pd.set_option('display.max_columns',80)
@@ -153,40 +152,6 @@ def realtime_list_ticks(tks,flags):
     # print ttdf[ttdf.volume>=100].groupby(ttdf.type).sum()
     return info
 
-
-def jsdump(info, indent=None):
-    return json.dumps(info, ensure_ascii=False, indent=indent)
-    
-def load_ta_pat_map():
-    return json.load(open('talib_pattern_name.json'))
-
-
-TA_PATTERN_MAP = load_ta_pat_map()
- 
-def candle_analyse(df):
-    cn_names = []
-    for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
-        func = getattr(talib,funcname) 
-        ohlc_data = func(df['open'],df['high'],df['low'],df['close'])
-        cn_name = funcname[3:]        
-        df[cn_name] = ohlc_data
-        cn_names.append(cn_name)
-    total_cdl_score = df[cn_names].sum(axis=1)
-    df['CDLScore'] =  total_cdl_score
-    
-    cdl_info = {'cdl_total' : '%s'% (total_cdl_score.values[-1]),'data':{} }
-    last_cdlrow = df.iloc[-1]
-    for name,cdl_vlu in last_cdlrow.iteritems():        
-        if cdl_vlu != 0 and name in TA_PATTERN_MAP:
-            the_info = TA_PATTERN_MAP[name]
-            fig = the_info['figure'].split(' ')[1]
-            cn_name = the_info['name'].split(' ')[0]
-            en_name = the_info['name'].split(' ')[1]
-            intro = the_info['intro']
-            intro2 = the_info['intro2']
-            cdl_info['data'][name] = {'figure':fig,'score':cdl_vlu,'cn_name':cn_name,'intro':intro,'intro2':intro2,'en_name':en_name}
-    # print jsdump(cdl_info)
-    return cdl_info,df
     
 def split_stocks(tks):
     ntks = OrderedDict()
@@ -203,115 +168,6 @@ def to_num(s):
 def line_cross(line1,line2):
     diff = line1 - line2
 
-def boll_analyse(bl_upper,bl_middle,bl_lower):
-    idx = 50.0/bl_middle[-1]
-    u = talib.LINEARREG_ANGLE(bl_upper*idx, timeperiod=2)
-    m = talib.LINEARREG_ANGLE(bl_middle*idx,timeperiod=2)    
-    l = talib.LINEARREG_ANGLE(bl_lower*idx, timeperiod=2)
-    if m[-1]>=0:
-        res = ['UP']
-    else:
-        res = ['DOWN']
-    if u[-1]-m[-1]>=0:
-        res[0] += '-EXPAND'
-    else:
-        res[0] += '-SHRINK'
-    res += ['mid_ang:%0.2f, up_ang:%0.2f, mid_prc:%0.2f'%(m[-1],u[-1]-m[-1] ,bl_middle[-1])]
-    return res
-  
-def round2(lst):
-    return map(lambda x:'%0.2f'%x,lst)
-    
-def pivot_line(high,low,open,close, mode='classic'):
-    pivot = (high + low + 2* close )/4
-    r1 = pivot*2 - low 
-    s1 = pivot*2 - high
-    r2 = pivot + r1 - s1
-    s2 = pivot - (r1 - s1)
-    r3 = high + 2*(pivot - low)
-    s3 = low - 2*(high - pivot)
-    sm1 = (pivot+s1)/2
-    sm2 = (s1+s2)/2
-    sm3 = (s2+s3)/2
-    rm1 = (pivot+r1)/2
-    rm2 = (r1+r2)/2
-    rm3 = (r2+r3)/2
-    return r3,r2,r1,pivot,s1,s2,s3
-    
-def tech_analyse(info, tk, df):    
-    close = df['close'].values
-    high = df['high'].values
-    low = df['low'].values
-    vol = df['volume'].values    
-    
-    bl_upper, bl_middle, bl_lower = talib.BBANDS(close)
-    boll_analyse_res = boll_analyse(bl_upper, bl_middle, bl_lower )
-    
-    macd, macdsignal, macdhist =  talib.MACD(close)
-    roc = talib.ROCR(close)
-    slk,sld = talib.STOCH(high,low,close)
-    obv = talib.OBV(close,vol)
-    sar = talib.SAREXT(high,low)
-    slj = 3*slk-2*sld
-    rsi = talib.RSI(close)
-    ##
-    ema05  = talib.EMA(close,5)
-    ema10  = talib.EMA(close,10)
-    ema20  = talib.EMA(close,20)
-    ema60  = talib.EMA(close,60)
-    ema240 = talib.EMA(close,240)
-    ##
-    sma05  = talib.SMA(close,5)
-    sma10  = talib.SMA(close,10)
-    sma20  = talib.SMA(close,20)
-    sma60  = talib.SMA(close,60)
-    sma240 = talib.SMA(close,240)    
-    ##
-    atr14 = talib.ATR(high,low,close,timeperiod =14)
-    atr28 = talib.ATR(high,low,close,timeperiod =28)
-    pivot_point = map(lambda x:round(x[-1],2) , pivot_line(high,low,open,close) )
-    name = info.get(tk,{}).get('name','')
-    # name = ' '
-    analyse_info = OrderedDict({'code':tk,'name':name,'price':df['close'].values[-1],'data':OrderedDict()})
-    
-    data = analyse_info['data']
-    data['BOLL_Res'] =  boll_analyse_res
-    # data['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
-    data['MACD'] = round2([ macd[-1],macdsignal[-1],macdhist[-1] ])
-    data['ROC'] = [roc[-3],roc[-2],roc[-1] ]
-    data['KDJ'] = [slk[-1],sld[-1], slj[-1] ]
-    data['OBV'] = [ obv[-1] ]
-    data['SAR'] = [ sar[-1] ]
-    data['EMA'] = round2([ ema05[-1],ema10[-1],ema20[-1],ema60[-1],ema240[-1] ])
-    data['SMA'] = round2([ sma05[-1],sma10[-1],sma20[-1],sma60[-1],sma240[-1] ])
-    data['VOL_Rate'] = round2([vol[-1]*1.0/vol[-2]])
-    data['ATR14'] = round2(list(atr14[-10::2]))
-    data['ATR28'] = round2(list(atr28[-10::2]))
-    data['PIVOT'] = pivot_point
-    # pdb.set_trace()
-    # data['RSI'] = [rsi[-1] ]
-    return analyse_info,df
-
-def print_analyse_res(res):
-    intro = {}
-    for stock in res:
-        if stock is None:
-            continue
-        
-        if 'tech' in stock and stock['tech'] != None:
-            tech = stock['tech']
-            print "[{0}:{1}] Price:{2}".format(tech['code'],tech['name'].encode(ECODE),tech['price'])
-            for key,vlu in tech['data'].items():
-                print '  [%s]'%key,jsdump(vlu)
-            
-        if 'cdl' in stock and stock['cdl'] != None:
-            cdl = stock['cdl']
-            cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
-            for name,info in cdl['data'].items():
-                intro[info['en_name']+info['cn_name']] = info['intro2']
-            print "  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(ECODE) )
-    for name,intro in intro.items():
-        print u"[{}]:{}".format(name,intro) 
 
 def add_delta_n(df):
     for i in [1,3,5,10,20,30,60,90]:
@@ -324,9 +180,9 @@ def add_delta_n(df):
         df['vol_delta_f_%02d'%i] = df.shift(-i)['volume'] - df['volume']
     return df
     
-def get_one_ticker_k_data(tk,info,flags):    
-    fname =  FNAME_PAT_HIST%tk
-    df = ts.get_k_data(tk)
+def get_one_ticker_k_data(tick,info,flags):    
+    fname =  FNAME_PAT_HIST%tick
+    df = ts.get_k_data(tick)
     # add_delta_n(df)
     df.to_csv(fname,index='date')
     df = pd.read_csv(fname,index_col='date')
@@ -334,14 +190,40 @@ def get_one_ticker_k_data(tk,info,flags):
     if df.shape[0] == 0:
         return
     ## technical indicator
-    tech_info,df = tech_analyse(info,tk, df)
+    tech_info,df = tech_analyse(df)
     ## japanese candle pattern
-    cdl_info,df = candle_analyse(df )
+    cdl_info,df = candle_analyse(df)
     # cdl_info = None
     df.to_csv(fname)
-    return {'tech':tech_info,'cdl':cdl_info}
+    return {'code':tick,'info':info[tick]
+        ,'tech':tech_info,'cdl':cdl_info}
+
+def jsdump(info, indent=None):
+    return json.dumps(info, ensure_ascii=False, indent=indent) 
     
-    
+ECODE='gbk'    
+def print_analyse_res(res):
+    intro = {}
+    for stock in res:
+        if stock is None:
+            continue        
+        code = stock['code']
+        name = stock['info'].get('name')
+        price = stock['info'].get('price')
+        print "[{0}:{1}] Price:{2}".format(code,name.encode(ECODE),price)
+        if 'tech' in stock and stock['tech'] != None:
+            tech = stock['tech']
+            for key,vlu in tech['data'].items():
+                print '  [%s]'%key,jsdump(vlu)
+            
+        if 'cdl' in stock and stock['cdl'] != None:
+            cdl = stock['cdl']
+            cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
+            for name,info in cdl['data'].items():
+                intro[info['en_name']+info['cn_name']] = info['intro2']
+            print "  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(ECODE) )
+    for name,intro in intro.items():
+        print u"[{}]:{}".format(name,intro).encode(ECODE)    
 
 def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=22, opt_map = None):    
     select_map = {}
@@ -429,7 +311,7 @@ def interact_choose_ticks(mode):
     return the_ticks, info, flags
 
   
-def zh_main_loop(mode):
+def cn_main_loop(mode):
     the_ticks, info, flags = interact_choose_ticks(mode)       
     # print the_ticks
     # print info
@@ -467,14 +349,17 @@ def zh_main_loop(mode):
         # jobs = [gevent.spawn(get_one_ticker_k_data,tk,info,flags) for tk in the_tks]
         # gevent.joinall(jobs)
         result = [job.value for job in jobs]
+    
+    ## 读取分析结果
     json.dump(result,open('result.%s.json'%exec_func.func_name,'w'),indent=2)
     print_analyse_res(result)
+    
     if 'graph' in flags and exec_func.func_name=='get_one_ticker_k_data':
         cols = len(result)        
         fig, ax = plt.subplots(nrows=3, ncols=cols, sharex=False)
         for i,onestk in enumerate(result):
-            tick = onestk['tech']['code']
-            name = onestk['tech']['name']
+            tick = onestk['code']
+            name = onestk['info'].get('name')
             fname = FNAME_PAT_HIST%tick
             df = pd.read_csv(fname,encoding='utf8',index_col='date')
             df = df[-50:]
@@ -516,7 +401,7 @@ def test():
     
 if __name__ == '__main__':    
     mode = sys.argv
-    main_loop = zh_main_loop
+    main_loop = cn_main_loop
     from stk_us_monitor import us_main_loop   
     flags = set()
     while 1:
@@ -524,8 +409,8 @@ if __name__ == '__main__':
         if 'us' in flags:            
             main_loop = us_main_loop
         if 'zh' in flags:        
-            main_loop = zh_main_loop  
+            main_loop = cn_main_loop  
         try:
             flags = main_loop(mode)
         except Exception as e:
-            print e
+            traceback.print_exc()
