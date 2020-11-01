@@ -73,31 +73,44 @@ def boll_analyse(ohlcv,period=10):
     res += ['ANG[MID:%0.2f, UP:%0.2f], MID_PRC:%0.2f'%(m[-1], u[-1]-m[-1], boll_mid[-1])]
     res += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(boll_up[-1],boll_mid[-1],boll_low[-1])]
     return res,df
+ 
+ 
+def cross_judge(row):    
+    # pdb.set_trace()
+    fast_ag = row['fast_ag']
+    slow_ag = row['slow_ag']
+    ag_dif = fast_ag - slow_ag
+    value_gap = row['fast_line'] - row['slow_line']
+    if fast_ag>0 and slow_ag>0:
+        res=['GoldenX_After']
+    elif fast_ag>0 and slow_ag<0:
+        res=['GoldenX_Before']
+    elif fast_ag<0 and slow_ag<0:
+        res=['DeathX_After']
+    elif fast_ag<0 and slow_ag>0:
+        res=['DeathX_Before']
+    else:
+        res=['fast_ag:%0.2f, ag_dif:%0.2f, value_gap:%0.2f'%(fast_ag,ag_dif,value_gap)]
+    return res
+    
+def get_crossx_type(fast_line,slow_line):
+    fast_ag = talib.LINEARREG_ANGLE(fast_line, timeperiod=2)
+    slow_ag = talib.LINEARREG_ANGLE(slow_line, timeperiod=2)
+    df=pd.DataFrame({'fast_line':fast_line,'slow_line':slow_line,'fast_ag':fast_ag,'slow_ag':slow_ag})
+    edf = df.apply(cross_judge,axis=1,result_type='expand')
+    df = pd.concat([df,edf.set_index(df.index)],axis=1)
+    # print edf
+    return df
     
 def macd_analyse(ohlcv,period=10):
     dif, dea, hist =  talib.MACD(ohlcv['close'],period)    
     df = pd.DataFrame({'macd_dif': dif, 'macd_dea':dea, 'macd_hist':hist })    
-    # pdb.set_trace()
-    dif_ag = talib.LINEARREG_ANGLE(dif, timeperiod=2)
-    dea_ag = talib.LINEARREG_ANGLE(dea, timeperiod=2)     
-    res = []
-    
-    fast_ag = dif_ag[-1]
-    slow_ag = dea_ag[-1]
-    ag_dif = fast_ag - dea_ag[-1]
-    macd_gap = dea[-1] - dif[-1]
-    if fast_ag>0 and slow_ag>0:
-        res+=['GoldenX_After']
-    elif fast_ag>0 and slow_ag<0:
-        res+=['GoldenX_Before']
-    elif fast_ag<0 and slow_ag<0:
-        res+=['DeathX_After']
-    elif fast_ag<0 and slow_ag>0:
-        res+=['DeathX_Before']
-    else:
-        res+=['fast_ag:%0.2f, ag_dif:%0.2f, macd_gap:%0.2f'%(fast_ag,ag_dif,macd_gap)]
+    # pdb.set_trace() 
+    res = []    
+    df =  get_crossx_type(dif,dea)
     res += ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(dif[-1],dea[-1],hist[-1]*2)]   
-    res += ['ANG[IF:%0.2f, EA:%0.2f]'%(dif_ag[-1],dea_ag[-1])]
+    row = df.iloc[-1]        
+    res += ['%s: ANG[IF:%0.2f, EA:%0.2f]'%(row[0],row['fast_ag'],row['slow_ag'])]
     return res,df
      
 def tech_analyse(df):    
@@ -180,10 +193,10 @@ def test():
     def pprint(info, indent=None):
         print json.dumps(info, ensure_ascii=False, indent=2).encode('gbk')
     
-    df = ts.get_hist_data('600438')
-    df = ts.get_hist_data('601865')
-    df.to_csv('002409.csv')
-    # df=pd.read_csv('002409.csv')
+    # df = ts.get_hist_data('600438')
+    # df = ts.get_hist_data('601865')
+    # df.to_csv('002409.csv')
+    df=pd.read_csv('002409.csv')
     df = df.sort_values('date')
     # pdb.set_trace()
     tinfo,df = tech_analyse(df)
