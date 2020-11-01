@@ -39,7 +39,7 @@ def candle_analyse(df):
     # print jsdump(cdl_info)
     return cdl_info,df
     
-def pivot_line(high,low,open,close, mode='classic'):
+def pivot_line(open,high,low,close, mode='classic'):
     pivot = (high + low + 2* close )/4
     r1 = pivot*2 - low 
     s1 = pivot*2 - high
@@ -56,12 +56,12 @@ def pivot_line(high,low,open,close, mode='classic'):
     return r3,r2,r1,pivot,s1,s2,s3    
     
 def boll_analyse(ohlcv):
-    boll_up, boll_mid, boll_low = talib.BBANDS(ohlcv['close'])
+    boll_up, boll_mid, boll_low = talib.BBANDS(ohlcv['close'],)
     df = pd.DataFrame({'boll_up': boll_up, 'boll_mid':boll_mid, 'boll_low':boll_low })    
-    idx = 50.0/boll_mid[-1]
-    u = talib.LINEARREG_ANGLE(boll_up*idx, timeperiod=2)
-    m = talib.LINEARREG_ANGLE(boll_mid*idx,timeperiod=2)    
-    l = talib.LINEARREG_ANGLE(boll_low*idx, timeperiod=2)
+    scale = 1
+    u = talib.LINEARREG_ANGLE(boll_up *scale, timeperiod=2)
+    m = talib.LINEARREG_ANGLE(boll_mid*scale,timeperiod=2)    
+    l = talib.LINEARREG_ANGLE(boll_low*scale, timeperiod=2)
     if m[-1]>=0:
         res = ['UP']
     else:
@@ -70,14 +70,23 @@ def boll_analyse(ohlcv):
         res[0] += '-EXPAND'
     else:
         res[0] += '-SHRINK'
-    res += ['ANG(MID:%0.2f, UP:%0.2f), MID_PRC:%0.2f'%(m[-1], u[-1]-m[-1], boll_mid[-1])]
+    res += ['ANG[MID:%0.2f, UP:%0.2f], MID_PRC:%0.2f'%(m[-1], u[-1]-m[-1], boll_mid[-1])]
+    res += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(boll_up[-1],boll_mid[-1],boll_low[-1])]
     return res,df
     
 def macd_analyse(ohlcv):
     dif, dea, hist =  talib.MACD(ohlcv['close'])    
     df = pd.DataFrame({'macd_dif': dif, 'macd_dea':dea, 'macd_hist':hist })    
     # pdb.set_trace()
-    res = ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(dif[-1],dea[-1],hist[-1]*2)]    
+    dif_ag = talib.LINEARREG_ANGLE(dif, timeperiod=2)
+    dea_ag = talib.LINEARREG_ANGLE(dea,timeperiod=2)     
+    res = []
+    if dif_ag[-1]>0 and dif_ag[-1]>dea_ag[-1] and dif[-1]<dea[-1]:
+        res+=['Golden_cross_trend']
+    if dif_ag[-1]<0 and dif_ag[-1]<dea_ag[-1] and dif[-1]>dea[-1]:
+        res+=['Death_cross_trend']
+    res += ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(dif[-1],dea[-1],hist[-1]*2)]   
+    res += ['ANG[IF:%0.2f, EA:%0.2f]'%(dif_ag[-1],dea_ag[-1])]
     return res,df
      
 def tech_analyse(df):    
@@ -96,10 +105,10 @@ def tech_analyse(df):
     
     ##
     boll_anly_res,bdf = boll_analyse(ohlcv)
-    df= pd.concat([df,bdf],axis=1)
+    df= pd.concat([df,bdf.set_index(df.index)],axis=1)
     ##
     macd_anly_res,mdf = macd_analyse(ohlcv)
-    df= pd.concat([df,mdf],axis=1)
+    df= pd.concat([df,mdf.set_index(df.index)],axis=1)
     ##
     roc = talib.ROCR(close)
     ##
@@ -127,23 +136,23 @@ def tech_analyse(df):
     atr14 = talib.ATR(high,low,close,timeperiod =14)
     atr28 = talib.ATR(high,low,close,timeperiod =28)
     ##
-    pivot_point = map(lambda x:round(x[-1],2) , pivot_line(high,low,open,close) )    
+    pivot_point = map(lambda x:round(x[-1],2) , pivot_line(open,high,low,close) )    
     # name = ' '
     analyse_info = OrderedDict({'price':df['close'].values[-1]})
     
-    ana_res['BOLL'] =  boll_anly_res
-    # ana_res['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
     ana_res['MACD'] = macd_anly_res
-    ana_res['ROC'] = round_float([roc[-3],roc[-2],roc[-1]  ])
-    ana_res['KDJ'] = round_float([slk[-1],sld[-1], slj[-1] ])
+    ana_res['BOLL'] =  boll_anly_res
     ana_res['RSI'] = round_float([ rsi[-1] ])
+    # ana_res['KDJ'] = round_float([slk[-1],sld[-1], slj[-1] ])
+    # ana_res['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
+    # ana_res['ROC'] = round_float([roc[-3],roc[-2],roc[-1]  ])
     ana_res['OBV'] = round_float([ obv[-1] ])
-    ana_res['SAR'] = round_float([ sar[-1] ])
-    ana_res['EMA'] = round_float([ ema05[-1],ema10[-1],ema20[-1],ema60[-1],ema240[-1] ])
-    ana_res['SMA'] = round_float([ sma05[-1],sma10[-1],sma20[-1],sma60[-1],sma240[-1] ])
+    # ana_res['SAR'] = round_float([ sar[-1] ])
+    # ana_res['EMA'] = round_float([ ema05[-1],ema10[-1],ema20[-1],ema60[-1],ema240[-1] ])
+    # ana_res['SMA'] = round_float([ sma05[-1],sma10[-1],sma20[-1],sma60[-1],sma240[-1] ])
     ana_res['VOL_Rate'] = round_float([vol[-1]*1.0/vol[-2]])
-    ana_res['ATR14'] = round_float(list(atr14[-10::2]))
-    ana_res['ATR28'] = round_float(list(atr28[-10::2]))
+    # ana_res['ATR14'] = round_float(list(atr14[-10::2]))
+    # ana_res['ATR28'] = round_float(list(atr28[-10::2]))
     ana_res['PIVOT'] = pivot_point
     
     analyse_info['data']=ana_res
@@ -160,14 +169,15 @@ def test():
     def pprint(info, indent=None):
         print json.dumps(info, ensure_ascii=False, indent=2).encode('gbk')
     
-    df = ts.get_hist_data('002409')
+    # df = ts.get_hist_data('002409')
+    df=pd.read_csv('002409.csv')
     df = df.sort_values('date')
     # pdb.set_trace()
     tinfo,df = tech_analyse(df)
     pprint(tinfo)
-    print df.to_csv('test.csv')
-    # cinfo,df = candle_analyse(df)
-    # pprint(cinfo)
+    # df.to_csv('002409.csv')
+    cinfo,df = candle_analyse(df)
+    pprint(cinfo)
     
 if __name__ == '__main__':
     test()

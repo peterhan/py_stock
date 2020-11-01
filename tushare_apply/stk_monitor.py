@@ -119,7 +119,7 @@ def realtime_list_ticks(tks,flags):
         rdf['name'] = rdf['name'].str.slice(0,10,1)
     
     rdf.index.name = 'id'
-    r3,r2,r1,pivot,s1,s2,s3 = pivot_line(rdf['high'],rdf['low'],rdf['open'],rdf['pclose'])
+    r3,r2,r1,pivot,s1,s2,s3 = pivot_line(rdf['open'],rdf['high'],rdf['low'],rdf['price'])
     rdf.insert(0,'code',rdf.pop('code'))
     rdf.insert(1,'op_gp',(rdf['open']-rdf['pclose'])/(rdf['pclose'])*100)
     rdf.insert(2,'mx_up',(rdf['high']-rdf['pclose'])/(rdf['pclose'])*100)
