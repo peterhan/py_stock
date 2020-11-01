@@ -55,12 +55,12 @@ def pivot_line(open,high,low,close, mode='classic'):
     rm3 = (r2+r3)/2
     return r3,r2,r1,pivot,s1,s2,s3    
     
-def boll_analyse(ohlcv):
-    boll_up, boll_mid, boll_low = talib.BBANDS(ohlcv['close'],)
+def boll_analyse(ohlcv,period=10):
+    boll_up, boll_mid, boll_low = talib.BBANDS(ohlcv['close'],period)
     df = pd.DataFrame({'boll_up': boll_up, 'boll_mid':boll_mid, 'boll_low':boll_low })    
-    scale = 1
+    scale = period
     u = talib.LINEARREG_ANGLE(boll_up *scale, timeperiod=2)
-    m = talib.LINEARREG_ANGLE(boll_mid*scale,timeperiod=2)    
+    m = talib.LINEARREG_ANGLE(boll_mid*scale, timeperiod=2)    
     l = talib.LINEARREG_ANGLE(boll_low*scale, timeperiod=2)
     if m[-1]>=0:
         res = ['UP']
@@ -74,17 +74,28 @@ def boll_analyse(ohlcv):
     res += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(boll_up[-1],boll_mid[-1],boll_low[-1])]
     return res,df
     
-def macd_analyse(ohlcv):
-    dif, dea, hist =  talib.MACD(ohlcv['close'])    
+def macd_analyse(ohlcv,period=10):
+    dif, dea, hist =  talib.MACD(ohlcv['close'],period)    
     df = pd.DataFrame({'macd_dif': dif, 'macd_dea':dea, 'macd_hist':hist })    
     # pdb.set_trace()
     dif_ag = talib.LINEARREG_ANGLE(dif, timeperiod=2)
-    dea_ag = talib.LINEARREG_ANGLE(dea,timeperiod=2)     
+    dea_ag = talib.LINEARREG_ANGLE(dea, timeperiod=2)     
     res = []
-    if dif_ag[-1]>0 and dif_ag[-1]>dea_ag[-1] and dif[-1]<dea[-1]:
-        res+=['Golden_cross_trend']
-    if dif_ag[-1]<0 and dif_ag[-1]<dea_ag[-1] and dif[-1]>dea[-1]:
-        res+=['Death_cross_trend']
+    
+    fast_ag = dif_ag[-1]
+    slow_ag = dea_ag[-1]
+    ag_dif = fast_ag - dea_ag[-1]
+    macd_gap = dea[-1] - dif[-1]
+    if fast_ag>0 and slow_ag>0:
+        res+=['GoldenX_After']
+    elif fast_ag>0 and slow_ag<0:
+        res+=['GoldenX_Before']
+    elif fast_ag<0 and slow_ag<0:
+        res+=['DeathX_After']
+    elif fast_ag<0 and slow_ag>0:
+        res+=['DeathX_Before']
+    else:
+        res+=['fast_ag:%0.2f, ag_dif:%0.2f, macd_gap:%0.2f'%(fast_ag,ag_dif,macd_gap)]
     res += ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(dif[-1],dea[-1],hist[-1]*2)]   
     res += ['ANG[IF:%0.2f, EA:%0.2f]'%(dif_ag[-1],dea_ag[-1])]
     return res,df
@@ -169,15 +180,16 @@ def test():
     def pprint(info, indent=None):
         print json.dumps(info, ensure_ascii=False, indent=2).encode('gbk')
     
-    # df = ts.get_hist_data('002409')
-    df=pd.read_csv('002409.csv')
+    df = ts.get_hist_data('600438')
+    df = ts.get_hist_data('601865')
+    df.to_csv('002409.csv')
+    # df=pd.read_csv('002409.csv')
     df = df.sort_values('date')
     # pdb.set_trace()
     tinfo,df = tech_analyse(df)
     pprint(tinfo)
-    # df.to_csv('002409.csv')
-    cinfo,df = candle_analyse(df)
-    pprint(cinfo)
+    # cinfo,df = candle_analyse(df)
+    # pprint(cinfo)
     
 if __name__ == '__main__':
     test()
