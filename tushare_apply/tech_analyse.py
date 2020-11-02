@@ -74,7 +74,15 @@ def boll_analyse(ohlcv,period=10):
     res += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(boll_up[-1],boll_mid[-1],boll_low[-1])]
     return res,df
  
- 
+def value_range_judge(vlu,up_down,up_down_name): 
+    if vlu>=up_down[0]:
+        return up_down_name[0]+': %0.2f'%vlu
+    elif vlu<=up_down[1]:
+        return up_down_name[1]+': %0.2f'%vlu
+    else:
+        return "MID"+': %0.2f'%vlu      
+    
+
 def cross_judge(row):    
     # pdb.set_trace()
     fast_ag = row['fast_ag']
@@ -82,22 +90,26 @@ def cross_judge(row):
     ag_dif = fast_ag - slow_ag
     value_gap = row['fast_line'] - row['slow_line']
     if fast_ag>0 and slow_ag>0:
-        res=['AftGoldX']
-    elif (fast_ag>0 or ag_dif>0) and slow_ag<0:
-        res=['BefGoldX']
+        res='AftGoldX'
+    elif fast_ag>0  and slow_ag<0:
+        res='TrnBefGoldX'
+    elif ag_dif>0 and slow_ag<0:
+        res='CovBefGoldX'
     elif fast_ag<0 and slow_ag<0:
-        res=['AftDeathX']
-    elif (fast_ag<0 or ag_dif<0) and slow_ag>0:
-        res=['BefDeathX']
+        res='AftDeathX'
+    elif fast_ag<0  and slow_ag>0:
+        res='TrnBefDeathX'
+    elif  ag_dif<0 and slow_ag>0:
+        res='CovBefDeathX'
     else:
-        res=['Unknown[fast_ag:%0.2f, ag_dif:%0.2f, value_gap:%0.2f]'%(fast_ag,ag_dif,value_gap)]
+        res='Unknown[fast_ag:%0.2f, ag_dif:%0.2f, value_gap:%0.2f]'%(fast_ag,ag_dif,value_gap)
     return res
     
 def get_crossx_type(fast_line,slow_line):
     fast_ag = talib.LINEARREG_ANGLE(fast_line, timeperiod=2)
     slow_ag = talib.LINEARREG_ANGLE(slow_line, timeperiod=2)
     df=pd.DataFrame({'fast_line':fast_line,'slow_line':slow_line,'fast_ag':fast_ag,'slow_ag':slow_ag})
-    df['macd_stage'] = df.apply(cross_judge,axis=1)#,result_type='expand'    
+    df['cross_stage'] = df.apply(cross_judge,axis=1)#,result_type='expand'    
     # print edf
     return df
     
@@ -107,10 +119,14 @@ def macd_analyse(ohlcv,period=10):
     # pdb.set_trace() 
     res = []    
     df =  get_crossx_type(dif,dea)
-    row = df.iloc[-1]        
-    res += ['%s: ANG[IF:%0.2f, EA:%0.2f]'%(row[0],row['fast_ag'],row['slow_ag'])]
+    row = df.iloc[-1]     
+    print row
+    res += ['%s: ANG[IF:%0.2f, EA:%0.2f]'%(row['cross_stage'],row['fast_ag'],row['slow_ag'])]
     res += ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(dif[-1],dea[-1],hist[-1]*2)]   
     return res,df
+   
+
+def rsi_analyse(ohlcv,period=10):
     
 def round_float(lst):
     return map(lambda x:'%0.2f'%x,lst)    
@@ -129,23 +145,33 @@ def tech_analyse(df):
     ana_res = OrderedDict()
     
     
-    ##
+    ## BOLL
     boll_anly_res,bdf = boll_analyse(ohlcv)
     df= pd.concat([df,bdf.set_index(df.index)],axis=1)
-    ##
+    ana_res['BOLL'] =  boll_anly_res
+    
+    ##MACD
     macd_anly_res,mdf = macd_analyse(ohlcv)
     df= pd.concat([df,mdf.set_index(df.index)],axis=1)
+    ana_res['MACD'] = macd_anly_res
+    
+    ##
+    rsi = talib.RSI(close)
+    ana_res['RSI'] = value_range_judge( rsi[-1] ,[70,30],['OverBrought','OverSell'])
+    
     ##
     roc = talib.ROCR(close)
+    
     ##
     slk,sld = talib.STOCH(high,low,close)
     slj = 3*slk-2*sld
+    ana_res['KDJ'] = 'KDJ:%s'%([slk[-1],sld[-1], slj[-1] ])
+    
     ##
     obv = talib.OBV(close,vol)
     ##
     sar = talib.SAREXT(high,low)
-    ##
-    rsi = talib.RSI(close)
+    
     ##
     ema05  = talib.EMA(close,5)
     ema10  = talib.EMA(close,10)
@@ -166,11 +192,16 @@ def tech_analyse(df):
     # name = ' '
     analyse_info = OrderedDict({'price':df['close'].values[-1]})
     
-    ana_res['MACD'] = macd_anly_res
-    ana_res['BOLL'] =  boll_anly_res
+    
+    
+    
     # ana_res['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
-    ana_res['RSI'] = round_float([ rsi[-1] ])
-    ana_res['KDJ'] = 'KDJ:%s'%(round_float([slk[-1],sld[-1], slj[-1] ]))
+    
+    
+    
+    
+    
+    
     # ana_res['ROC'] = round_float([roc[-3],roc[-2],roc[-1]  ])
     # ana_res['OBV'] = round_float([ obv[-1] ])
     ana_res['SAR'] = round_float([ sar[-1] ])
