@@ -83,11 +83,11 @@ def cross_judge(row):
     value_gap = row['fast_line'] - row['slow_line']
     if fast_ag>0 and slow_ag>0:
         res=['AftGoldX']
-    elif fast_ag>0 and slow_ag<0:
+    elif (fast_ag>0 or ag_dif>0) and slow_ag<0:
         res=['BefGoldX']
     elif fast_ag<0 and slow_ag<0:
         res=['AftDeathX']
-    elif fast_ag<0 and slow_ag>0:
+    elif (fast_ag<0 or ag_dif<0) and slow_ag>0:
         res=['BefDeathX']
     else:
         res=['Unknown[fast_ag:%0.2f, ag_dif:%0.2f, value_gap:%0.2f]'%(fast_ag,ag_dif,value_gap)]
@@ -142,7 +142,7 @@ def tech_analyse(df):
     slk,sld = talib.STOCH(high,low,close)
     slj = 3*slk-2*sld
     ##
-    obv = talib.OBV(close,vol)
+    # obv = talib.OBV(close,vol)
     ##
     sar = talib.SAREXT(high,low)
     ##
@@ -186,7 +186,34 @@ def tech_analyse(df):
     # pdb.set_trace()
     return analyse_info,df
     
-  
+def jsdump(info, indent=None):
+    return json.dumps(info, ensure_ascii=False, indent=indent) 
+    
+ECODE='gbk'    
+def analyse_res_to_str(res):
+    intro = {}
+    pstr = ''
+    for stock in res:
+        if stock is None:
+            continue        
+        code = stock.get('code','no-code')
+        name = stock.get('info',{}).get('name','')
+        price = stock.get('info',{}).get('price','')
+        pstr+= "\n[{0}:{1}] Price:{2}".format(code,name.encode(ECODE),price)
+        if 'tech' in stock and stock['tech'] != None:
+            tech = stock['tech']
+            for key,vlu in tech['data'].items():
+                pstr+= '\n  [%s] %s'%(key,jsdump(vlu))
+            
+        if 'cdl' in stock and stock['cdl'] != None:
+            cdl = stock['cdl']
+            cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
+            for name,info in cdl['data'].items():
+                intro[info['en_name']+info['cn_name']] = info['intro2']
+            pstr+= "\n  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(ECODE) )
+    for name,intro in intro.items():
+        pstr+= u"\n[{}]:{}".format(name,intro).encode(ECODE)  
+    return pstr
 
  
 def test():

@@ -11,7 +11,7 @@ import traceback
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 from tushare_patch import get_latest_news,get_today_ticks
-from tech_analyse import tech_analyse,candle_analyse,pivot_line
+from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_str
 
 try:    
     import gevent
@@ -197,32 +197,7 @@ def get_one_ticker_k_data(tick,info,flags):
     return {'code':tick,'info':info[tick]
         ,'tech':tech_info,'cdl':cdl_info}
 
-def jsdump(info, indent=None):
-    return json.dumps(info, ensure_ascii=False, indent=indent) 
-    
-ECODE='gbk'    
-def print_analyse_res(res):
-    intro = {}
-    for stock in res:
-        if stock is None:
-            continue        
-        code = stock['code']
-        name = stock['info'].get('name')
-        price = stock['info'].get('price')
-        print "[{0}:{1}] Price:{2}".format(code,name.encode(ECODE),price)
-        if 'tech' in stock and stock['tech'] != None:
-            tech = stock['tech']
-            for key,vlu in tech['data'].items():
-                print '  [%s]'%key,jsdump(vlu)
-            
-        if 'cdl' in stock and stock['cdl'] != None:
-            cdl = stock['cdl']
-            cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
-            for name,info in cdl['data'].items():
-                intro[info['en_name']+info['cn_name']] = info['intro2']
-            print "  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(ECODE) )
-    for name,intro in intro.items():
-        print u"[{}]:{}".format(name,intro).encode(ECODE)    
+ 
 
 def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=22, opt_map = None):    
     select_map = {}
@@ -353,7 +328,7 @@ def cn_main_loop(mode):
     fname = 'result.%s.json'%exec_func.func_name
     # print fname
     json.dump(result,open(fname,'w'),indent=2)
-    print_analyse_res(result)
+    print analyse_res_to_str(result)+'\n'
     
     if 'graph' in flags and exec_func.func_name=='get_one_ticker_k_data':
         cols = len(result)        

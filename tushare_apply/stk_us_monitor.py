@@ -12,6 +12,7 @@ from matplotlib import pyplot as plt
 import yfinance as yf
 from stk_monitor import cli_select_menu
 import talib
+from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str
 
 pd.set_option('display.max_columns',80)
 
@@ -40,9 +41,18 @@ def get_ticker_df_alpha_vantage(ticker,mode='day'):
     # print ndf
     return df
     
+def apply_analyse(df,tk):
+    df['vol']= pd.to_numeric(df['volume'])
+    tinfo,tdf = tech_analyse(df)
+    cinfo,cdf = candle_analyse(df)
+    # pdb.set_trace()
+    info ={'code':tk,'info':{'price':df['close'].values[-1],'name':''}
+        ,'tech':tinfo,'cdl':cinfo}
+    print analyse_res_to_str([info])+'\n'
+    
 def add_analyse_columns(df):
     ndf =  df
-    ndf['pivot']=(df['high']+df['low']+df['close']*2)/4
+    ndf['pivot']= (df['high']+df['low']+df['close']*2)/4
     ndf['r1']=  2*ndf['pivot']-df['low']
     ndf['s1']=  2*ndf['pivot']-df['high']
     ndf['r2']=  ndf['pivot']+ndf['r1']-ndf['s1']
@@ -112,7 +122,10 @@ def us_main_loop(mode):
             pdb.set_trace()
         ndf = add_analyse_columns(his_df)
         ndf['code']=tk
-        print ndf[['code','close','volume','pchange','vchange']].tail(5)
+        print '#'*20
+        print ndf[['code','close','volume','pchange','vchange']].tail(3)
+        apply_analyse(ndf,tk)
+        print ''
         if 'graph' in flags:
             his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[0,0+i*2])
             his_df[['volume']].plot(title=tk,ax = ax[0,1+i*2])
