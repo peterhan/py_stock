@@ -229,7 +229,7 @@ def test():
     tinfo,df = tech_analyse(df)
     pprint(tinfo)
     # df.to_csv('temp.csv')
-    pdb.set_trace()
+    # pdb.set_trace()
     # cinfo,df = candle_analyse(df)
     # pprint(cinfo)
     
