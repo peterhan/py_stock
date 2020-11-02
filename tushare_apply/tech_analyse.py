@@ -82,15 +82,15 @@ def cross_judge(row):
     ag_dif = fast_ag - slow_ag
     value_gap = row['fast_line'] - row['slow_line']
     if fast_ag>0 and slow_ag>0:
-        res=['GoldenX_After']
+        res=['AftGoldX']
     elif fast_ag>0 and slow_ag<0:
-        res=['GoldenX_Before']
+        res=['BefGoldX']
     elif fast_ag<0 and slow_ag<0:
-        res=['DeathX_After']
+        res=['AftDeathX']
     elif fast_ag<0 and slow_ag>0:
-        res=['DeathX_Before']
+        res=['BefeDeathX']
     else:
-        res=['fast_ag:%0.2f, ag_dif:%0.2f, value_gap:%0.2f'%(fast_ag,ag_dif,value_gap)]
+        res=['Unknown[fast_ag:%0.2f, ag_dif:%0.2f, value_gap:%0.2f]'%(fast_ag,ag_dif,value_gap)]
     return res
     
 def get_crossx_type(fast_line,slow_line):
@@ -108,11 +108,14 @@ def macd_analyse(ohlcv,period=10):
     # pdb.set_trace() 
     res = []    
     df =  get_crossx_type(dif,dea)
-    res += ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(dif[-1],dea[-1],hist[-1]*2)]   
     row = df.iloc[-1]        
     res += ['%s: ANG[IF:%0.2f, EA:%0.2f]'%(row[0],row['fast_ag'],row['slow_ag'])]
+    res += ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(dif[-1],dea[-1],hist[-1]*2)]   
     return res,df
-     
+    
+def round_float(lst):
+    return map(lambda x:'%0.2f'%x,lst)    
+    
 def tech_analyse(df):    
     '''
     input:OHLC dataframe
@@ -167,25 +170,24 @@ def tech_analyse(df):
     ana_res['MACD'] = macd_anly_res
     ana_res['BOLL'] =  boll_anly_res
     ana_res['RSI'] = round_float([ rsi[-1] ])
-    # ana_res['KDJ'] = round_float([slk[-1],sld[-1], slj[-1] ])
+    ana_res['KDJ'] = 'KDJ:%s'%(round_float([slk[-1],sld[-1], slj[-1] ]))
     # ana_res['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
     # ana_res['ROC'] = round_float([roc[-3],roc[-2],roc[-1]  ])
-    ana_res['OBV'] = round_float([ obv[-1] ])
-    # ana_res['SAR'] = round_float([ sar[-1] ])
+    # ana_res['OBV'] = round_float([ obv[-1] ])
+    ana_res['SAR'] = round_float([ sar[-1] ])
     # ana_res['EMA'] = round_float([ ema05[-1],ema10[-1],ema20[-1],ema60[-1],ema240[-1] ])
     # ana_res['SMA'] = round_float([ sma05[-1],sma10[-1],sma20[-1],sma60[-1],sma240[-1] ])
     ana_res['VOL_Rate'] = round_float([vol[-1]*1.0/vol[-2]])
     # ana_res['ATR14'] = round_float(list(atr14[-10::2]))
     # ana_res['ATR28'] = round_float(list(atr28[-10::2]))
-    ana_res['PIVOT'] = pivot_point
-    
-    analyse_info['data']=ana_res
+    ana_res['PIVOT'] = 'Resistance:%s, Mid:%s, Support:%s'%(pivot_point[0:3],pivot_point[3],pivot_point[4:])
+    ### put into output 
+    analyse_info['data']= ana_res
     # pdb.set_trace()
     return analyse_info,df
     
   
-def round_float(lst):
-    return map(lambda x:'%0.2f'%x,lst)
+
  
 def test():
     import tushare as ts
@@ -195,8 +197,8 @@ def test():
     
     # df = ts.get_hist_data('600438')
     # df = ts.get_hist_data('601865')
-    # df.to_csv('002409.csv')
-    df=pd.read_csv('002409.csv')
+    # df.to_csv('temp.csv')
+    df=pd.read_csv('temp.csv')
     df = df.sort_values('date')
     # pdb.set_trace()
     tinfo,df = tech_analyse(df)
