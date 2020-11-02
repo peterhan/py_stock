@@ -94,9 +94,9 @@ def real_time_ticks(tick,info,flags,use_cache = False):
         df.pop('vol')
         df.plot(subplots=True,title=tick)
         plt.show()
-    return {'tech':{'code':tick,'name':'','price':'','data':{}}}
+    return {'code':tick,'info':info[tick],'tech':{'price':'','data':{}}}
     
-def realtime_list_ticks(tks,flags):
+def summary_list_ticks(tks,flags):
     if len(tks) == 0:
         return pd.DataFrame()
     info = {}
@@ -167,7 +167,6 @@ def to_num(s):
 
 def line_cross(line1,line2):
     diff = line1 - line2
-
 
 def add_delta_n(df):
     for i in [1,3,5,10,20,30,60,90]:
@@ -288,7 +287,7 @@ def interact_choose_ticks(mode):
     sel_tks = list(sel_tks)
     #####
     print 'Input: %s, Ticks: %s'%(ticks,','.join(sel_tks)) 
-    info = realtime_list_ticks(sel_tks,flags)
+    info = summary_list_ticks(sel_tks,flags)
     time.sleep(3)
     if '-d' in mode or 'detail' in flags:
         input = 'y'
@@ -351,7 +350,9 @@ def cn_main_loop(mode):
         result = [job.value for job in jobs]
     
     ## 读取分析结果
-    json.dump(result,open('result.%s.json'%exec_func.func_name,'w'),indent=2)
+    fname = 'result.%s.json'%exec_func.func_name
+    # print fname
+    json.dump(result,open(fname,'w'),indent=2)
     print_analyse_res(result)
     
     if 'graph' in flags and exec_func.func_name=='get_one_ticker_k_data':

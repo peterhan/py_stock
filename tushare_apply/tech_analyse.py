@@ -88,7 +88,7 @@ def cross_judge(row):
     elif fast_ag<0 and slow_ag<0:
         res=['AftDeathX']
     elif fast_ag<0 and slow_ag>0:
-        res=['BefeDeathX']
+        res=['BefDeathX']
     else:
         res=['Unknown[fast_ag:%0.2f, ag_dif:%0.2f, value_gap:%0.2f]'%(fast_ag,ag_dif,value_gap)]
     return res
@@ -169,9 +169,9 @@ def tech_analyse(df):
     
     ana_res['MACD'] = macd_anly_res
     ana_res['BOLL'] =  boll_anly_res
+    # ana_res['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
     ana_res['RSI'] = round_float([ rsi[-1] ])
     ana_res['KDJ'] = 'KDJ:%s'%(round_float([slk[-1],sld[-1], slj[-1] ]))
-    # ana_res['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
     # ana_res['ROC'] = round_float([roc[-3],roc[-2],roc[-1]  ])
     # ana_res['OBV'] = round_float([ obv[-1] ])
     ana_res['SAR'] = round_float([ sar[-1] ])
