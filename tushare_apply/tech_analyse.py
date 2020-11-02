@@ -97,8 +97,7 @@ def get_crossx_type(fast_line,slow_line):
     fast_ag = talib.LINEARREG_ANGLE(fast_line, timeperiod=2)
     slow_ag = talib.LINEARREG_ANGLE(slow_line, timeperiod=2)
     df=pd.DataFrame({'fast_line':fast_line,'slow_line':slow_line,'fast_ag':fast_ag,'slow_ag':slow_ag})
-    edf = df.apply(cross_judge,axis=1,result_type='expand')
-    df = pd.concat([df,edf.set_index(df.index)],axis=1)
+    df['macd_stage'] = df.apply(cross_judge,axis=1)#,result_type='expand'    
     # print edf
     return df
     
@@ -124,7 +123,7 @@ def tech_analyse(df):
     high = df['high'].values
     low = df['low'].values
     close = df['close'].values
-    vol = df['volume'].values
+    vol = df['volume'].values.astype(float)
     ohlcv= {'open':open,'high':high,'low':low,'close':close,'vol':vol}
     
     ana_res = OrderedDict()
@@ -142,7 +141,7 @@ def tech_analyse(df):
     slk,sld = talib.STOCH(high,low,close)
     slj = 3*slk-2*sld
     ##
-    # obv = talib.OBV(close,vol)
+    obv = talib.OBV(close,vol)
     ##
     sar = talib.SAREXT(high,low)
     ##
@@ -222,14 +221,15 @@ def test():
     def pprint(info, indent=None):
         print json.dumps(info, ensure_ascii=False, indent=2).encode('gbk')
     
-    # df = ts.get_hist_data('600438')
     # df = ts.get_hist_data('601865')
+    # df = ts.get_hist_data('600438')
     # df.to_csv('temp.csv')
     df=pd.read_csv('temp.csv')
     df = df.sort_values('date')
-    # pdb.set_trace()
     tinfo,df = tech_analyse(df)
     pprint(tinfo)
+    # df.to_csv('temp.csv')
+    pdb.set_trace()
     # cinfo,df = candle_analyse(df)
     # pprint(cinfo)
     
