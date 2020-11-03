@@ -57,20 +57,29 @@ def pivot_line(open,high,low,close, mode='classic'):
     
 def boll_analyse(ohlcv,period=10):
     boll_up, boll_mid, boll_low = talib.BBANDS(ohlcv['close'],period)
-    df = pd.DataFrame({'boll_up': boll_up, 'boll_mid':boll_mid, 'boll_low':boll_low })    
     scale = period
-    u = get_angle(boll_up *scale, 2)
-    m = get_angle(boll_mid*scale, 2)    
-    l = get_angle(boll_low*scale, 2)
-    if m[-1]>=0:
-        res = ['UP']
-    else:
-        res = ['DOWN']
-    if u[-1]-m[-1]>=0:
-        res[0] += '-EXPAND'
-    else:
-        res[0] += '-SHRINK'
-    res += ['ANG[MID:%0.2f, UP:%0.2f], MID_PRC:%0.2f'%(m[-1], u[-1]-m[-1], boll_mid[-1])]
+    uag = get_angle(boll_up *scale, 2)
+    mag = get_angle(boll_mid*scale, 2)    
+    lag = get_angle(boll_low*scale, 2)
+    df = pd.DataFrame({'boll_up': boll_up, 'boll_mid':boll_mid, 'boll_low':boll_low 
+        ,'bollup_ag':uag,'bollmid_ag':mag,'bolllow_ag':lag })
+    def boll_judge(row):
+        m_ag = row['bollmid_ag']
+        u_ag = row['bollup_ag']
+        # print m,u
+        if m_ag >= 0:
+            res = 'UP'
+        else:
+            res = 'DOWN'
+        if (u_ag - m_ag) >= 0:
+            res += '-EXPAND'
+        else:
+            res += '-SHRINK'
+        return res
+    df['boll_stage'] = df.apply(boll_judge,axis=1)
+    row = df.iloc[-1]
+    res = [row['boll_stage']]
+    res += ['ANG[MID:%0.2f, UP:%0.2f], MID_PRC:%0.2f'%(mag[-1], uag[-1]-mag[-1], boll_mid[-1])]
     res += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(boll_up[-1],boll_mid[-1],boll_low[-1])]
     return res,df
  
@@ -139,9 +148,9 @@ def rsi_analyse(ohlcv,period=10):
     df['rsi_stage'] =  df.apply(rsi_row, axis=1)
     # pdb.set_trace()
     row = df.iloc[-1]
-    res_info = row['rsi_stage']+' '+'RSI: %0.2f, ANG:%02.f'%(row['rsi'],row['rsi_ag'])
+    res_info = row['rsi_stage']+', '+'RSI: %0.2f, ANG:%02.f'%(row['rsi'],row['rsi_ag'])
     return res_info,df
-    
+
 def kdj_analyse(ohlcv,period=10):
     high,low,close = ohlcv['high'],ohlcv['low'],ohlcv['close']
     slk,sld = talib.STOCH(high,low,close, fastk_period=9,slowk_period=3,slowk_matype=0,slowd_period=3,slowd_matype=0)
@@ -163,15 +172,19 @@ def kdj_analyse(ohlcv,period=10):
     def kdj_row(row):
         sw = 'MIDL'
         if row['kdj_k']>row['kdj_d']:
-            sw = 'STRG'
+            sw = 'KD-STRG,'
         elif row['kdj_k']<row['kdj_d']:
-            sw = 'WEAK'
+            sw = 'KD-WEAK,'
+        ##
         if row['p_ag']*row['k_ag']<0:
-            sw+='-DIV'
-        elif row['k_aag']<0 or row['d_aag']<0:
-            sw+='-TRN'
+            sw += 'TRND-DVRG'
+        elif (row['k_ag']>0 and row['k_aag']<0) or \
+             (row['k_ag']<0 and row['k_aag']>0) or \
+             (row['d_ag']>0 and row['d_aag']<0) or \
+             (row['d_ag']<0 and row['d_aag']>0):
+            sw += 'TRND-TURN'
         else:
-            sw+='-NRM'
+            sw += 'TRND-NORM'
         res = [
             sw 
             # ,'K-'+value_range_judge( row['kdj_k'] ,[80,20],['OB','OS','MD']) +'-'+ value_range_judge( row['kdj_k'] ,[50,50],['S','W','M'])
@@ -187,9 +200,40 @@ def kdj_analyse(ohlcv,period=10):
         ,'KDJ:%0.2f,%02.f,%02.f'%(row['kdj_k'],row['kdj_d'],row['kdj_j']) 
         ,'ANG-KDJ:%0.2f,%02.f,%02.f'%(row['k_ag'],row['d_ag'],row['j_ag'])
         ]
-    res_info = ' '.join(res_info)
+    res_info = ', '.join(res_info)
     return res_info,df
- 
+
+def ma_analyse(ohlcv,period=10):    
+    close = ohlcv['close']
+    ma = OrderedDict()
+    # cycles = [5,10,20,40,60,120,240]
+    cycles = [5,10,20,40]
+    for cyc in cycles:
+        ma['EMA%s'%cyc]  = talib.EMA(close,cyc)
+        ma['SMA%s'%cyc]  = talib.SMA(close,cyc)
+    df = pd.DataFrame(ma)
+    def ma_judge(row):
+        res = []
+        for cyc in cycles:
+            ema = row['EMA%s'%cyc]
+            sma = row['SMA%s'%cyc]
+            if ema>sma:
+                s= '%s:UP'%cyc
+            else:
+                s='%s:DN'%cyc
+            res.append(s)
+        return ','.join(res)
+    df['ma_stage'] = df.apply(ma_judge,axis=1)
+    row = df.iloc[-1]
+    def ma_str(row,typ):
+        res = []
+        for cyc in cycles:            
+            k = '%sMA%s'%(typ,cyc)
+            v = row[k]
+            res.append('%s:%0.2f'%(k,v))
+        return ', '.join(res)
+    res_info = [row['ma_stage'], ma_str(row,'E'), ma_str(row,'S')]
+    return res_info,df
     
 def tech_analyse(df):  
     def round_float(lst):
@@ -209,49 +253,47 @@ def tech_analyse(df):
     def pd_concat(df1,df2):
         return pd.concat([df1,df2.set_index(df1.index)],axis=1)
     
+    ## MA
+    ma_anly_res,mdf = ma_analyse(ohlcv)
+    df= pd_concat(df,mdf)
+    ana_res['ES-MA'] = ma_anly_res
+    
+    ## MACD
+    macd_anly_res,mdf = macd_analyse(ohlcv)
+    df= pd_concat(df,mdf)
+    ana_res['MACD'] = macd_anly_res
+
     ## BOLL
     boll_anly_res,bdf = boll_analyse(ohlcv)
     df= pd_concat(df,bdf)
     ana_res['BOLL'] =  boll_anly_res
     
-    ##MACD
-    macd_anly_res,mdf = macd_analyse(ohlcv)
-    df= pd_concat(df,mdf)
-    ana_res['MACD'] = macd_anly_res
-    
-    ##
+    ## RSI
     rsi_anly_res,rdf = rsi_analyse(ohlcv)
     df= pd_concat(df,rdf)
     ana_res['RSI'] = rsi_anly_res    
     
-    ##    
+    ## KDJ 
     kdj_anly_res,kdf = kdj_analyse(ohlcv)
     df= pd_concat(df,kdf)
     ana_res['KDJ'] = kdj_anly_res
     
     
-    ##
+    
+    ## ROC
     roc = talib.ROCR(close)
-    # ana_res['ROC'] = round_float([roc[-3],roc[-2],roc[-1]  ])
+    ana_res['ROC'] = round_float([roc[-3],roc[-2],roc[-1]  ])
     
+    ## CCI 
+    cci = talib.CCI(high,low,close)
     
-    ##
+    ## OBV
     obv = talib.OBV(close,vol)
-    ##
+    
+    ## SAR
     sar = talib.SAREXT(high,low)
     
-    ##
-    ema05  = talib.EMA(close,5)
-    ema10  = talib.EMA(close,10)
-    ema20  = talib.EMA(close,20)
-    ema60  = talib.EMA(close,60)
-    ema240 = talib.EMA(close,240)
-    ##
-    sma05  = talib.SMA(close,5)
-    sma10  = talib.SMA(close,10)
-    sma20  = talib.SMA(close,20)
-    sma60  = talib.SMA(close,60)
-    sma240 = talib.SMA(close,240)    
+ 
     ##
     atr14 = talib.ATR(high,low,close,timeperiod =14)
     atr28 = talib.ATR(high,low,close,timeperiod =28)
@@ -279,10 +321,10 @@ def jsdump(info, indent=None):
     return json.dumps(info, ensure_ascii=False, indent=indent) 
     
 ECODE='gbk'    
-def analyse_res_to_str(res):
+def analyse_res_to_str(stock_anly_res):
     intro = {}
     pstr = ''
-    for stock in res:
+    for stock in stock_anly_res:
         if stock is None:
             continue        
         code = stock.get('code','no-code')
@@ -323,11 +365,12 @@ def test():
     # cinfo,df = candle_analyse(df)
     # pprint(cinfo)
     # print df.tail(1)
+    ###
     verify_indicator(df)
     
 def verify_indicator(df):
     
-    adf = df[['turnover','macd_stage','rsi_stage','kdj_stage','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']].copy()
+    adf = df[['turnover','ma_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']].copy()
     adf['p_change_1d'] = df['p_change'].shift(-1)
     adf['p_change_3d'] = df['p_change'].shift(-3)
     adf['p_change_5d'] = df['p_change'].shift(-5)
@@ -338,7 +381,9 @@ def verify_indicator(df):
     # adf['p_change_30d'] = df['p_change'].shift(-30)
     print adf.corr()
     offset = 9
+    print adf.groupby('ma_stage').mean().iloc[:,offset:]   
     print adf.groupby('macd_stage').mean().iloc[:,offset:]   
+    print adf.groupby('boll_stage').mean().iloc[:,offset:]   
     print adf.groupby('rsi_stage' ).mean().iloc[:,offset:]   
     print adf.groupby('kdj_stage' ).mean().iloc[:,offset:]   
     # pdb.set_trace()

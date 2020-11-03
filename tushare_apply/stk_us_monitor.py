@@ -122,7 +122,7 @@ def us_main_loop(mode):
             pdb.set_trace()
         ndf = add_analyse_columns(his_df)
         ndf['code']=tk
-        print '#'*20
+        print '#'*50
         print ndf[['code','close','volume','pchange','vchange']].tail(3)
         apply_analyse(ndf,tk)
         print ''
