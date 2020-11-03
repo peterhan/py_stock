@@ -560,8 +560,8 @@ for l in s.splitlines():
         ck=v[3:].decode('utf8')
     else:
         # print k.decode('utf8').encode('gbk')
-        k=k.replace('名称','name2')
-        k=k.replace('简介','intro2')
+        k=k.replace('名称','short_name')
+        k=k.replace('简介','intro')
         k=k.replace('例子','exp')
         res[ck][k.decode('utf8')]=v.decode('utf8')
 print res
@@ -572,6 +572,6 @@ for k in jo:
     jo[k].update(res[k])
     print jo[k].keys()
     print jo[k]
-with open('talib_pattern_name2.json','w') as fh:
+with open('talib_pattern_name.v2.json','w') as fh:
     js= json.dumps(jo,indent=2,ensure_ascii=False).encode('utf8')
     fh.write(js)

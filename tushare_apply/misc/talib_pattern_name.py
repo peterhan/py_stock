@@ -25,12 +25,12 @@ for i,h2t  in enumerate(h2s):
     name = h2t.text
     fdesc = infos[keys[0]][i]
     ftag = fdesc.split('CDL')[1].split('(')[0]
-    intro = infos[keys[1]][i]
+    define = infos[keys[1]][i]
     cdlcnt = infos[keys[2]][i]
     figure = infos[keys[3]][i]
     sig = infos[keys[4]][i]
-    p('No:%s'%i, ftag, name,intro,fdesc)
-    ta_info[ftag]={'name':name.encode('utf8'),'intro':intro.encode('utf8'),'desc':fdesc.encode('utf8'),
+    p('No:%s'%i, ftag, name,define,fdesc)
+    ta_info[ftag]={'name':name.encode('utf8'),'define':define.encode('utf8'),'desc':fdesc.encode('utf8'),
         'figure':figure.encode('utf8'),'cdlcnt':cdlcnt.encode('utf8'),'signal':sig.encode('utf8')}
     
 import json

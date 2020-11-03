@@ -33,9 +33,9 @@ def candle_analyse(df):
             fig = the_info['figure'].split(' ')[1]
             cn_name = the_info['name'].split(' ')[0]
             en_name = the_info['name'].split(' ')[1]
+            define = the_info['define']
             intro = the_info['intro']
-            intro2 = the_info['intro2']
-            cdl_info['data'][name] = {'figure':fig,'score':cdl_vlu,'cn_name':cn_name,'intro':intro,'intro2':intro2,'en_name':en_name}
+            cdl_info['data'][name] = {'figure':fig,'score':cdl_vlu,'cn_name':cn_name,'define':define,'intro':intro,'en_name':en_name}
     # print jsdump(cdl_info)
     return cdl_info,df
     
@@ -59,9 +59,9 @@ def boll_analyse(ohlcv,period=10):
     boll_up, boll_mid, boll_low = talib.BBANDS(ohlcv['close'],period)
     df = pd.DataFrame({'boll_up': boll_up, 'boll_mid':boll_mid, 'boll_low':boll_low })    
     scale = period
-    u = talib.LINEARREG_ANGLE(boll_up *scale, timeperiod=2)
-    m = talib.LINEARREG_ANGLE(boll_mid*scale, timeperiod=2)    
-    l = talib.LINEARREG_ANGLE(boll_low*scale, timeperiod=2)
+    u = get_angle(boll_up *scale, 2)
+    m = get_angle(boll_mid*scale, 2)    
+    l = get_angle(boll_low*scale, 2)
     if m[-1]>=0:
         res = ['UP']
     else:
@@ -74,13 +74,13 @@ def boll_analyse(ohlcv,period=10):
     res += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(boll_up[-1],boll_mid[-1],boll_low[-1])]
     return res,df
  
-def value_range_judge(vlu,up_down,up_down_name): 
+def value_range_judge(vlu,up_down,up_down_mid_name): 
     if vlu>=up_down[0]:
-        return up_down_name[0]+': %0.2f'%vlu
+        return up_down_mid_name[0]
     elif vlu<=up_down[1]:
-        return up_down_name[1]+': %0.2f'%vlu
+        return up_down_mid_name[1]
     else:
-        return "MID"+': %0.2f'%vlu      
+        return up_down_mid_name[2]
     
 
 def cross_judge(row):    
@@ -102,12 +102,15 @@ def cross_judge(row):
     elif  ag_dif<0 and slow_ag>0:
         res='CovBefDeathX'
     else:
-        res='Unknown[fast_ag:%0.2f, ag_dif:%0.2f, value_gap:%0.2f]'%(fast_ag,ag_dif,value_gap)
+        res='Unknown'
     return res
+
+def get_angle(ss,p=2):
+    return talib.LINEARREG_ANGLE(ss, timeperiod=p)
     
 def get_crossx_type(fast_line,slow_line):
-    fast_ag = talib.LINEARREG_ANGLE(fast_line, timeperiod=2)
-    slow_ag = talib.LINEARREG_ANGLE(slow_line, timeperiod=2)
+    fast_ag = get_angle(fast_line, 2)
+    slow_ag = get_angle(slow_line, 2)
     df=pd.DataFrame({'fast_line':fast_line,'slow_line':slow_line,'fast_ag':fast_ag,'slow_ag':slow_ag})
     df['cross_stage'] = df.apply(cross_judge,axis=1)#,result_type='expand'    
     # print edf
@@ -119,19 +122,78 @@ def macd_analyse(ohlcv,period=10):
     # pdb.set_trace() 
     res = []    
     df =  get_crossx_type(dif,dea)
-    row = df.iloc[-1]     
-    print row
-    res += ['%s: ANG[IF:%0.2f, EA:%0.2f]'%(row['cross_stage'],row['fast_ag'],row['slow_ag'])]
+    df = df.rename({'fast_line':'dif','slow_line':'dea','cross_stage':'macd_stage','fast_ag':'dif_ag','slow_ag':'dea_ag'},axis=1)
+    row = df.iloc[-1]         
+    res += ['%s: ANG[IF:%0.2f, EA:%0.2f]'%(row['macd_stage'],row['dif_ag'],row['dea_ag'])]
     res += ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(dif[-1],dea[-1],hist[-1]*2)]   
     return res,df
    
 
 def rsi_analyse(ohlcv,period=10):
+    close = ohlcv['close']
+    rsi = talib.RSI(close)
+    rsi_ag = get_angle(rsi,2)
+    df = pd.DataFrame({'rsi':rsi,'rsi_ag':rsi_ag})
+    def rsi_row(row):
+        return value_range_judge( row['rsi'] ,[70,30],['OverBrought','OverSell','MID'])
+    df['rsi_stage'] =  df.apply(rsi_row, axis=1)
+    # pdb.set_trace()
+    row = df.iloc[-1]
+    res_info = row['rsi_stage']+' '+'RSI: %0.2f, ANG:%02.f'%(row['rsi'],row['rsi_ag'])
+    return res_info,df
     
-def round_float(lst):
-    return map(lambda x:'%0.2f'%x,lst)    
+def kdj_analyse(ohlcv,period=10):
+    high,low,close = ohlcv['high'],ohlcv['low'],ohlcv['close']
+    slk,sld = talib.STOCH(high,low,close, fastk_period=9,slowk_period=3,slowk_matype=0,slowd_period=3,slowd_matype=0)
+    slj = 3*slk-2*sld
+    p_ag = get_angle(close)
+    ##
+    k_ag = get_angle(slk)
+    d_ag = get_angle(sld)
+    j_ag = get_angle(slj)
+    ##
+    k_aag = get_angle(k_ag)
+    d_aag = get_angle(d_ag)
+    j_aag = get_angle(j_ag)
+    df = pd.DataFrame({'kdj_k':slk,'kdj_d':sld,'kdj_j':slj
+        ,'k_ag':k_ag,'d_ag':d_ag,'j_ag':j_ag
+        ,'p_ag':p_ag
+        ,'k_aag':k_aag,'d_aag':d_aag,'j_aag':j_aag
+        })
+    def kdj_row(row):
+        sw = 'MIDL'
+        if row['kdj_k']>row['kdj_d']:
+            sw = 'STRG'
+        elif row['kdj_k']<row['kdj_d']:
+            sw = 'WEAK'
+        if row['p_ag']*row['k_ag']<0:
+            sw+='-DIV'
+        elif row['k_aag']<0 or row['d_aag']<0:
+            sw+='-TRN'
+        else:
+            sw+='-NRM'
+        res = [
+            sw 
+            # ,'K-'+value_range_judge( row['kdj_k'] ,[80,20],['OB','OS','MD']) +'-'+ value_range_judge( row['kdj_k'] ,[50,50],['S','W','M'])
+            # ,'D-'+value_range_judge( row['kdj_d'] ,[80,20],['OB','OS','MD']) +'-'+ value_range_judge( row['kdj_d'] ,[50,50],['S','W','M'])        
+            # ,'J-'+value_range_judge( row['kdj_j'] ,[80,20],['OB','OS','MD']) +'-'+ value_range_judge( row['kdj_j'] ,[50,50],['S','W','M'])
+        ]
+        return ','.join(res)
+        
+    df['kdj_stage'] =  df.apply(kdj_row, axis=1)
+    row = df.iloc[-1]
+    res_info = [
+        row['kdj_stage']
+        ,'KDJ:%0.2f,%02.f,%02.f'%(row['kdj_k'],row['kdj_d'],row['kdj_j']) 
+        ,'ANG-KDJ:%0.2f,%02.f,%02.f'%(row['k_ag'],row['d_ag'],row['j_ag'])
+        ]
+    res_info = ' '.join(res_info)
+    return res_info,df
+ 
     
-def tech_analyse(df):    
+def tech_analyse(df):  
+    def round_float(lst):
+        return map(lambda x:'%0.2f'%x,lst)   
     '''
     input:OHLC dataframe
     '''
@@ -144,28 +206,34 @@ def tech_analyse(df):
     
     ana_res = OrderedDict()
     
+    def pd_concat(df1,df2):
+        return pd.concat([df1,df2.set_index(df1.index)],axis=1)
     
     ## BOLL
     boll_anly_res,bdf = boll_analyse(ohlcv)
-    df= pd.concat([df,bdf.set_index(df.index)],axis=1)
+    df= pd_concat(df,bdf)
     ana_res['BOLL'] =  boll_anly_res
     
     ##MACD
     macd_anly_res,mdf = macd_analyse(ohlcv)
-    df= pd.concat([df,mdf.set_index(df.index)],axis=1)
+    df= pd_concat(df,mdf)
     ana_res['MACD'] = macd_anly_res
     
     ##
-    rsi = talib.RSI(close)
-    ana_res['RSI'] = value_range_judge( rsi[-1] ,[70,30],['OverBrought','OverSell'])
+    rsi_anly_res,rdf = rsi_analyse(ohlcv)
+    df= pd_concat(df,rdf)
+    ana_res['RSI'] = rsi_anly_res    
+    
+    ##    
+    kdj_anly_res,kdf = kdj_analyse(ohlcv)
+    df= pd_concat(df,kdf)
+    ana_res['KDJ'] = kdj_anly_res
+    
     
     ##
     roc = talib.ROCR(close)
+    # ana_res['ROC'] = round_float([roc[-3],roc[-2],roc[-1]  ])
     
-    ##
-    slk,sld = talib.STOCH(high,low,close)
-    slj = 3*slk-2*sld
-    ana_res['KDJ'] = 'KDJ:%s'%([slk[-1],sld[-1], slj[-1] ])
     
     ##
     obv = talib.OBV(close,vol)
@@ -192,17 +260,8 @@ def tech_analyse(df):
     # name = ' '
     analyse_info = OrderedDict({'price':df['close'].values[-1]})
     
-    
-    
-    
     # ana_res['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
-    
-    
-    
-    
-    
-    
-    # ana_res['ROC'] = round_float([roc[-3],roc[-2],roc[-1]  ])
+           
     # ana_res['OBV'] = round_float([ obv[-1] ])
     ana_res['SAR'] = round_float([ sar[-1] ])
     # ana_res['EMA'] = round_float([ ema05[-1],ema10[-1],ema20[-1],ema60[-1],ema240[-1] ])
@@ -239,7 +298,7 @@ def analyse_res_to_str(res):
             cdl = stock['cdl']
             cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
             for name,info in cdl['data'].items():
-                intro[info['en_name']+info['cn_name']] = info['intro2']
+                intro[info['en_name']+info['cn_name']] = info['intro']
             pstr+= "\n  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(ECODE) )
     for name,intro in intro.items():
         pstr+= u"\n[{}]:{}".format(name,intro).encode(ECODE)  
@@ -259,10 +318,31 @@ def test():
     df = df.sort_values('date')
     tinfo,df = tech_analyse(df)
     pprint(tinfo)
-    # df.to_csv('temp.csv')
+    # df.to_csv('temp_res.csv')
     # pdb.set_trace()
     # cinfo,df = candle_analyse(df)
     # pprint(cinfo)
+    # print df.tail(1)
+    verify_indicator(df)
+    
+def verify_indicator(df):
+    
+    adf = df[['turnover','macd_stage','rsi_stage','kdj_stage','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']].copy()
+    adf['p_change_1d'] = df['p_change'].shift(-1)
+    adf['p_change_3d'] = df['p_change'].shift(-3)
+    adf['p_change_5d'] = df['p_change'].shift(-5)
+    adf['p_change_7d'] = df['p_change'].shift(-7)
+    adf['p_change_10d'] = df['p_change'].shift(-10)
+    adf['p_change_15d'] = df['p_change'].shift(-15)
+    # adf['p_change_20d'] = df['p_change'].shift(-20)
+    # adf['p_change_30d'] = df['p_change'].shift(-30)
+    print adf.corr()
+    offset = 9
+    print adf.groupby('macd_stage').mean().iloc[:,offset:]   
+    print adf.groupby('rsi_stage' ).mean().iloc[:,offset:]   
+    print adf.groupby('kdj_stage' ).mean().iloc[:,offset:]   
+    # pdb.set_trace()
     
 if __name__ == '__main__':
+    pd.set_option('display.max_columns',80)
     test()
