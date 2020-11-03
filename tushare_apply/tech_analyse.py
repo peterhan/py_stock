@@ -151,6 +151,32 @@ def rsi_analyse(ohlcv,period=10):
     res_info = row['rsi_stage']+', '+'RSI: %0.2f, ANG:%02.f'%(row['rsi'],row['rsi_ag'])
     return res_info,df
 
+def cci_analyse(ohlcv,period=10):
+    high,low,close = ohlcv['high'],ohlcv['low'],ohlcv['close']
+    cci = talib.CCI(high,low,close)    
+    cci_ag = get_angle(cci,2)
+    df = pd.DataFrame({'cci':cci,'cci_ag':cci_ag})
+    def cci_row(row):
+        return value_range_judge( row['cci'] ,[100,-100],['OverBrought','OverSell','MID'])
+    df['cci_stage'] =  df.apply(cci_row, axis=1)
+    # pdb.set_trace()
+    row = df.iloc[-1]
+    res_info = row['cci_stage']+', '+'CCI: %0.2f, ANG:%02.f'%(row['cci'],row['cci_ag'])
+    return res_info,df
+
+def roc_analyse(ohlcv,period=10):
+    high,low,close = ohlcv['high'],ohlcv['low'],ohlcv['close']
+    roc = talib.ROCP(close)    
+    roc_ag = get_angle(roc,2)
+    df = pd.DataFrame({'roc':roc,'roc_ag':roc_ag})
+    def roc_row(row):
+        return value_range_judge( row['roc'] ,[100,-100],['OverBrought','OverSell','MID'])
+    df['roc_stage'] =  df.apply(roc_row, axis=1)
+    # pdb.set_trace()
+    row = df.iloc[-1]
+    res_info = row['roc_stage']+', '+'CCI: %0.2f, ANG:%02.f'%(row['roc'],row['roc_ag'])
+    return res_info,df
+
 def kdj_analyse(ohlcv,period=10):
     high,low,close = ohlcv['high'],ohlcv['low'],ohlcv['close']
     slk,sld = talib.STOCH(high,low,close, fastk_period=9,slowk_period=3,slowk_matype=0,slowd_period=3,slowd_matype=0)
@@ -278,14 +304,19 @@ def tech_analyse(df):
     df= pd_concat(df,kdf)
     ana_res['KDJ'] = kdj_anly_res
     
-    
+    ## CCI 
+    cci_anly_res,cdf = cci_analyse(ohlcv)
+    df= pd_concat(df,cdf)
+    ana_res['CCI'] = cci_anly_res
     
     ## ROC
+    roc_anly_res,rdf = roc_analyse(ohlcv)
+    df= pd_concat(df,rdf)
+    ana_res['ROC'] = roc_anly_res
+    
     roc = talib.ROCR(close)
     ana_res['ROC'] = round_float([roc[-3],roc[-2],roc[-1]  ])
     
-    ## CCI 
-    cci = talib.CCI(high,low,close)
     
     ## OBV
     obv = talib.OBV(close,vol)
@@ -370,7 +401,7 @@ def test():
     
 def verify_indicator(df):
     
-    adf = df[['turnover','ma_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']].copy()
+    adf = df[['turnover','cci_stage','ma_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']].copy()
     adf['p_change_1d'] = df['p_change'].shift(-1)
     adf['p_change_3d'] = df['p_change'].shift(-3)
     adf['p_change_5d'] = df['p_change'].shift(-5)
@@ -386,6 +417,7 @@ def verify_indicator(df):
     print adf.groupby('boll_stage').mean().iloc[:,offset:]   
     print adf.groupby('rsi_stage' ).mean().iloc[:,offset:]   
     print adf.groupby('kdj_stage' ).mean().iloc[:,offset:]   
+    print adf.groupby('cci_stage' ).mean().iloc[:,offset:]   
     # pdb.set_trace()
     
 if __name__ == '__main__':
