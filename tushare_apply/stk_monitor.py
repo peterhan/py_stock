@@ -94,6 +94,10 @@ def real_time_ticks(tick,info,flags,use_cache = False):
         df.pop('vol')
         df.plot(subplots=True,title=tick)
         plt.show()
+        
+    if 'emd' in flags:
+        from stock_emd import emd_plot
+        emd_res = emd_plot(df['price'])        
     return {'code':tick,'info':info[tick],'tech':{'price':'','data':{}}}
     
 def summary_list_ticks(tks,flags):
@@ -194,6 +198,9 @@ def get_one_ticker_k_data(tick,info,flags):
     cdl_info,df = candle_analyse(df)
     # cdl_info = None
     df.to_csv(fname)
+    if 'emd' in flags:
+        from stock_emd import emd_plot
+        emd_res = emd_plot(df['close'])  
     return {'code':tick,'info':info[tick]
         ,'tech':tech_info,'cdl':cdl_info}
 
@@ -218,7 +225,7 @@ def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=2
         ,'s':'onestock','n':'news'
         ,'top':'top','inst':'inst'
         ,'r':'realtime','f':'fullname','g':'graph'
-        ,'u':'us','z':'zh'
+        ,'u':'us','z':'zh','e':'emd'
         }
     
     for k,v in opt_map.items():

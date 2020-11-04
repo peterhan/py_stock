@@ -87,6 +87,7 @@ def us_main_loop(mode):
         ,'s':'onestock','n':'news','r':'realtime'
         ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'v':"vantage"
         ,'g':"graph",'ia':'intraday','id':'day','im':'month','u':'us','z':'zh'
+        ,'e':'emd'
     }
     menu_dict = conf_ticks
     groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
@@ -98,6 +99,7 @@ def us_main_loop(mode):
         sys.exit()
     if 'graph' in flags:
         fig, ax = plt.subplots(nrows=2, ncols=2*len(s_ticks), sharex=False)
+    ###
     for i,tk in enumerate(s_ticks):
         yfinance = True
         start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
@@ -135,7 +137,10 @@ def us_main_loop(mode):
                 his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[1,0+i*2])
                 his_df[['volume']].plot(title=tk,ax = ax[1,1+i*2])
             except:
-                pass        
+                pass
+        if 'emd' in flags:
+            from stock_emd import emd_plot
+            emd_plot(his_df['close'])
         if 'pdb' in flags:
             pdb.set_trace()
         if  'detail' in flags:
