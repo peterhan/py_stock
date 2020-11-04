@@ -3,6 +3,8 @@ import talib
 import pandas as pd
 import pdb
 from collections import OrderedDict
+from matplotlib import pyplot as plt
+
 
 def load_ta_pat_map():
     return json.load(open('talib_pattern_name.json'))
@@ -89,8 +91,7 @@ def value_range_judge(vlu,up_down,up_down_mid_name):
     elif vlu<=up_down[1]:
         return up_down_mid_name[1]
     else:
-        return up_down_mid_name[2]
-    
+        return up_down_mid_name[2]    
 
 def cross_judge(row):    
     # pdb.set_trace()
@@ -113,9 +114,6 @@ def cross_judge(row):
     else:
         res='Unknown'
     return res
-
-def get_angle(ss,p=2):
-    return talib.LINEARREG_ANGLE(ss, timeperiod=p)
     
 def get_crossx_type(fast_line,slow_line):
     fast_ag = get_angle(fast_line, 2)
@@ -124,6 +122,9 @@ def get_crossx_type(fast_line,slow_line):
     df['cross_stage'] = df.apply(cross_judge,axis=1)#,result_type='expand'    
     # print edf
     return df
+    
+def get_angle(ss,p=2):
+    return talib.LINEARREG_ANGLE(ss, timeperiod=p)    
     
 def macd_analyse(ohlcv,period=10):
     dif, dea, hist =  talib.MACD(ohlcv['close'],period)    
@@ -168,7 +169,12 @@ def roc_analyse(ohlcv,period=10):
     high,low,close = ohlcv['high'],ohlcv['low'],ohlcv['close']
     roc = talib.ROCP(close)    
     roc_ag = get_angle(roc,2)
-    df = pd.DataFrame({'roc':roc,'roc_ag':roc_ag})
+    maroc = talib.SMA(roc,14)
+    maroc_ag = talib.SMA(maroc,14)
+    # plt.plot(roc)
+    # plt.plot(maroc)
+    # plt.show()
+    df = pd.DataFrame({'roc':roc,'roc_ag':roc_ag,'maroc':maroc,'maroc_ag':maroc_ag})
     def roc_row(row):
         return value_range_judge( row['roc'] ,[100,-100],['OverBrought','OverSell','MID'])
     df['roc_stage'] =  df.apply(roc_row, axis=1)
@@ -314,9 +320,8 @@ def tech_analyse(df):
     df= pd_concat(df,rdf)
     ana_res['ROC'] = roc_anly_res
     
-    roc = talib.ROCR(close)
-    ana_res['ROC'] = round_float([roc[-3],roc[-2],roc[-1]  ])
-    
+    tsf_res =  'Forcast: %0.2f'%talib.TSF(ohlcv['close'])[-1]
+    ana_res['TSF'] = tsf_res
     
     ## OBV
     obv = talib.OBV(close,vol)
@@ -373,8 +378,9 @@ def analyse_res_to_str(stock_anly_res):
             for name,info in cdl['data'].items():
                 intro[info['en_name']+info['cn_name']] = info['intro']
             pstr+= "\n  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(ECODE) )
+    print ''
     for name,intro in intro.items():
-        pstr+= u"\n[{}]:{}".format(name,intro).encode(ECODE)  
+        pstr+= u"\n  [EXPLAIN:{}]:{}".format(name,intro).encode(ECODE)  
     return pstr
 
  
@@ -410,9 +416,9 @@ def verify_indicator(df):
     adf['p_change_15d'] = df['p_change'].shift(-15)
     # adf['p_change_20d'] = df['p_change'].shift(-20)
     # adf['p_change_30d'] = df['p_change'].shift(-30)
-    print adf.corr()
+    # print adf.corr()
     offset = 9
-    print adf.groupby('ma_stage').mean().iloc[:,offset:]   
+    print adf.groupby('ma_stage').mean().iloc[:,offset:]
     print adf.groupby('macd_stage').mean().iloc[:,offset:]   
     print adf.groupby('boll_stage').mean().iloc[:,offset:]   
     print adf.groupby('rsi_stage' ).mean().iloc[:,offset:]   
