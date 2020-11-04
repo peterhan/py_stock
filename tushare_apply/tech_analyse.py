@@ -176,11 +176,11 @@ def roc_analyse(ohlcv,period=10):
     # plt.show()
     df = pd.DataFrame({'roc':roc,'roc_ag':roc_ag,'maroc':maroc,'maroc_ag':maroc_ag})
     def roc_row(row):
-        return value_range_judge( row['roc'] ,[100,-100],['OverBrought','OverSell','MID'])
+        return value_range_judge( row['roc'] ,[0,0],['STRONG','WEAK','ZERO'])
     df['roc_stage'] =  df.apply(roc_row, axis=1)
     # pdb.set_trace()
     row = df.iloc[-1]
-    res_info = row['roc_stage']+', '+'CCI: %0.2f, ANG:%02.f'%(row['roc'],row['roc_ag'])
+    res_info = row['roc_stage']+', '+'ROC: %0.2f, ANG:%02.f'%(row['roc'],row['roc_ag'])
     return res_info,df
 
 def kdj_analyse(ohlcv,period=10):
@@ -378,7 +378,7 @@ def analyse_res_to_str(stock_anly_res):
             for name,info in cdl['data'].items():
                 intro[info['en_name']+info['cn_name']] = info['intro']
             pstr+= "\n  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(ECODE) )
-    print ''
+    pstr += '\n'
     for name,intro in intro.items():
         pstr+= u"\n  [EXPLAIN:{}]:{}".format(name,intro).encode(ECODE)  
     return pstr
