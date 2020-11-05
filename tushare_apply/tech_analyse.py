@@ -1,6 +1,7 @@
 import json
 import talib 
 import pandas as pd
+import numpy as np
 import pdb
 from collections import OrderedDict
 from matplotlib import pyplot as plt
@@ -209,14 +210,14 @@ def kdj_analyse(ohlcv,period=10):
             sw = 'KD-WEAK,'
         ##
         if row['p_ag']*row['k_ag']<0:
-            sw += 'TRND-DVRG'
+            sw += 'DVRG'
         elif (row['k_ag']>0 and row['k_aag']<0) or \
              (row['k_ag']<0 and row['k_aag']>0) or \
              (row['d_ag']>0 and row['d_aag']<0) or \
              (row['d_ag']<0 and row['d_aag']>0):
-            sw += 'TRND-TURN'
+            sw += 'TURN'
         else:
-            sw += 'TRND-NORM'
+            sw += 'NORM'
         res = [
             sw 
             # ,'K-'+value_range_judge( row['kdj_k'] ,[80,20],['OB','OS','MD']) +'-'+ value_range_judge( row['kdj_k'] ,[50,50],['S','W','M'])
@@ -239,7 +240,7 @@ def ma_analyse(ohlcv,period=10):
     close = ohlcv['close']
     ma = OrderedDict()
     # cycles = [5,10,20,40,60,120,240]
-    cycles = [5,10,20,40]
+    cycles = [3,5,20,60]
     for cyc in cycles:
         ma['EMA%s'%cyc]  = talib.EMA(close,cyc)
         ma['SMA%s'%cyc]  = talib.SMA(close,cyc)
@@ -250,9 +251,9 @@ def ma_analyse(ohlcv,period=10):
             ema = row['EMA%s'%cyc]
             sma = row['SMA%s'%cyc]
             if ema>sma:
-                s= '%s:UP'%cyc
+                s= '%s:U'%cyc
             else:
-                s='%s:DN'%cyc
+                s='%s:D'%cyc
             res.append(s)
         return ','.join(res)
     df['ma_stage'] = df.apply(ma_judge,axis=1)
@@ -408,22 +409,27 @@ def test():
 def verify_indicator(df):
     
     adf = df[['turnover','cci_stage','ma_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']].copy()
-    adf['p_change_1d'] = df['p_change'].shift(-1)
-    adf['p_change_3d'] = df['p_change'].shift(-3)
-    adf['p_change_5d'] = df['p_change'].shift(-5)
-    adf['p_change_7d'] = df['p_change'].shift(-7)
-    adf['p_change_10d'] = df['p_change'].shift(-10)
-    adf['p_change_15d'] = df['p_change'].shift(-15)
+    bencols = []
+    for i in (1,3,5,7,10,15):
+        bname = 'p_change_%sd'%i
+        adf[bname] = df['p_change'].shift(-i)    
+        bencols.append(bname)
     # adf['p_change_20d'] = df['p_change'].shift(-20)
     # adf['p_change_30d'] = df['p_change'].shift(-30)
     # print adf.corr()
     offset = 9
-    print adf.groupby('ma_stage').mean().iloc[:,offset:]
-    print adf.groupby('macd_stage').mean().iloc[:,offset:]   
-    print adf.groupby('boll_stage').mean().iloc[:,offset:]   
-    print adf.groupby('rsi_stage' ).mean().iloc[:,offset:]   
-    print adf.groupby('kdj_stage' ).mean().iloc[:,offset:]   
-    print adf.groupby('cci_stage' ).mean().iloc[:,offset:]   
+    def stat_gp(gp):
+        return gp.agg([np.size, np.mean, np.std, np.max, np.min]) 
+        # gp.agg({'text':'size', 'sent':'mean'}) \        
+       #.rename(columns={'text':'count','sent':'mean_sent'}) \
+       #.reset_index()
+       #.iloc[:,offset:]
+    print stat_gp(adf.groupby('ma_stage'  )[bencols])
+    print stat_gp(adf.groupby('macd_stage')[bencols])   
+    print stat_gp(adf.groupby('boll_stage')[bencols])   
+    print stat_gp(adf.groupby('rsi_stage' )[bencols])   
+    print stat_gp(adf.groupby('kdj_stage' )[bencols])   
+    print stat_gp(adf.groupby('cci_stage' )[bencols])   
     # pdb.set_trace()
     
 if __name__ == '__main__':
