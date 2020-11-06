@@ -280,7 +280,7 @@ def ma_analyse(ohlcv,period=10):
             v = row[k]
             res.append('%s:%0.2f'%(k,v))
         return ', '.join(res)
-    res_info = [row['ema_stage'],row['sma_stage'],row['ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
+    res_info = ['E:'+row['ema_stage'],'S:'+row['sma_stage'],'ES:'+row['ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
     return res_info,df
     
 def tech_analyse(df):  
@@ -343,8 +343,7 @@ def tech_analyse(df):
     obv = talib.OBV(close,vol)
     
     ## SAR
-    sar = talib.SAREXT(high,low)
-    
+    sar = talib.SAREXT(high,low)    
  
     ##
     atr14 = talib.ATR(high,low,close,timeperiod =14)
@@ -422,8 +421,8 @@ def test():
     verify_indicator(df)
     
 def verify_indicator(df):
-    
-    adf = df[['turnover','cci_stage','ema_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']].copy()
+    i_stages = ['cci_stage','ema_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] 
+    adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
     bencols = []
     for i in (1,3,5,7,10,15):
         bname = 'p_change_%sd'%i
@@ -432,22 +431,32 @@ def verify_indicator(df):
     # adf['p_change_20d'] = df['p_change'].shift(-20)
     # adf['p_change_30d'] = df['p_change'].shift(-30)
     # print adf.corr()
-    offset = 9
+    
+    adf.to_csv("veri/all_dump.csv")
     def stat_gp(gp):
         return gp.agg([np.size, np.mean, np.std, np.max, np.min]) 
         # gp.agg({'text':'size', 'sent':'mean'}) \        
        #.rename(columns={'text':'count','sent':'mean_sent'}) \
        #.reset_index()
        #.iloc[:,offset:]
-    print stat_gp(adf.groupby('ema_stage'  )[bencols])
-    print stat_gp(adf.groupby('sma_stage'  )[bencols])
-    print stat_gp(adf.groupby('ma_es_dif_stage'  )[bencols])
-    print stat_gp(adf.groupby('macd_stage')[bencols])   
-    print stat_gp(adf.groupby('boll_stage')[bencols])   
-    print stat_gp(adf.groupby('rsi_stage' )[bencols])   
-    print stat_gp(adf.groupby('kdj_stage' )[bencols])   
-    print stat_gp(adf.groupby('cci_stage' )[bencols])   
+    df = stat_gp(adf.groupby(['macd_stage','sma_stage','rsi_stage'] )[bencols])
+    # print df
+    # df.to_csv('veri/comb.csv')
+    for stage in i_stages:
+        df = stat_gp(adf.groupby(stage )[bencols])
+        # print df
+        # df.to_csv('veri/'+stage+".csv")       
     # pdb.set_trace()
+    train_cat(adf,i_stages)
+
+def train_cat(adf,i_stages):
+    data=adf[i_stages]
+    train_labels = adf['p_change_15d']
+    from catboost import CatBoostRegressor
+    model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE')
+    fit_model = model.fit(dataset, train_labels)
+
+    print(fit_model.get_params())
     
 if __name__ == '__main__':
     pd.set_option('display.max_columns',80)
