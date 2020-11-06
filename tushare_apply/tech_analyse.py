@@ -245,8 +245,9 @@ def ma_analyse(ohlcv,period=10):
         ma['EMA%s'%cyc]  = talib.EMA(close,cyc)
         ma['SMA%s'%cyc]  = talib.SMA(close,cyc)
     df = pd.DataFrame(ma)
-    def ma_judge(row):
-        res = []
+    ## 
+    def ma_es_dif_judge(row):
+        es_res = []
         for cyc in cycles:
             ema = row['EMA%s'%cyc]
             sma = row['SMA%s'%cyc]
@@ -254,9 +255,23 @@ def ma_analyse(ohlcv,period=10):
                 s= '%s:U'%cyc
             else:
                 s='%s:D'%cyc
-            res.append(s)
-        return ','.join(res)
-    df['ma_stage'] = df.apply(ma_judge,axis=1)
+            es_res.append(s)
+        return ','.join(es_res)
+    def ma_stage_judge(row,ma_type):
+        ma_res = []
+        for i,cyc in enumerate(cycles[:-1]):
+            ma = row['%s%s'%(ma_type,cyc)]
+            ama = row['%s%s'%(ma_type,cycles[i+1])]
+            if ma >= ama:
+                s= '%sv%s:U'%(cyc,cycles[i+1])
+            else:
+                s='%sv%s:D'%(cyc,cycles[i+1])
+            ma_res.append(s)
+        return ','.join(ma_res)
+    ##
+    df['ma_es_dif_stage'] = df.apply(ma_es_dif_judge,axis=1)
+    df['ema_stage'] = df.apply(lambda row:ma_stage_judge(row,'EMA'), axis=1)
+    df['sma_stage'] = df.apply(lambda row:ma_stage_judge(row,'SMA'), axis=1)
     row = df.iloc[-1]
     def ma_str(row,typ):
         res = []
@@ -265,7 +280,7 @@ def ma_analyse(ohlcv,period=10):
             v = row[k]
             res.append('%s:%0.2f'%(k,v))
         return ', '.join(res)
-    res_info = [row['ma_stage'], ma_str(row,'E'), ma_str(row,'S')]
+    res_info = [row['ema_stage'],row['sma_stage'],row['ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
     return res_info,df
     
 def tech_analyse(df):  
@@ -408,7 +423,7 @@ def test():
     
 def verify_indicator(df):
     
-    adf = df[['turnover','cci_stage','ma_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']].copy()
+    adf = df[['turnover','cci_stage','ema_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']].copy()
     bencols = []
     for i in (1,3,5,7,10,15):
         bname = 'p_change_%sd'%i
@@ -424,7 +439,9 @@ def verify_indicator(df):
        #.rename(columns={'text':'count','sent':'mean_sent'}) \
        #.reset_index()
        #.iloc[:,offset:]
-    print stat_gp(adf.groupby('ma_stage'  )[bencols])
+    print stat_gp(adf.groupby('ema_stage'  )[bencols])
+    print stat_gp(adf.groupby('sma_stage'  )[bencols])
+    print stat_gp(adf.groupby('ma_es_dif_stage'  )[bencols])
     print stat_gp(adf.groupby('macd_stage')[bencols])   
     print stat_gp(adf.groupby('boll_stage')[bencols])   
     print stat_gp(adf.groupby('rsi_stage' )[bencols])   
