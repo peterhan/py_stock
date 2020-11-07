@@ -301,6 +301,7 @@ def tech_analyse(df):
     def pd_concat(df1,df2):
         return pd.concat([df1,df2.set_index(df1.index)],axis=1)
     
+    df=df[['date','close']]
     ## MA
     ma_anly_res,mdf = ma_analyse(ohlcv)
     df= pd_concat(df,mdf)
@@ -397,6 +398,7 @@ def analyse_res_to_str(stock_anly_res):
     for name,intro in intro.items():
         pstr+= u"\n  [EXPLAIN:{}]:{}".format(name,intro).encode(ECODE)  
     return pstr
+    
 
  
 def test():
@@ -407,14 +409,20 @@ def test():
     
     # df = ts.get_hist_data('601865')
     # df = ts.get_hist_data('600438')
-    # df.to_csv('temp.csv')
-    df=pd.read_csv('temp.csv')
-    df = df.sort_values('date')
-    tinfo,df = tech_analyse(df)
+    # df = df.sort_index()
+    # pdb.set_trace()
+    # df.to_csv('veri/origin.csv')
+    df=pd.read_csv('veri/origin.csv')
+    df.set_index(df['date'])
+    # df = df.sort_values('date')
+    tinfo,tdf = tech_analyse(df)
+    df = pd.concat([df,tdf],axis=1)
+    df.to_csv('veri/tech.csv')
     pprint(tinfo)
+    # print df.tail(1)
     # df.to_csv('temp_res.csv')
     # pdb.set_trace()
-    # cinfo,df = candle_analyse(df)
+    # cinfo,cdf = candle_analyse(df)
     # pprint(cinfo)
     # print df.tail(1)
     ###
@@ -422,24 +430,27 @@ def test():
     
 def verify_indicator(df):
     i_stages = ['cci_stage','ema_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] 
+    i_stages = ['ema_stage','sma_stage','ma_es_dif_stage','macd_stage'] 
+    i_stages = ['ema_stage'] 
     adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
     bencols = []
     for i in (1,3,5,7,10,15):
         bname = 'p_change_%sd'%i
+        # pdb.set_trace()
         adf[bname] = df['p_change'].shift(-i)    
         bencols.append(bname)
     # adf['p_change_20d'] = df['p_change'].shift(-20)
     # adf['p_change_30d'] = df['p_change'].shift(-30)
     # print adf.corr()
     
-    adf.to_csv("veri/all_dump.csv")
+    adf.to_csv("veri/train_dump.csv")
     def stat_gp(gp):
         return gp.agg([np.size, np.mean, np.std, np.max, np.min]) 
         # gp.agg({'text':'size', 'sent':'mean'}) \        
        #.rename(columns={'text':'count','sent':'mean_sent'}) \
        #.reset_index()
        #.iloc[:,offset:]
-    df = stat_gp(adf.groupby(['macd_stage','sma_stage','rsi_stage'] )[bencols])
+    # df = stat_gp(adf.groupby(['macd_stage','sma_stage','rsi_stage'] )[bencols])
     # print df
     # df.to_csv('veri/comb.csv')
     for stage in i_stages:
@@ -447,16 +458,44 @@ def verify_indicator(df):
         # print df
         # df.to_csv('veri/'+stage+".csv")       
     # pdb.set_trace()
-    train_cat(adf,i_stages)
+    target_col='p_change_3d'
+    train_cat(adf,i_stages,target_col)
+    predict_cat(adf,i_stages,target_col)
 
-def train_cat(adf,i_stages):
-    data=adf[i_stages]
-    train_labels = adf['p_change_15d']
+
+def rmse(targets,predictions):
+    return np.sqrt(((predictions - targets) ** 2).mean())
+    
+def predict_cat(adf,i_stages,target_col):
     from catboost import CatBoostRegressor
-    model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE')
+    test_pool = adf[i_stages]
+    train_labels = adf[target_col].fillna(0)
+    model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=i_stages)
+    model.load_model('first.model')
+    # preds_class = model.predict(test_pool, prediction_type='Class')
+    # preds_proba = model.predict(test_pool, prediction_type='Probability')
+    preds_raw_vals = model.predict(test_pool, prediction_type='RawFormulaVal')
+    from matplotlib import pyplot as plt
+    # print preds_raw_vals,train_labels
+
+    rmsev = rmse(train_labels.values, preds_raw_vals)
+    print rmsev
+    
+    plt.plot(preds_raw_vals[-50:])
+    plt.plot(train_labels.values[-50:])
+    plt.show()
+    # return preds_class,preds_proba,preds_raw_vals
+
+def train_cat(adf,i_stages,target_col):
+    from catboost import CatBoostRegressor
+    dataset = adf[i_stages]
+    train_labels = adf[target_col].fillna(0)
+    model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=i_stages)
     fit_model = model.fit(dataset, train_labels)
 
-    print(fit_model.get_params())
+    # print(fit_model.get_params())
+    fit_model.save_model('first.model')
+    # pdb.set_trace()
     
 if __name__ == '__main__':
     pd.set_option('display.max_columns',80)
