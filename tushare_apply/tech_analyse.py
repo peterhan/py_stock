@@ -467,8 +467,8 @@ def verify_indicator(df):
         print df
         # df.to_csv('veri/'+stage+".csv")       
     # pdb.set_trace()
-    target_col='p_change_3d'
-    train_cat(adf,i_stages,target_col)
+    target_col='p_change_15d'
+    # train_cat(adf,i_stages,target_col)
     predict_cat(adf,i_stages,target_col)
 
 
@@ -477,28 +477,31 @@ def rmse(targets,predictions):
     
 def predict_cat(adf,i_stages,target_col):
     from catboost import CatBoostRegressor
-    test_pool = adf[i_stages]
-    train_labels = adf[target_col].fillna(0)
+    test_pool = adf[i_stages][-50:]
+    test_labels = adf[target_col].fillna(0)[-50:]
     model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=i_stages)
     model.load_model('first.model')
     # preds_class = model.predict(test_pool, prediction_type='Class')
     # preds_proba = model.predict(test_pool, prediction_type='Probability')
     preds_raw_vals = model.predict(test_pool, prediction_type='RawFormulaVal')
     from matplotlib import pyplot as plt
-    # print preds_raw_vals,train_labels
+    # print preds_raw_vals,test_labels
 
-    rmsev = rmse(train_labels.values, preds_raw_vals)
-    print rmsev
-    
-    plt.plot(preds_raw_vals[-50:])
-    plt.plot(train_labels.values[-50:])
+    rmsev = rmse(test_labels.values, preds_raw_vals)
+    print 'rmse:',rmsev
+    pos_neg = pd.Series(np.sign(test_labels*preds_raw_vals),index=test_labels.index)
+    print 'pos_neg',pos_neg,test_labels
+    plt.title(i_stages)
+    plt.plot(preds_raw_vals[:],'--')
+    plt.plot(test_labels.values[:])
+    plt.plot(pos_neg.values[:],'-o')
     plt.show()
     # return preds_class,preds_proba,preds_raw_vals
 
 def train_cat(adf,i_stages,target_col):
     from catboost import CatBoostRegressor
-    dataset = adf[i_stages]
-    train_labels = adf[target_col].fillna(0)
+    dataset = adf[i_stages][:-50]
+    train_labels = adf[target_col].fillna(0)[:-50]
     model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=i_stages)
     fit_model = model.fit(dataset, train_labels)
 
