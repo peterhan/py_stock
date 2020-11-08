@@ -467,8 +467,8 @@ def verify_indicator(df):
         print df
         # df.to_csv('veri/'+stage+".csv")       
     # pdb.set_trace()
-    target_col='p_change_15d'
-    # train_cat(adf,i_stages,target_col)
+    target_col='p_change_3d'
+    train_cat(adf,i_stages,target_col)
     predict_cat(adf,i_stages,target_col)
 
 
@@ -489,12 +489,12 @@ def predict_cat(adf,i_stages,target_col):
 
     rmsev = rmse(test_labels.values, preds_raw_vals)
     print 'rmse:',rmsev
-    pos_neg = pd.Series(np.sign(test_labels*preds_raw_vals),index=test_labels.index)
-    print 'pos_neg',pos_neg,test_labels
+    pos_neg = pd.Series(np.sign(test_labels*preds_raw_vals)*10,index=test_labels.index)
+    print 'pos_neg',pos_neg.value_counts()
     plt.title(i_stages)
     plt.plot(preds_raw_vals[:],'--')
     plt.plot(test_labels.values[:])
-    plt.plot(pos_neg.values[:],'-o')
+    plt.plot(pos_neg.values[:],':')
     plt.show()
     # return preds_class,preds_proba,preds_raw_vals
 
