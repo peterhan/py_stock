@@ -116,6 +116,7 @@ def cross_judge(row):
     elif  ag_dif<0 and slow_ag>0:
         res='CovBefDeathX'
     else:
+        # print ag_dif,fast_ag,slow_ag
         res='Unknown'
     return res
     
@@ -436,12 +437,13 @@ def test():
 def verify_indicator(df):
     i_stages = ['cci_stage','ema_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] 
     # i_stages = ['ema_stage','sma_stage','ma_es_dif_stage','macd_stage'] 
+    i_stages = ['macd_stage'] 
     # i_stages = ['ema_stage'] 
     # i_stages = cdl_pat_names
     adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
     bencols = []
-    # for i in (1,3,5,7,10,15):
-    for i in (1,3,5,7):
+    for i in (1,3,5,7,10,15):
+    # for i in (1,3,5,7):
         bname = 'p_change_%sd'%i
         # pdb.set_trace()
         adf[bname] = (df['close'] / df['close'].shift(i) -1)*100
@@ -466,8 +468,8 @@ def verify_indicator(df):
         # df.to_csv('veri/'+stage+".csv")       
     # pdb.set_trace()
     target_col='p_change_3d'
-    # train_cat(adf,i_stages,target_col)
-    # predict_cat(adf,i_stages,target_col)
+    train_cat(adf,i_stages,target_col)
+    predict_cat(adf,i_stages,target_col)
 
 
 def rmse(targets,predictions):
