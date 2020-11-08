@@ -11,19 +11,22 @@ def load_ta_pat_map():
     return json.load(open('talib_pattern_name.json'))
 TA_PATTERN_MAP = load_ta_pat_map()
 
-
+cdl_pat_names =  []
 def candle_analyse(df):
     '''
     input:OHLC dataframe
     '''
     cn_names = []
     ## calc all candle score
+    open,high,low,close = df['open'],df['high'],df['low'],df['close']
+    df=df[['date']].copy()
     for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
         func = getattr(talib,funcname) 
-        score_data = func(df['open'],df['high'],df['low'],df['close'])
-        cn_name = funcname[3:]        
-        df[cn_name] = score_data
-        cn_names.append(cn_name)
+        score_data = func(open,high,low,close)
+        pat_name = funcname[3:]        
+        cdl_pat_names.append(pat_name) 
+        df[pat_name] = score_data
+        cn_names.append(pat_name)
     
     ###
     total_cdl_score = df[cn_names].sum(axis=1)
@@ -301,7 +304,7 @@ def tech_analyse(df):
     def pd_concat(df1,df2):
         return pd.concat([df1,df2.set_index(df1.index)],axis=1)
     
-    df=df[['date','close']]
+    df=df[['date']]
     ## MA
     ma_anly_res,mdf = ma_analyse(ohlcv)
     df= pd_concat(df,mdf)
@@ -352,7 +355,7 @@ def tech_analyse(df):
     ##
     pivot_point = map(lambda x:round(x[-1],2) , pivot_line(open,high,low,close) )    
     # name = ' '
-    analyse_info = OrderedDict({'price':df['close'].values[-1]})
+    analyse_info = OrderedDict({'price':close[-1]})
     
     # ana_res['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
            
@@ -416,13 +419,15 @@ def test():
     df.set_index(df['date'])
     # df = df.sort_values('date')
     tinfo,tdf = tech_analyse(df)
-    df = pd.concat([df,tdf],axis=1)
-    df.to_csv('veri/tech.csv')
+    
     pprint(tinfo)
     # print df.tail(1)
     # df.to_csv('temp_res.csv')
     # pdb.set_trace()
-    # cinfo,cdf = candle_analyse(df)
+    cinfo,cdf = candle_analyse(df)
+    
+    df = pd.concat([df,tdf,cdf],axis=1)
+    df.to_csv('veri/tech.csv')
     # pprint(cinfo)
     # print df.tail(1)
     ###
@@ -430,14 +435,16 @@ def test():
     
 def verify_indicator(df):
     i_stages = ['cci_stage','ema_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] 
-    i_stages = ['ema_stage','sma_stage','ma_es_dif_stage','macd_stage'] 
-    i_stages = ['ema_stage'] 
+    # i_stages = ['ema_stage','sma_stage','ma_es_dif_stage','macd_stage'] 
+    # i_stages = ['ema_stage'] 
+    # i_stages = cdl_pat_names
     adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
     bencols = []
-    for i in (1,3,5,7,10,15):
+    # for i in (1,3,5,7,10,15):
+    for i in (1,3,5,7):
         bname = 'p_change_%sd'%i
         # pdb.set_trace()
-        adf[bname] = df['p_change'].shift(-i)    
+        adf[bname] = (df['close'] / df['close'].shift(i) -1)*100
         bencols.append(bname)
     # adf['p_change_20d'] = df['p_change'].shift(-20)
     # adf['p_change_30d'] = df['p_change'].shift(-30)
@@ -455,12 +462,12 @@ def verify_indicator(df):
     # df.to_csv('veri/comb.csv')
     for stage in i_stages:
         df = stat_gp(adf.groupby(stage )[bencols])
-        # print df
+        print df
         # df.to_csv('veri/'+stage+".csv")       
     # pdb.set_trace()
     target_col='p_change_3d'
-    train_cat(adf,i_stages,target_col)
-    predict_cat(adf,i_stages,target_col)
+    # train_cat(adf,i_stages,target_col)
+    # predict_cat(adf,i_stages,target_col)
 
 
 def rmse(targets,predictions):
