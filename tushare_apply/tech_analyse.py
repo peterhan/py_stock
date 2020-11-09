@@ -484,6 +484,7 @@ def predict_cat(adf,i_stages,target_col):
     # preds_class = model.predict(test_pool, prediction_type='Class')
     # preds_proba = model.predict(test_pool, prediction_type='Probability')
     preds_raw_vals = model.predict(test_pool, prediction_type='RawFormulaVal')
+    pdb.set_trace()
     from matplotlib import pyplot as plt
     # print preds_raw_vals,test_labels
 
