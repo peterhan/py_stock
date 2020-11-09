@@ -18,7 +18,7 @@ def candle_analyse(df):
     '''
     cn_names = []
     ## calc all candle score
-    open,high,low,close = df['open'],df['high'],df['low'],df['close']
+    open,high,low,close = df['open'],df['high'],df['low'],df['close']    
     df=df[['date']].copy()
     for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
         func = getattr(talib,funcname) 
@@ -412,12 +412,12 @@ def test():
         print json.dumps(info, ensure_ascii=False, indent=2).encode('gbk')
     
     # df = ts.get_hist_data('601865')
-    # df = ts.get_hist_data('600438')
+    df = ts.get_hist_data('600438')
     # df = df.sort_index()
     # pdb.set_trace()
-    # df.to_csv('veri/origin.csv')
-    df=pd.read_csv('veri/origin.csv')
-    df.set_index(df['date'])
+    df.to_csv('veri/origin.csv')
+    df=pd.read_csv('veri/origin.csv',index_col='date')
+    df['date'] = df.index
     # df = df.sort_values('date')
     tinfo,tdf = tech_analyse(df)
     
