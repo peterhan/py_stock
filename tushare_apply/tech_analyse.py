@@ -305,7 +305,7 @@ def tech_analyse(df):
     def pd_concat(df1,df2):
         return pd.concat([df1,df2.set_index(df1.index)],axis=1)
     
-    df=df[['date']]
+    df=df[['date']].copy()
     ## MA
     ma_anly_res,mdf = ma_analyse(ohlcv)
     df= pd_concat(df,mdf)

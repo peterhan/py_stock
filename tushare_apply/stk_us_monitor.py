@@ -43,6 +43,7 @@ def get_ticker_df_alpha_vantage(ticker,mode='day'):
     
 def apply_analyse(df,tk):
     df['vol']= pd.to_numeric(df['volume'])
+    df['date']  = df.index
     tinfo,tdf = tech_analyse(df)
     cinfo,cdf = candle_analyse(df)
     # pdb.set_trace()
