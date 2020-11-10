@@ -8,6 +8,13 @@ from matplotlib import pyplot as plt
 from matplotlib import rcParams
 rcParams['figure.figsize'] = (24, 12)
 
+T("20170104")
+# 设置关注股票为上证指数
+S("000001.XSHG")
+
+# 打印 Open High Low Close
+print(O, H, L, C)
+
 # https://github.com/cedricporter/funcat
 M1, M2 = 14, 6
 
