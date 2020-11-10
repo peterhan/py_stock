@@ -49,7 +49,7 @@ def apply_analyse(df,tk):
     # pdb.set_trace()
     info ={'code':tk,'info':{'price':df['close'].values[-1],'name':''}
         ,'tech':tinfo,'cdl':cinfo}
-    print analyse_res_to_str([info])+'\n'
+    print '\n'+analyse_res_to_str([info])+'\n'
     
 def add_analyse_columns(df):
     ndf =  df

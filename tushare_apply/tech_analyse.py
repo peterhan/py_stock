@@ -438,7 +438,7 @@ def test():
     # print df.tail(1)
     ###
     i_stages = [['cci_stage','ema_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] ]    
-    i_stage_list = [ ['cci_stage'] , ['ema_stage']  ,['sma_stage'] ,['macd_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ]
+    i_stage_list = [  ['ema_stage']  ,['sma_stage'] ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ]
     for i_stages in i_stage_list:
         verify_indicator(df,i_stages)
     

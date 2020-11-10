@@ -336,7 +336,7 @@ def cn_main_loop(mode):
     fname = 'result.%s.json'%exec_func.func_name
     # print fname
     json.dump(result,open(fname,'w'),indent=2)
-    print analyse_res_to_str(result)+'\n'
+    print '\n'+analyse_res_to_str(result)+'\n'
     
     if 'graph' in flags and exec_func.func_name=='get_one_ticker_k_data':
         cols = len(result)        
