@@ -261,6 +261,7 @@ def ma_analyse(ohlcv,period=10):
                 s='%s:D'%cyc
             es_res.append(s)
         return ','.join(es_res)
+        
     def ma_stage_judge(row,ma_type):
         ma_res = []
         for i,cyc in enumerate(cycles[:-1]):
@@ -284,7 +285,7 @@ def ma_analyse(ohlcv,period=10):
             v = row[k]
             res.append('%s:%0.2f'%(k,v))
         return ', '.join(res)
-    res_info = ['E:'+row['ema_stage'],'S:'+row['sma_stage'],'ES:'+row['ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
+    res_info = ['S '+row['sma_stage'], 'E '+row['ema_stage'], 'ES '+row['ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
     return res_info,df
     
 def tech_analyse(df):  
@@ -309,7 +310,10 @@ def tech_analyse(df):
     ## MA
     ma_anly_res,mdf = ma_analyse(ohlcv)
     df= pd_concat(df,mdf)
-    ana_res['ES-MA'] = ma_anly_res
+    ana_res['SMA'] = ma_anly_res[0]
+    ana_res['EMA'] = ma_anly_res[1]
+    ana_res['ES-MA'] = ma_anly_res[2]
+    ana_res['MA-detail'] = ma_anly_res[2:]
     
     ## MACD
     macd_anly_res,mdf = macd_analyse(ohlcv)
