@@ -120,7 +120,7 @@ def us_main_loop(mode):
         else:
             ytk = yf.Ticker(tk)            
             his_df = ytk.history(start=start)
-            his_df = his_df.rename(columns={'Close':'close','Open':'open','High':'high','Low':'low','Volume':'volume'})
+            his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
         if 'pdb' in flags:            
             pdb.set_trace()
         ndf = add_analyse_columns(his_df)

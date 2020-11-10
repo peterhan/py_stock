@@ -411,6 +411,8 @@ def analyse_res_to_str(stock_anly_res):
  
 def test():
     import tushare as ts
+    import yfinance as yf
+    import datetime
     
     def pprint(info, indent=None):
         print json.dumps(info, ensure_ascii=False, indent=2).encode('gbk')
@@ -418,9 +420,17 @@ def test():
     remote_call = False
     remote_call = True
     if remote_call:
-        df = ts.get_hist_data('601865')
+        # df = ts.get_hist_data('601865')
+        tk = yf.Ticker('tsla')
+        start = (datetime.datetime.now()-datetime.timedelta(days=200)).strftime('%Y-%m-%d')
+        df = tk.history(start=start)
+        
         # df = ts.get_hist_data('600438')
         df = df.sort_index()
+        df = df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
+        df['turnover'] = 0
+        df.index.name='date'
+        # pdb.set_trace()
         df.to_csv('veri/origin.csv')
     
     # pdb.set_trace()
