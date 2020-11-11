@@ -43,12 +43,13 @@ def get_ticker_df_alpha_vantage(ticker,mode='day'):
     
 def apply_analyse(df,tk):
     df['vol']= pd.to_numeric(df['volume'])
+    df['date']  = df.index
     tinfo,tdf = tech_analyse(df)
     cinfo,cdf = candle_analyse(df)
     # pdb.set_trace()
     info ={'code':tk,'info':{'price':df['close'].values[-1],'name':''}
         ,'tech':tinfo,'cdl':cinfo}
-    print analyse_res_to_str([info])+'\n'
+    print '\n'+analyse_res_to_str([info])+'\n'
     
 def add_analyse_columns(df):
     ndf =  df
@@ -119,7 +120,7 @@ def us_main_loop(mode):
         else:
             ytk = yf.Ticker(tk)            
             his_df = ytk.history(start=start)
-            his_df = his_df.rename(columns={'Close':'close','Open':'open','High':'high','Low':'low','Volume':'volume'})
+            his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
         if 'pdb' in flags:            
             pdb.set_trace()
         ndf = add_analyse_columns(his_df)

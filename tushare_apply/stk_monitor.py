@@ -189,13 +189,14 @@ def get_one_ticker_k_data(tick,info,flags):
     # add_delta_n(df)
     df.to_csv(fname,index='date')
     df = pd.read_csv(fname,index_col='date')
+    df['date'] = df.index
     # print df.shape
     if df.shape[0] == 0:
         return
     ## technical indicator
-    tech_info,df = tech_analyse(df)
+    tech_info,tdf = tech_analyse(df)
     ## japanese candle pattern
-    cdl_info,df = candle_analyse(df)
+    cdl_info,cdf = candle_analyse(df)
     # cdl_info = None
     df.to_csv(fname)
     if 'emd' in flags:
@@ -335,7 +336,7 @@ def cn_main_loop(mode):
     fname = 'result.%s.json'%exec_func.func_name
     # print fname
     json.dump(result,open(fname,'w'),indent=2)
-    print analyse_res_to_str(result)+'\n'
+    print '\n'+analyse_res_to_str(result)+'\n'
     
     if 'graph' in flags and exec_func.func_name=='get_one_ticker_k_data':
         cols = len(result)        

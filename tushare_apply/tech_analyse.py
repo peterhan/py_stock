@@ -18,7 +18,7 @@ def candle_analyse(df):
     '''
     cn_names = []
     ## calc all candle score
-    open,high,low,close = df['open'],df['high'],df['low'],df['close']
+    open,high,low,close = df['open'],df['high'],df['low'],df['close']    
     df=df[['date']].copy()
     for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
         func = getattr(talib,funcname) 
@@ -261,6 +261,7 @@ def ma_analyse(ohlcv,period=10):
                 s='%s:D'%cyc
             es_res.append(s)
         return ','.join(es_res)
+        
     def ma_stage_judge(row,ma_type):
         ma_res = []
         for i,cyc in enumerate(cycles[:-1]):
@@ -284,7 +285,7 @@ def ma_analyse(ohlcv,period=10):
             v = row[k]
             res.append('%s:%0.2f'%(k,v))
         return ', '.join(res)
-    res_info = ['E:'+row['ema_stage'],'S:'+row['sma_stage'],'ES:'+row['ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
+    res_info = ['S '+row['sma_stage'], 'E '+row['ema_stage'], 'ES '+row['ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
     return res_info,df
     
 def tech_analyse(df):  
@@ -305,11 +306,15 @@ def tech_analyse(df):
     def pd_concat(df1,df2):
         return pd.concat([df1,df2.set_index(df1.index)],axis=1)
     
-    df=df[['date']]
+    df=df[['date']].copy()
     ## MA
     ma_anly_res,mdf = ma_analyse(ohlcv)
     df= pd_concat(df,mdf)
-    ana_res['ES-MA'] = ma_anly_res
+    ana_res['SMA'] = ma_anly_res[0]
+    ana_res['EMA'] = ma_anly_res[1]
+    ana_res['ES-MA'] = ma_anly_res[2]
+    ana_res['EMA-DTL'] = ma_anly_res[3]
+    ana_res['SMA-DTL'] = ma_anly_res[4]
     
     ## MACD
     macd_anly_res,mdf = macd_analyse(ohlcv)
@@ -407,17 +412,32 @@ def analyse_res_to_str(stock_anly_res):
  
 def test():
     import tushare as ts
+    import yfinance as yf
+    import datetime
     
     def pprint(info, indent=None):
         print json.dumps(info, ensure_ascii=False, indent=2).encode('gbk')
     
-    # df = ts.get_hist_data('601865')
-    # df = ts.get_hist_data('600438')
-    # df = df.sort_index()
+    remote_call = False
+    remote_call = True
+    if remote_call:
+        # df = ts.get_hist_data('601865')
+        tk = yf.Ticker('ba')
+        start = (datetime.datetime.now()-datetime.timedelta(days=300)).strftime('%Y-%m-%d')
+        df = tk.history(start=start)
+        
+        # df = ts.get_hist_data('600438')
+        df = df.sort_index()
+        df = df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
+        df['turnover'] = 0
+        df.index.name='date'
+        # pdb.set_trace()
+        df.to_csv('veri/origin.csv')
+    
     # pdb.set_trace()
-    # df.to_csv('veri/origin.csv')
-    df=pd.read_csv('veri/origin.csv')
-    df.set_index(df['date'])
+    
+    df=pd.read_csv('veri/origin.csv',index_col='date')
+    df['date'] = df.index
     # df = df.sort_values('date')
     tinfo,tdf = tech_analyse(df)
     
@@ -432,13 +452,13 @@ def test():
     # pprint(cinfo)
     # print df.tail(1)
     ###
-    verify_indicator(df)
+    i_stages = [['cci_stage','ema_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] ]    
+    i_stage_list = [  ['ema_stage']  ,['sma_stage'] ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ]
+    for i_stages in i_stage_list:
+        verify_indicator(df,i_stages)
     
-def verify_indicator(df):
-    i_stages = ['cci_stage','ema_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] 
-    # i_stages = ['ema_stage','sma_stage','ma_es_dif_stage','macd_stage'] 
-    i_stages = ['macd_stage'] 
-    # i_stages = ['ema_stage'] 
+def verify_indicator(df,i_stages):
+
     # i_stages = cdl_pat_names
     adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
     bencols = []
@@ -464,12 +484,13 @@ def verify_indicator(df):
     # df.to_csv('veri/comb.csv')
     for stage in i_stages:
         df = stat_gp(adf.groupby(stage )[bencols])
-        print df
+        # print df
         # df.to_csv('veri/'+stage+".csv")       
     # pdb.set_trace()
     
+    target_col='p_change_15d'
+
     
-    target_col='p_change_3d'
     train_cat(adf,i_stages,target_col)
     predict_cat(adf,i_stages,target_col)
 
@@ -486,18 +507,32 @@ def predict_cat(adf,i_stages,target_col):
     # preds_class = model.predict(test_pool, prediction_type='Class')
     # preds_proba = model.predict(test_pool, prediction_type='Probability')
     preds_raw_vals = model.predict(test_pool, prediction_type='RawFormulaVal')
-    from matplotlib import pyplot as plt
+    # pdb.set_trace()
+    
+    ss = [[k] for k in  test_pool[i_stages[0]].value_counts().index]
+    ps = model.predict(ss)
+    sts = [row[0] for row in ss]
+    pdf  = pd.DataFrame({'feature':sts,'weight':ps})
+    print i_stages
+    print pdf
+    
     # print preds_raw_vals,test_labels
 
-    rmsev = rmse(test_labels.values, preds_raw_vals)
-    print 'rmse:',rmsev
+    rmsev = rmse( np.sign(test_labels.values), np.sign(preds_raw_vals) )
+    print 'rmse: %0.2f'%rmsev
     pos_neg = pd.Series(np.sign(test_labels*preds_raw_vals)*10,index=test_labels.index)
-    print 'pos_neg',pos_neg.value_counts()
-    plt.title('%s %s'%(target_col,i_stages))
+    
+    pnvc = pos_neg.value_counts()
+    
+    print 'correct_rate: %0.2f%%'%(pnvc[10.0]*1.0/sum(pnvc.values)*100)
+    
+    from matplotlib import pyplot as plt
+    plt.title('%s %s'%(i_stages,target_col))
+    
     plt.plot(preds_raw_vals[:],'--')
     plt.plot(test_labels.values[:])
     plt.plot(pos_neg.values[:],':')
-    plt.show()
+    # plt.show()
     # return preds_class,preds_proba,preds_raw_vals
 
 def train_cat(adf,i_stages,target_col):
@@ -505,7 +540,7 @@ def train_cat(adf,i_stages,target_col):
     dataset = adf[i_stages][:-50]
     train_labels = adf[target_col].fillna(0)[:-50]
     model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=i_stages)
-    fit_model = model.fit(dataset, train_labels)
+    fit_model = model.fit(dataset, train_labels, verbose=0)
 
     # print(fit_model.get_params())
     fit_model.save_model('first.model')
