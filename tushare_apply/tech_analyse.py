@@ -313,7 +313,8 @@ def tech_analyse(df):
     ana_res['SMA'] = ma_anly_res[0]
     ana_res['EMA'] = ma_anly_res[1]
     ana_res['ES-MA'] = ma_anly_res[2]
-    ana_res['MA-detail'] = ma_anly_res[2:]
+    ana_res['EMA-DTL'] = ma_anly_res[3]
+    ana_res['SMA-DTL'] = ma_anly_res[4]
     
     ## MACD
     macd_anly_res,mdf = macd_analyse(ohlcv)
@@ -421,8 +422,8 @@ def test():
     remote_call = True
     if remote_call:
         # df = ts.get_hist_data('601865')
-        tk = yf.Ticker('tsla')
-        start = (datetime.datetime.now()-datetime.timedelta(days=200)).strftime('%Y-%m-%d')
+        tk = yf.Ticker('ba')
+        start = (datetime.datetime.now()-datetime.timedelta(days=300)).strftime('%Y-%m-%d')
         df = tk.history(start=start)
         
         # df = ts.get_hist_data('600438')
