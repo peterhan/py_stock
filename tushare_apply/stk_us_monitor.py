@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 import yfinance as yf
 from stk_monitor import cli_select_menu
 import talib
-from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str
+from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str,cat_boost_factor_check
 
 pd.set_option('display.max_columns',80)
 
@@ -41,15 +41,19 @@ def get_ticker_df_alpha_vantage(ticker,mode='day'):
     # print ndf
     return df
     
-def apply_analyse(df,tk):
+def apply_analyse(df,tk,flags):
     df['vol']= pd.to_numeric(df['volume'])
     df['date']  = df.index
     tinfo,tdf = tech_analyse(df)
     cinfo,cdf = candle_analyse(df)
+    df = pd.concat([df,tdf,cdf],axis=1)
     # pdb.set_trace()
     info ={'code':tk,'info':{'price':df['close'].values[-1],'name':''}
         ,'tech':tinfo,'cdl':cinfo}
     print '\n'+analyse_res_to_str([info])+'\n'
+    if 'cat' in flags:
+        cat_boost_factor_check(df)    
+    return df
     
 def add_analyse_columns(df):
     ndf =  df
@@ -88,7 +92,7 @@ def us_main_loop(mode):
         ,'s':'onestock','n':'news','r':'realtime'
         ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'v':"vantage"
         ,'g':"graph",'ia':'intraday','id':'day','im':'month','u':'us','z':'zh'
-        ,'e':'emd'
+        ,'e':'emd','c':'cat'
     }
     menu_dict = conf_ticks
     groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
@@ -127,7 +131,7 @@ def us_main_loop(mode):
         ndf['code']=tk
         print '#'*50
         print ndf[['code','close','volume','pchange','vchange']].tail(3)
-        apply_analyse(ndf,tk)
+        apply_analyse(ndf,tk,flags)
         print ''
         if 'graph' in flags:
             his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[0,0+i*2])

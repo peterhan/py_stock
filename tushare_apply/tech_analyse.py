@@ -2,6 +2,7 @@ import json
 import talib 
 import pandas as pd
 import numpy as np
+import traceback
 import pdb
 from collections import OrderedDict
 from matplotlib import pyplot as plt
@@ -129,7 +130,10 @@ def get_crossx_type(fast_line,slow_line):
     return df
     
 def get_angle(ss,p=2):
-    return talib.LINEARREG_ANGLE(ss, timeperiod=p)    
+    fss = np.nan_to_num(ss,0)
+    ang =  talib.LINEARREG_ANGLE(fss, timeperiod=p)    
+    return ang
+    
     
 def macd_analyse(ohlcv,period=10):
     dif, dea, hist =  talib.MACD(ohlcv['close'],period)    
@@ -409,8 +413,111 @@ def analyse_res_to_str(stock_anly_res):
     return pstr
     
 
- 
-def test():
+
+    
+def verify_indicator(df,i_stages):
+
+    # i_stages = cdl_pat_names
+    # adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
+    adf = df[['rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
+    bencols = []
+    for i in (1,3,5,7,10,15):
+    # for i in (1,3,5,7):
+        bname = 'p_change_%sd'%i
+        # pdb.set_trace()
+        adf[bname] = (df['close'] / df['close'].shift(i) -1)*100
+        bencols.append(bname)
+    # adf['p_change_20d'] = df['p_change'].shift(-20)
+    # adf['p_change_30d'] = df['p_change'].shift(-30)
+    # print adf.corr()
+    
+    adf.to_csv("veri/train_dump.csv")
+    def stat_gp(gp):
+        return gp.agg([np.size, np.mean, np.std, np.max, np.min]) 
+        # gp.agg({'text':'size', 'sent':'mean'}) \        
+       #.rename(columns={'text':'count','sent':'mean_sent'}) \
+       #.reset_index()
+       #.iloc[:,offset:]
+    # df = stat_gp(adf.groupby(['macd_stage','sma_stage','rsi_stage'] )[bencols])
+    # print df
+    # df.to_csv('veri/comb.csv')
+    for stage in i_stages:
+        df = stat_gp(adf.groupby(stage )[bencols])
+        # print df
+        # df.to_csv('veri/'+stage+".csv")       
+    # pdb.set_trace()
+    target_col='p_change_3d'
+    fit_model = train_cat(adf,i_stages,target_col)
+    predict_cat(fit_model ,adf,i_stages,target_col)
+
+
+def rmse(targets,predictions):
+    return np.sqrt(((predictions - targets) ** 2).mean())
+    
+def predict_cat(fit_model, adf,i_stages,target_col):
+    from catboost import CatBoostRegressor
+    test_pool = adf[i_stages][-50:]
+    test_labels = adf[target_col].fillna(0)[-50:]
+    model = fit_model
+    # model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=i_stages)
+    # model.load_model('first.model')
+    # preds_class = model.predict(test_pool, prediction_type='Class')
+    # preds_proba = model.predict(test_pool, prediction_type='Probability')
+    preds_raw_vals = model.predict(test_pool, prediction_type='RawFormulaVal')
+    # pdb.set_trace()
+    
+    ss = [[k] for k in  test_pool[i_stages[0]].value_counts().index]
+    
+    ps = model.predict(ss)
+    sts = [row[0] for row in ss]
+    pdf  = pd.DataFrame({'feature':sts,'weight':ps}).sort_values('weight',ascending=False)
+    print i_stages
+    print pdf
+    
+    # print preds_raw_vals,test_labels
+
+    rmsev = rmse( np.sign(test_labels.values), np.sign(preds_raw_vals) )
+    print 'rmse: %0.2f'%rmsev
+    pos_neg = pd.Series(np.sign(test_labels*preds_raw_vals)*10,index=test_labels.index)
+    pnvc = pos_neg.value_counts()
+    
+    print 'correct_rate: %0.2f%%'%(pnvc[10.0]*1.0/sum(pnvc.values)*100)
+    
+    from matplotlib import pyplot as plt
+    plt.title('%s %s'%(i_stages,target_col))
+    plt.plot(preds_raw_vals[:],'--')
+    plt.plot(test_labels.values[:])
+    plt.plot(pos_neg.values[:],':')
+    # plt.show()
+    # return preds_class,preds_proba,preds_raw_vals
+
+def train_cat(adf,i_stages,target_col):
+    from catboost import CatBoostRegressor
+    dataset = adf[i_stages][:]
+    train_labels = adf[target_col].fillna(0)[:]
+    model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=i_stages)
+    try:
+        fit_model = model.fit(dataset, train_labels, verbose=0)
+    except:
+        traceback.print_exc()
+
+    # print(fit_model.get_params())
+    fit_model.save_model('first.model')
+    return fit_model
+    # pdb.set_trace()
+
+
+def cat_boost_factor_check(df):
+    i_stages = [['cci_stage','ema_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] ]    
+    i_stage_list = [  ['ema_stage']  ,['sma_stage'] ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ]
+    for i_stages in i_stage_list:
+        try:
+            verify_indicator(df,i_stages)
+        except:
+            traceback.print_exc()
+            
+def main():
+    pd.set_option('display.max_columns',80)
     import tushare as ts
     import yfinance as yf
     import datetime
@@ -422,7 +529,7 @@ def test():
     remote_call = True
     if remote_call:
         # df = ts.get_hist_data('601865')
-        tk = yf.Ticker('ba')
+        tk = yf.Ticker('pltr')
         start = (datetime.datetime.now()-datetime.timedelta(days=300)).strftime('%Y-%m-%d')
         df = tk.history(start=start)
         
@@ -452,95 +559,9 @@ def test():
     # pprint(cinfo)
     # print df.tail(1)
     ###
-    i_stages = [['cci_stage','ema_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] ]    
-    i_stage_list = [  ['ema_stage']  ,['sma_stage'] ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ]
-    for i_stages in i_stage_list:
-        verify_indicator(df,i_stages)
+    cat_boost_factor_check(df)
     
-def verify_indicator(df,i_stages):
 
-    # i_stages = cdl_pat_names
-    adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
-    bencols = []
-    for i in (1,3,5,7,10,15):
-    # for i in (1,3,5,7):
-        bname = 'p_change_%sd'%i
-        # pdb.set_trace()
-        adf[bname] = (df['close'] / df['close'].shift(i) -1)*100
-        bencols.append(bname)
-    # adf['p_change_20d'] = df['p_change'].shift(-20)
-    # adf['p_change_30d'] = df['p_change'].shift(-30)
-    # print adf.corr()
-    
-    adf.to_csv("veri/train_dump.csv")
-    def stat_gp(gp):
-        return gp.agg([np.size, np.mean, np.std, np.max, np.min]) 
-        # gp.agg({'text':'size', 'sent':'mean'}) \        
-       #.rename(columns={'text':'count','sent':'mean_sent'}) \
-       #.reset_index()
-       #.iloc[:,offset:]
-    # df = stat_gp(adf.groupby(['macd_stage','sma_stage','rsi_stage'] )[bencols])
-    # print df
-    # df.to_csv('veri/comb.csv')
-    for stage in i_stages:
-        df = stat_gp(adf.groupby(stage )[bencols])
-        # print df
-        # df.to_csv('veri/'+stage+".csv")       
-    # pdb.set_trace()
-    target_col='p_change_15d'
-    train_cat(adf,i_stages,target_col)
-    predict_cat(adf,i_stages,target_col)
-
-
-def rmse(targets,predictions):
-    return np.sqrt(((predictions - targets) ** 2).mean())
-    
-def predict_cat(adf,i_stages,target_col):
-    from catboost import CatBoostRegressor
-    test_pool = adf[i_stages][-50:]
-    test_labels = adf[target_col].fillna(0)[-50:]
-    model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=i_stages)
-    model.load_model('first.model')
-    # preds_class = model.predict(test_pool, prediction_type='Class')
-    # preds_proba = model.predict(test_pool, prediction_type='Probability')
-    preds_raw_vals = model.predict(test_pool, prediction_type='RawFormulaVal')
-    # pdb.set_trace()
-    
-    ss = [[k] for k in  test_pool[i_stages[0]].value_counts().index]
-    ps = model.predict(ss)
-    sts = [row[0] for row in ss]
-    pdf  = pd.DataFrame({'feature':sts,'weight':ps})
-    print i_stages
-    print pdf
-    
-    # print preds_raw_vals,test_labels
-
-    rmsev = rmse( np.sign(test_labels.values), np.sign(preds_raw_vals) )
-    print 'rmse: %0.2f'%rmsev
-    pos_neg = pd.Series(np.sign(test_labels*preds_raw_vals)*10,index=test_labels.index)
-    pnvc = pos_neg.value_counts()
-    
-    print 'correct_rate: %0.2f%%'%(pnvc[10.0]*1.0/sum(pnvc.values)*100)
-    
-    from matplotlib import pyplot as plt
-    plt.title('%s %s'%(i_stages,target_col))
-    plt.plot(preds_raw_vals[:],'--')
-    plt.plot(test_labels.values[:])
-    plt.plot(pos_neg.values[:],':')
-    # plt.show()
-    # return preds_class,preds_proba,preds_raw_vals
-
-def train_cat(adf,i_stages,target_col):
-    from catboost import CatBoostRegressor
-    dataset = adf[i_stages][:-50]
-    train_labels = adf[target_col].fillna(0)[:-50]
-    model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=i_stages)
-    fit_model = model.fit(dataset, train_labels, verbose=0)
-
-    # print(fit_model.get_params())
-    fit_model.save_model('first.model')
-    # pdb.set_trace()
-    
-if __name__ == '__main__':
-    pd.set_option('display.max_columns',80)
-    test()
+        
+if __name__ == '__main__':    
+    main()

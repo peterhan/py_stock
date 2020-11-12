@@ -11,7 +11,7 @@ import traceback
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 from tushare_patch import get_latest_news,get_today_ticks
-from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_str
+from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_str,cat_boost_factor_check
 
 try:    
     import gevent
@@ -197,6 +197,9 @@ def get_one_ticker_k_data(tick,info,flags):
     tech_info,tdf = tech_analyse(df)
     ## japanese candle pattern
     cdl_info,cdf = candle_analyse(df)
+    df = pd.concat([df,tdf,cdf],axis=1)
+    if 'cat' in flags:
+        cat_boost_factor_check(df)
     # cdl_info = None
     df.to_csv(fname)
     if 'emd' in flags:
@@ -226,7 +229,7 @@ def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=2
         ,'s':'onestock','n':'news'
         ,'top':'top','inst':'inst'
         ,'r':'realtime','f':'fullname','g':'graph'
-        ,'u':'us','z':'zh','e':'emd'
+        ,'u':'us','z':'zh','e':'emd','c':'cat'
         }
     
     for k,v in opt_map.items():
