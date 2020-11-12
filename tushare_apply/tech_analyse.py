@@ -529,7 +529,7 @@ def main():
     remote_call = True
     if remote_call:
         # df = ts.get_hist_data('601865')
-        tk = yf.Ticker('pltr')
+        tk = yf.Ticker('tsla')
         start = (datetime.datetime.now()-datetime.timedelta(days=300)).strftime('%Y-%m-%d')
         df = tk.history(start=start)
         
