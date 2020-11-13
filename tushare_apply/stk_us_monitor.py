@@ -83,7 +83,7 @@ def us_main_loop(mode):
     conf_ticks = json.load(open(fname), object_pairs_hook=OrderedDict)
     conf_ticks = conf_ticks['us-ticks']
     # pdb.set_trace()
-    all = reduce(lambda x,y:x+y, conf_ticks.values())
+    all = reduce(lambda x,y:x+' '+y, conf_ticks.values())
     all = all.replace('  ',' ')
     
     conf_ticks['all'] = all
