@@ -82,10 +82,15 @@ def us_main_loop(mode):
     fname = 'stk_monitor.v01.json'
     conf_ticks = json.load(open(fname), object_pairs_hook=OrderedDict)
     conf_ticks = conf_ticks['us-ticks']
+    # pdb.set_trace()
+    all = reduce(lambda x,y:x+y, conf_ticks.values())
+    all = all.replace('  ',' ')
+    
+    conf_ticks['all'] = all
     opt_map = {
         'q':'quit','d':'detail','i':'pdb'
         ,'s':'onestock','n':'news','r':'realtime'
-        ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'v':"vantage"
+        ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'vt':"vantage"
         ,'g':"graph",'ia':'intraday','id':'day','im':'month','u':'us','z':'zh'
         ,'e':'emd','c':'cat'
     }
@@ -93,7 +98,7 @@ def us_main_loop(mode):
     groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
     s_ticks = []
     for group in groups:
-        s_ticks.extend(conf_ticks.get(group,group).split(' '))    
+        s_ticks.extend(conf_ticks.get(group,group).split(' '))
     print 'ticks:',s_ticks,'flags:',flags
     if 'quit' in flags:
         sys.exit()
@@ -129,7 +134,7 @@ def us_main_loop(mode):
         print ndf[['code','close','volume','pchange','vchange']].tail(3)
         apply_analyse(ndf,tk,flags)
         info = yinfos[tk]
-        print tk,info.get('shortName',''),info.get('sector',''),info.get('market','')
+        print '[%s],[%s],[%s],[%s]'%( tk,info.get('shortName',''),info.get('sector',''),info.get('market','') )
         print ''
         if 'graph' in flags:
             his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[0,0+i*2])
