@@ -311,6 +311,12 @@ def tech_analyse(df):
         return pd.concat([df1,df2.set_index(df1.index)],axis=1)
     
     df=df[['date']].copy()
+
+    ## MACD
+    macd_anly_res,mdf = macd_analyse(ohlcv)
+    df= pd_concat(df,mdf)
+    ana_res['MACD'] = macd_anly_res
+    
     ## MA
     ma_anly_res,mdf = ma_analyse(ohlcv)
     df= pd_concat(df,mdf)
@@ -318,12 +324,7 @@ def tech_analyse(df):
     ana_res['EMA'] = ma_anly_res[1]
     ana_res['ES-MA'] = ma_anly_res[2]
     ana_res['EMA-DTL'] = ma_anly_res[3]
-    ana_res['SMA-DTL'] = ma_anly_res[4]
-    
-    ## MACD
-    macd_anly_res,mdf = macd_analyse(ohlcv)
-    df= pd_concat(df,mdf)
-    ana_res['MACD'] = macd_anly_res
+    ana_res['SMA-DTL'] = ma_anly_res[4]    
 
     ## BOLL
     boll_anly_res,bdf = boll_analyse(ohlcv)
@@ -502,7 +503,7 @@ def train_cat(adf,i_stages,target_col):
         traceback.print_exc()
 
     # print(fit_model.get_params())
-    fit_model.save_model('first.model')
+    # fit_model.save_model('first.model')
     return fit_model
     # pdb.set_trace()
 
