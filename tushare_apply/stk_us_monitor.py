@@ -13,6 +13,7 @@ import yfinance as yf
 from stk_monitor import cli_select_menu
 import talib
 from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str,cat_boost_factor_check
+from yfinance_cache import yfinance_cache
 
 pd.set_option('display.max_columns',80)
 
@@ -40,6 +41,13 @@ def get_ticker_df_alpha_vantage(ticker,mode='day'):
     # print ndf.describe()
     # print ndf
     return df
+
+def add_analyse_columns(df):
+    ndf =  df
+  
+    ndf['pchange'] = df['close'].pct_change()*100
+    ndf['vchange'] = df['volume'].pct_change()*100
+    return ndf
     
 def apply_analyse(df,tk,flags):
     df['vol']= pd.to_numeric(df['volume'])
@@ -55,28 +63,6 @@ def apply_analyse(df,tk,flags):
         cat_boost_factor_check(df)    
     return df
     
-def add_analyse_columns(df):
-    ndf =  df
-    ndf['pivot']= (df['high']+df['low']+df['close']*2)/4
-    ndf['r1']=  2*ndf['pivot']-df['low']
-    ndf['s1']=  2*ndf['pivot']-df['high']
-    ndf['r2']=  ndf['pivot']+ndf['r1']-ndf['s1']
-    ndf['s2']=  ndf['pivot']-ndf['r1']+ndf['s1']
-    ndf['r3']=  df['high']+2*(ndf['pivot']-df['low'])
-    ndf['s3']=  df['low']-2*(df['high']-ndf['pivot'])
-    ndf['sma10'] = talib.SMA(df['close'],10)
-    ndf['sma20'] = talib.SMA(df['close'],20)
-    ndf['sma30'] = talib.SMA(df['close'],30)
-    ndf['sma60'] = talib.SMA(df['close'],60)
-    ndf['sma120'] = talib.SMA(df['close'],120)
-    ndf['ema10'] = talib.EMA(df['close'],10)
-    ndf['ema20'] = talib.EMA(df['close'],20)
-    ndf['ema30'] = talib.EMA(df['close'],30)
-    ndf['ema60'] = talib.EMA(df['close'],60)
-    ndf['ema120'] = talib.EMA(df['close'],120)
-    ndf['pchange'] = df['close'].pct_change()*100
-    ndf['vchange'] = df['volume'].pct_change()*100
-    return ndf
     
 def stock_map():
     "https://finviz.com/js/maps/sec_788.js?rev=226"
@@ -105,6 +91,7 @@ def us_main_loop(mode):
     if 'graph' in flags:
         fig, ax = plt.subplots(nrows=2, ncols=2*len(s_ticks), sharex=False)
     ###
+    yinfos = yfinance_cache(s_ticks)
     for i,tk in enumerate(s_ticks):
         yfinance = True
         start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
@@ -126,12 +113,13 @@ def us_main_loop(mode):
             his_df = ytk.history(start=start)
             his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
         if 'pdb' in flags:            
-            pdb.set_trace()
+            pdb.set_trace()    
         ndf = add_analyse_columns(his_df)
         ndf['code']=tk
         print '#'*50
         print ndf[['code','close','volume','pchange','vchange']].tail(3)
         apply_analyse(ndf,tk,flags)
+        print tk,yinfos[tk].get('longName',''),yinfos[tk].get('market','')
         print ''
         if 'graph' in flags:
             his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[0,0+i*2])

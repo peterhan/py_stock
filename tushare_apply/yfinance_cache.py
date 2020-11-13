@@ -3,6 +3,7 @@ import os
 import json
 import traceback,pdb
 import yfinance as yf
+import yfinance_cache
 
 YFINFO_CACHE = {}
 YFCACHE_FNAME = 'yf_info_cache.json'
@@ -16,10 +17,10 @@ def yfinance_cache(ticks,use_cache=True):
     info_dic = {}
     for tick in ticks:
         if tick in YFINFO_CACHE and use_cache:
-            print 'use cache:',tick
+            # print 'use cache:',tick
             info_dic[tick] = YFINFO_CACHE[tick]
         else:
-            print 'use remote api:',tick
+            print '[yf info use remote api]:',tick
             ticker = yf.Ticker(tick)
             info = ticker.info
             YFINFO_CACHE[tick] = info
