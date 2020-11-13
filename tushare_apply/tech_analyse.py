@@ -320,8 +320,7 @@ def tech_analyse(df):
     ## MA
     ma_anly_res,mdf = ma_analyse(ohlcv)
     df= pd_concat(df,mdf)
-    ana_res['SMA'] = ma_anly_res[0]
-    ana_res['EMA'] = ma_anly_res[1]
+    ana_res['MA'] = ma_anly_res[0] + ma_anly_res[1]    
     ana_res['ES-MA'] = ma_anly_res[2]
     ana_res['EMA-DTL'] = ma_anly_res[3]
     ana_res['SMA-DTL'] = ma_anly_res[4]    

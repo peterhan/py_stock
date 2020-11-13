@@ -32,9 +32,10 @@ def load_cache(fname,use_cache=True):
     jobj = json.load(open(fname))
     ticks = set()
     for k,v in jobj["us-ticks"].items():
-        print k,':',v
+        # print k,':',v
         ticks.update(v.replace('  ','').split(' '))
-    print 'need refresh:',len(ticks)
+    print 'NotConfigTicks:',set(YFINFO_CACHE.keys()) - ticks
+    print 'Total Ticks:',len(ticks)
     for tick in ticks:
         try:
             info = yfinance_cache([tick],use_cache)

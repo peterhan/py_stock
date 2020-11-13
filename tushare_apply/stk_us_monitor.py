@@ -44,7 +44,16 @@ def get_ticker_df_alpha_vantage(ticker,mode='day'):
 
 def add_analyse_columns(df):
     ndf =  df
-  
+    ndf['pivot']= (df['high']+df['low']+df['close']*2)/4
+    ndf['r1']=  2*ndf['pivot']-df['low']
+    ndf['s1']=  2*ndf['pivot']-df['high']
+    ndf['r2']=  ndf['pivot']+ndf['r1']-ndf['s1']
+    ndf['s2']=  ndf['pivot']-ndf['r1']+ndf['s1']
+    ndf['r3']=  df['high']+2*(ndf['pivot']-df['low'])
+    ndf['s3']=  df['low']-2*(df['high']-ndf['pivot'])
+    for i in [10,20,30,60,120,240] :        
+        ndf['sma%s'%i] = talib.SMA(df['close'],i)
+        ndf['ema%s'%i] = talib.EMA(df['close'],i)    
     ndf['pchange'] = df['close'].pct_change()*100
     ndf['vchange'] = df['volume'].pct_change()*100
     return ndf
@@ -119,7 +128,8 @@ def us_main_loop(mode):
         print '#'*50
         print ndf[['code','close','volume','pchange','vchange']].tail(3)
         apply_analyse(ndf,tk,flags)
-        print tk,yinfos[tk].get('longName',''),yinfos[tk].get('market','')
+        info = yinfos[tk]
+        print tk,info.get('shortName',''),info.get('sector',''),info.get('market','')
         print ''
         if 'graph' in flags:
             his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[0,0+i*2])
