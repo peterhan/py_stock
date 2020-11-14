@@ -282,7 +282,8 @@ class TickerBase():
         # holders
         url = "{}/{}/holders".format(self._scrape_url, self.ticker)
         try:
-            holders = _pd.read_html(url)
+            html = _requests.get(url,proxies=proxy)
+            holders = _pd.read_html(html)
         except:
             holders = []
         if len(holders)>0:

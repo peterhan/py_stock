@@ -8,6 +8,7 @@ import yfinance_cache
 YFINFO_CACHE = {}
 YFCACHE_FNAME = 'yf_info_cache.json'
 
+proxy ={'https':'http://127.0.0.1:7890' }
 def yfinance_cache(ticks,use_cache=True):
     global YFINFO_CACHE,YFCACHE_FNAME
     if not os.path.exists(YFCACHE_FNAME):
@@ -16,13 +17,15 @@ def yfinance_cache(ticks,use_cache=True):
         YFINFO_CACHE = json.load(open(YFCACHE_FNAME))
     info_dic = {}
     for tick in ticks:
+        if tick.strip()=='':
+            continue
         if tick in YFINFO_CACHE and use_cache:
             # print 'use cache:',tick
             info_dic[tick] = YFINFO_CACHE[tick]
         else:
             print '[yf info use remote api]:',tick
-            ticker = yf.Ticker(tick)
-            info = ticker.info
+            ticker = yf.Ticker(tick)            
+            info = ticker.get_info(proxy={'https':'http://127.0.0.1:7890','http':'http://127.0.0.1:7890' })
             YFINFO_CACHE[tick] = info
             json.dump(YFINFO_CACHE,open(YFCACHE_FNAME,'w'),indent=2)
             info_dic[tick] = info
