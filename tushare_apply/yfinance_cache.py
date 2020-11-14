@@ -1,20 +1,21 @@
 #!coding:utf8
 import os
 import json
+import gzip
 import traceback,pdb
 import yfinance as yf
 import yfinance_cache
 
 YFINFO_CACHE = {}
-YFCACHE_FNAME = 'yf_info_cache.json'
+YFCACHE_FNAME = 'yf_info_cache.json.gz'
 
 proxy ={'https':'http://127.0.0.1:7890' }
 def yfinance_cache(ticks,use_cache=True):
     global YFINFO_CACHE,YFCACHE_FNAME
     if not os.path.exists(YFCACHE_FNAME):
-        json.dump({},open(YFCACHE_FNAME,'w'))
+        json.dump({},gzip.open(YFCACHE_FNAME,'w'))
     if len(YFINFO_CACHE)==0:
-        YFINFO_CACHE = json.load(open(YFCACHE_FNAME))
+        YFINFO_CACHE = json.load(gzip.open(YFCACHE_FNAME))
     info_dic = {}
     for tick in ticks:
         if tick.strip()=='':
@@ -27,7 +28,7 @@ def yfinance_cache(ticks,use_cache=True):
             ticker = yf.Ticker(tick)            
             info = ticker.get_info(proxy={'https':'http://127.0.0.1:7890','http':'http://127.0.0.1:7890' })
             YFINFO_CACHE[tick] = info
-            json.dump(YFINFO_CACHE,open(YFCACHE_FNAME,'w'),indent=2)
+            json.dump(YFINFO_CACHE,gzip.open(YFCACHE_FNAME,'w'),indent=2)
             info_dic[tick] = info
     return info_dic
  
@@ -38,7 +39,7 @@ def load_cache(fname,use_cache=True):
         # print k,':',v
         ticks.update(v.replace('  ','').split(' '))
     print 'NotConfigTicks:',set(YFINFO_CACHE.keys()) - ticks
-    print 'Total Ticks:',len(ticks)
+    print 'Total Ticks:',len(ticks)    
     for tick in ticks:
         try:
             info = yfinance_cache([tick],use_cache)
