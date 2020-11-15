@@ -244,21 +244,24 @@ def kdj_analyse(ohlcv,period=10):
     res_info = ', '.join(res_info)
     return res_info,df
 
-def ma_analyse(ohlcv,period=10):    
-    close = ohlcv['close']
+def ma_analyse(ohlcv,period=10,target_col='close'):    
+    close = ohlcv[target_col]
     ma = OrderedDict()
+    prefix=''
+    if target_col!='close':
+        prefix = '%s_'%target_col
     # cycles = [5,10,20,40,60,120,240]
     cycles = [3,5,20,60]
     for cyc in cycles:
-        ma['EMA%s'%cyc]  = talib.EMA(close,cyc)
-        ma['SMA%s'%cyc]  = talib.SMA(close,cyc)
+        ma[prefix+'EMA%s'%cyc]  = talib.EMA(close,cyc)
+        ma[prefix+'SMA%s'%cyc]  = talib.SMA(close,cyc)
     df = pd.DataFrame(ma)
     ## 
     def ma_es_dif_judge(row):
         es_res = []
         for cyc in cycles:
-            ema = row['EMA%s'%cyc]
-            sma = row['SMA%s'%cyc]
+            ema = row[prefix+'EMA%s'%cyc]
+            sma = row[prefix+'SMA%s'%cyc]
             if ema>sma:
                 s= '%s:U'%cyc
             else:
@@ -269,8 +272,8 @@ def ma_analyse(ohlcv,period=10):
     def ma_stage_judge(row,ma_type):
         ma_res = []
         for i,cyc in enumerate(cycles[:-1]):
-            ma = row['%s%s'%(ma_type,cyc)]
-            ama = row['%s%s'%(ma_type,cycles[i+1])]
+            ma = row[prefix+'%s%s'%(ma_type,cyc)]
+            ama = row[prefix+'%s%s'%(ma_type,cycles[i+1])]
             if ma >= ama:
                 s= '%sv%s:U'%(cyc,cycles[i+1])
             else:
@@ -278,18 +281,18 @@ def ma_analyse(ohlcv,period=10):
             ma_res.append(s)
         return ','.join(ma_res)
     ##
-    df['ma_es_dif_stage'] = df.apply(ma_es_dif_judge,axis=1)
-    df['ema_stage'] = df.apply(lambda row:ma_stage_judge(row,'EMA'), axis=1)
-    df['sma_stage'] = df.apply(lambda row:ma_stage_judge(row,'SMA'), axis=1)
+    df[ prefix +'ma_es_dif_stage'] = df.apply(ma_es_dif_judge,axis=1)
+    df[ prefix +'ema_stage'] = df.apply(lambda row:ma_stage_judge(row,'EMA'), axis=1)
+    df[ prefix +'sma_stage'] = df.apply(lambda row:ma_stage_judge(row,'SMA'), axis=1)
     row = df.iloc[-1]
     def ma_str(row,typ):
         res = []
         for cyc in cycles:            
             k = '%sMA%s'%(typ,cyc)
-            v = row[k]
+            v = row[prefix+k]
             res.append('%s:%0.2f'%(k,v))
         return ', '.join(res)
-    res_info = ['S '+row['sma_stage'], 'E '+row['ema_stage'], 'ES '+row['ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
+    res_info = ['S '+row[prefix+'sma_stage'], 'E '+row[prefix+'ema_stage'], 'ES '+row[prefix+'ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
     return res_info,df
     
 def tech_analyse(df):  
@@ -320,11 +323,20 @@ def tech_analyse(df):
     ## MA
     ma_anly_res,mdf = ma_analyse(ohlcv)
     df= pd_concat(df,mdf)
-    ana_res['MA'] = ma_anly_res[0] + ma_anly_res[1]    
+    ana_res['MA'] = ma_anly_res[0] + ' ' + ma_anly_res[1]    
     ana_res['ES-MA'] = ma_anly_res[2]
     ana_res['EMA-DTL'] = ma_anly_res[3]
     ana_res['SMA-DTL'] = ma_anly_res[4]    
 
+    ## volma
+    # pdb.set_trace()
+    vol_ma_res, vdf = ma_analyse(ohlcv,target_col='vol')
+    df= pd_concat(df,vdf)
+    ana_res['VOL_MA'] = vol_ma_res[0] + ' ' + vol_ma_res[1]    
+    ana_res['VOL_ES-MA'] = vol_ma_res[2]
+    # ana_res['VOL_EMA-DTL'] = vol_ma_res[3]
+    # ana_res['VOL_SMA-DTL'] = vol_ma_res[4]   
+    
     ## BOLL
     boll_anly_res,bdf = boll_analyse(ohlcv)
     df= pd_concat(df,bdf)
@@ -350,8 +362,11 @@ def tech_analyse(df):
     df= pd_concat(df,rdf)
     ana_res['ROC'] = roc_anly_res
     
+    ## Forcast
     tsf_res =  'Forcast: %0.2f'%talib.TSF(ohlcv['close'])[-1]
     ana_res['TSF'] = tsf_res
+    
+    
     
     ## OBV
     obv = talib.OBV(close,vol)
@@ -508,8 +523,8 @@ def train_cat(adf,i_stages,target_col):
 
 
 def cat_boost_factor_check(df):
-    i_stages = [['cci_stage','ema_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] ]    
-    i_stage_list = [  ['ema_stage']  ,['sma_stage'] ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ]
+    i_stages = [['cci_stage','ema_stage','vol_ema_stage','vol_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] ]    
+    i_stage_list = [  ['ema_stage']  ,['sma_stage'],['vol_ema_stage'] ,['vol_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ]
     for i_stages in i_stage_list:
         try:
             verify_indicator(df,i_stages)
@@ -529,11 +544,11 @@ def main():
     remote_call = True
     if remote_call:
         # df = ts.get_hist_data('601865')
-        tk = yf.Ticker('tsla')
-        start = (datetime.datetime.now()-datetime.timedelta(days=300)).strftime('%Y-%m-%d')
-        df = tk.history(start=start)
+        # tk = yf.Ticker('tsla')
+        # start = (datetime.datetime.now()-datetime.timedelta(days=300)).strftime('%Y-%m-%d')
+        # df = tk.history(start=start)
         
-        # df = ts.get_hist_data('600438')
+        df = ts.get_hist_data('600438')
         df = df.sort_index()
         df = df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
         df['turnover'] = 0
