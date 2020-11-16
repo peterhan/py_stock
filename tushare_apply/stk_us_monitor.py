@@ -134,7 +134,7 @@ def us_main_loop(mode):
     groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
     s_ticks = []
     for group in groups:
-        s_ticks.extend(conf_ticks.get(group,group).split(' '))
+        s_ticks.extend(conf_ticks.get(group,group).replace('  ',' ').split(' '))
     print 'ticks:',s_ticks,'flags:',flags
     if 'quit' in flags:
         sys.exit()
@@ -181,17 +181,14 @@ def us_main_loop(mode):
             emd_plot(ndf['close'])
         if 'pdb' in flags:
             pdb.set_trace()
-        if  'detail' in flags:
-            ytk = yf.Ticker(tk)
-            info = ytk.info
-            opt = ytk.option_chain()
-            print json.dumps(info ,indent=2)
-            print opt
-        else:
-            info = {}
-            opt = {}
-    
-    
+        #if  'detail' in flags:
+        #    ytk = yf.Ticker(tk)        
+        #    opt = ytk.option_chain()
+        #    print json.dumps(info ,indent=2)
+        #    print opt
+        #else:
+        #    info = {}
+        #    opt = {}
     if 'graph' in flags:
         plt.show()    
     return flags
