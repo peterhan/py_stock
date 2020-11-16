@@ -8,11 +8,11 @@ import yfinance as yf
 import yfinance_cache
 
 try:    
-    # import gevent
-    # from gevent import monkey
-    # from gevent.pool import Pool    
-    # monkey.patch_all()
-    Pool = None
+    import gevent
+    from gevent import monkey
+    from gevent.pool import Pool    
+    monkey.patch_all()
+    # Pool = None
     print '[Gevent ok]'
 except:    
     print '[Not Found gevent]'
@@ -71,6 +71,7 @@ def yfinance_cache(ticks,use_cache=True):
     
     ## make return/cache data
     if len(results)>0:
+        print results
         for tick,info in results:
             YFINFO_CACHE[tick] = info
             info_dic[tick] = info
