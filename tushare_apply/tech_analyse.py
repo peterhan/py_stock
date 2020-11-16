@@ -430,8 +430,7 @@ def analyse_res_to_str(stock_anly_res):
 
 
     
-def verify_indicator(df,i_stages):
-
+def caculate_indicator(df, i_stages, target_col):
     # i_stages = cdl_pat_names
     # adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
     adf = df[['rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
@@ -461,9 +460,8 @@ def verify_indicator(df,i_stages):
         # print df
         # df.to_csv('veri/'+stage+".csv")       
     # pdb.set_trace()
-    target_col='p_change_3d'
-    fit_model = train_cat(adf,i_stages,target_col)
-    predict_cat(fit_model ,adf,i_stages,target_col)
+    return adf
+
 
 
 def rmse(targets,predictions):
@@ -494,15 +492,14 @@ def predict_cat(fit_model, adf,i_stages,target_col):
     rmsev = rmse( np.sign(test_labels.values), np.sign(preds_raw_vals) )
     print 'rmse: %0.2f'%rmsev
     pos_neg = pd.Series(np.sign(test_labels*preds_raw_vals)*10,index=test_labels.index)
-    pnvc = pos_neg.value_counts()
-    
+    pnvc = pos_neg.value_counts()    
     print 'correct_rate: %0.2f%%'%(pnvc[10.0]*1.0/sum(pnvc.values)*100)
     
-    from matplotlib import pyplot as plt
-    plt.title('%s %s'%(i_stages,target_col))
-    plt.plot(preds_raw_vals[:],'--')
-    plt.plot(test_labels.values[:])
-    plt.plot(pos_neg.values[:],':')
+    # from matplotlib import pyplot as plt
+    # plt.title('%s %s'%(i_stages,target_col))
+    # plt.plot(preds_raw_vals[:],'--')
+    # plt.plot(test_labels.values[:])
+    # plt.plot(pos_neg.values[:],':')
     # plt.show()
     # return preds_class,preds_proba,preds_raw_vals
 
@@ -525,17 +522,28 @@ def train_cat(adf,i_stages,target_col):
 def cat_boost_factor_check(df):
     i_stages = [['cci_stage','ema_stage','vol_ema_stage','vol_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] ]    
     i_stage_list = [  ['ema_stage']  ,['sma_stage'],['vol_ema_stage'] ,['vol_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ]
+    target_col = 'p_change_3d'
     for i_stages in i_stage_list:
         try:
-            verify_indicator(df,i_stages)
+            adf = caculate_indicator(df, i_stages, target_col)
+            fit_model = train_cat(adf,i_stages,target_col)
+            predict_cat(fit_model ,adf,i_stages,target_col)
         except:
             traceback.print_exc()
-            
+
+
+def yf_get_hist_data(tick):
+    import yfinance as yf    
+    import datetime
+    tk = yf.Ticker(tick)
+    start = (datetime.datetime.now()-datetime.timedelta(days=300)).strftime('%Y-%m-%d')
+    df = tk.history(start=start)
+    df = df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
+    return df
+    
 def main():
     pd.set_option('display.max_columns',80)
     import tushare as ts
-    import yfinance as yf
-    import datetime
     
     def pprint(info, indent=None):
         print json.dumps(info, ensure_ascii=False, indent=2).encode('gbk')
@@ -543,14 +551,11 @@ def main():
     remote_call = False
     remote_call = True
     if remote_call:
-        # df = ts.get_hist_data('601865')
-        # tk = yf.Ticker('tsla')
-        # start = (datetime.datetime.now()-datetime.timedelta(days=300)).strftime('%Y-%m-%d')
-        # df = tk.history(start=start)
-        
-        df = ts.get_hist_data('600438')
+        tick='tsla'
+        df = yf_get_hist_data(tick)
+        # tick='600438'
+        # df = ts.get_hist_data(tick)
         df = df.sort_index()
-        df = df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
         df['turnover'] = 0
         df.index.name='date'
         # pdb.set_trace()
@@ -562,12 +567,13 @@ def main():
     df['date'] = df.index
     # df = df.sort_values('date')
     tinfo,tdf = tech_analyse(df)
-    
-    pprint(tinfo)
     # print df.tail(1)
     # df.to_csv('temp_res.csv')
     # pdb.set_trace()
     cinfo,cdf = candle_analyse(df)
+    res = [{'code':tick,'info':{}
+        ,'tech':tinfo,'cdl':cinfo}]
+    print analyse_res_to_str(res)
     
     df = pd.concat([df,tdf,cdf],axis=1)
     df.to_csv('veri/tech.csv')
