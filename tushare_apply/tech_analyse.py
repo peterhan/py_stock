@@ -522,7 +522,7 @@ def train_cat(adf,i_stages,target_col):
 def cat_boost_factor_check(df):
     i_stages = [['cci_stage','ema_stage','vol_ema_stage','vol_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] ]    
     i_stage_list = [  ['ema_stage']  ,['sma_stage'],['vol_ema_stage'] ,['vol_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ]
-    target_col = 'p_change_3d'
+    target_col = 'p_change_5d'
     for i_stages in i_stage_list:
         try:
             adf = caculate_indicator(df, i_stages, target_col)
@@ -539,6 +539,7 @@ def yf_get_hist_data(tick):
     start = (datetime.datetime.now()-datetime.timedelta(days=300)).strftime('%Y-%m-%d')
     df = tk.history(start=start)
     df = df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
+    df['turnover'] = 0
     return df
     
 def main():
@@ -556,7 +557,7 @@ def main():
         # tick='600438'
         # df = ts.get_hist_data(tick)
         df = df.sort_index()
-        df['turnover'] = 0
+        
         df.index.name='date'
         # pdb.set_trace()
         df.to_csv('veri/origin.csv')

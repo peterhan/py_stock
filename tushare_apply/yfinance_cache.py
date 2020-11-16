@@ -2,6 +2,7 @@
 import os
 import json
 import gzip
+import socket
 import traceback,pdb
 import yfinance as yf
 import yfinance_cache
@@ -9,7 +10,12 @@ import yfinance_cache
 YFINFO_CACHE = {}
 YFCACHE_FNAME = 'yf_info_cache.json.gz'
 
-proxy ={'https':'http://127.0.0.1:7890' }
+def check_socket(ip,port):
+    a_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    location = (ip,port)
+    result_of_check = a_socket.connect_ex(location)
+    return result_of_check==0
+
 def yfinance_cache(ticks,use_cache=True):
     global YFINFO_CACHE,YFCACHE_FNAME
     if not os.path.exists(YFCACHE_FNAME):
@@ -25,8 +31,12 @@ def yfinance_cache(ticks,use_cache=True):
             info_dic[tick] = YFINFO_CACHE[tick]
         else:
             print '[yf info use remote api]:',tick
-            ticker = yf.Ticker(tick)            
-            info = ticker.get_info(proxy={'https':'http://127.0.0.1:7890','http':'http://127.0.0.1:7890' })
+            ticker = yf.Ticker(tick)          
+            proxy=None
+            if check_socket('127.0.0.1',7890):
+                print 'use proxy'
+                proxy={'https':'http://127.0.0.1:7890','http':'http://127.0.0.1:7890' }
+            info = ticker.get_info(proxy=proxy)
             YFINFO_CACHE[tick] = info
             json.dump(YFINFO_CACHE,gzip.open(YFCACHE_FNAME,'w'),indent=2)
             info_dic[tick] = info
