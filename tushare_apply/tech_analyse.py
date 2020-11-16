@@ -292,7 +292,7 @@ def ma_analyse(ohlcv,period=10,target_col='close'):
             v = row[prefix+k]
             res.append('%s:%0.2f'%(k,v))
         return ', '.join(res)
-    res_info = ['S '+row[prefix+'sma_stage'], 'E '+row[prefix+'ema_stage'], 'ES '+row[prefix+'ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
+    res_info = ['[S] '+row[prefix+'sma_stage'], '[E] '+row[prefix+'ema_stage'], '[ES] '+row[prefix+'ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
     return res_info,df
     
 def tech_analyse(df):  
