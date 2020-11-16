@@ -15,6 +15,15 @@ import talib
 from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str,cat_boost_factor_check
 from yfinance_cache import yfinance_cache
 
+try:    
+    import gevent
+    from gevent import monkey
+    from gevent.pool import Pool    
+    monkey.patch_all()
+    # print '[gevent ok]'
+except:
+    print '[Not Found gevent]'
+
 pd.set_option('display.max_columns',80)
 
 def get_ticker_df_alpha_vantage(ticker,mode='day'):
@@ -58,26 +67,53 @@ def add_analyse_columns(df):
     ndf['vchange'] = df['volume'].pct_change()*100
     return ndf
     
-def apply_analyse(df,tk,flags):
-    df['vol']= pd.to_numeric(df['volume'])
-    df['date']  = df.index
-    tinfo,tdf = tech_analyse(df)
-    cinfo,cdf = candle_analyse(df)
-    df = pd.concat([df,tdf,cdf],axis=1)
-    # pdb.set_trace()
-    info ={'code':tk,'info':{'price':df['close'].values[-1],'name':''}
-        ,'tech':tinfo,'cdl':cinfo}
-    print '\n'+analyse_res_to_str([info])+'\n'
-    if 'cat' in flags:
-        cat_boost_factor_check(df)    
-    return df
-    
     
 def stock_map():
     "https://finviz.com/js/maps/sec_788.js?rev=226"
     "https://finviz.com/api/map_perf.ashx?t=sec"
     return 
     
+    
+def get_one_tick_data(tick,infos,flags):
+    yfinance = True
+    start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
+    if tick.split('.')[0].isdigit() or '=' in tick or '^' in tick:
+        yfinance = True
+    if 'vantage' in flags:
+        yfinance = False
+    if not yfinance:
+        mode = 'day'
+        if 'month' in flags:
+            mode='month'
+        if 'day' in flags:
+            mode='day'
+        if 'intraday' in flags:
+            mode='intraday'
+        his_df = get_ticker_df_alpha_vantage(tick,mode)
+    else:
+        ytk = yf.Ticker(tick)            
+        his_df = ytk.history(start=start)
+        his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
+    if 'pdb' in flags:            
+        pdb.set_trace()    
+    ndf = add_analyse_columns(his_df)
+    ndf['code']=tick
+    
+    
+    df = ndf
+    df['vol']= pd.to_numeric(df['volume'])
+    df['date']  = df.index
+    tinfo,tdf = tech_analyse(df)
+    cinfo,cdf = candle_analyse(df)
+    df = pd.concat([df,tdf,cdf],axis=1)
+        
+    res_info = {'code':tick,'info':infos.get(tick,{}),'tech':tinfo,'cdl':cinfo,'df':df}
+    res_info['info'].update({'price':df['close'].values[-1],'name':''})    
+    if 'cat' in flags:
+        cat_boost_factor_check(ndf)     
+    return res_info
+
+        
 def us_main_loop(mode):
     fname = 'stk_monitor.v01.json'
     conf_ticks = json.load(open(fname), object_pairs_hook=OrderedDict)
@@ -104,51 +140,45 @@ def us_main_loop(mode):
         sys.exit()
     if 'graph' in flags:
         fig, ax = plt.subplots(nrows=2, ncols=2*len(s_ticks), sharex=False)
-    ###
+    ### get infos
     yinfos = yfinance_cache(s_ticks)
-    for i,tk in enumerate(s_ticks):
-        yfinance = True
-        start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
-        if tk.split('.')[0].isdigit() or '=' in tk or '^' in tk:
-            yfinance = True
-        if 'vantage' in flags:
-            yfinance = False
-        if not yfinance:
-            mode = 'day'
-            if 'month' in flags:
-                mode='month'
-            if 'day' in flags:
-                mode='day'
-            if 'intraday' in flags:
-                mode='intraday'
-            his_df = get_ticker_df_alpha_vantage(tk,mode)
-        else:
-            ytk = yf.Ticker(tk)            
-            his_df = ytk.history(start=start)
-            his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
-        if 'pdb' in flags:            
-            pdb.set_trace()    
-        ndf = add_analyse_columns(his_df)
-        ndf['code']=tk
+    
+    ### get data
+    if not Pool:
+        for tk in s_ticks:
+            results = get_one_tick_data(tk,yinfos,flags)
+    else:
+        pool = Pool(8)
+        jobs = []
+        for tk in s_ticks:
+            job = pool.spawn(get_one_tick_data,tk,yinfos,flags)
+            jobs.append(job)
+        pool.join()
+        results = [job.value for job in jobs]
+      
+    # pdb.set_trace()
+    for i,result in enumerate(results):
+        ndf = result['df']
+        info = result['info']
         print '#'*50
+        if 'detail' in flags:
+            print analyse_res_to_str([result])
         print ndf[['code','close','volume','pchange','vchange']].tail(3)
-        apply_analyse(ndf,tk,flags)
-        info = yinfos[tk]
         print '[%s],[%s],[%s],[%s]'%( tk,info.get('shortName',''),info.get('sector',''),info.get('market','') )
         print ''
         if 'graph' in flags:
-            his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[0,0+i*2])
-            his_df[['volume']].plot(title=tk,ax = ax[0,1+i*2])
+            ndf[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[0,0+i*2])
+            ndf[['volume']].plot(title=tk,ax = ax[0,1+i*2])
             try:
-                his_df = get_ticker_df_alpha_vantage(tk,'intraday')
-                add_analyse_columns(his_df)
-                his_df[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[1,0+i*2])
-                his_df[['volume']].plot(title=tk,ax = ax[1,1+i*2])
+                ndf = get_ticker_df_alpha_vantage(tk,'intraday')
+                add_analyse_columns(ndf)
+                ndf[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[1,0+i*2])
+                ndf[['volume']].plot(title=tk,ax = ax[1,1+i*2])
             except:
                 pass
         if 'emd' in flags:
             from stock_emd import emd_plot
-            emd_plot(his_df['close'])
+            emd_plot(ndf['close'])
         if 'pdb' in flags:
             pdb.set_trace()
         if  'detail' in flags:
@@ -160,6 +190,8 @@ def us_main_loop(mode):
         else:
             info = {}
             opt = {}
+    
+    
     if 'graph' in flags:
         plt.show()    
     return flags
