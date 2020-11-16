@@ -105,10 +105,14 @@ def get_one_tick_data(tick,infos,flags):
     df['date']  = df.index
     tinfo,tdf = tech_analyse(df)
     cinfo,cdf = candle_analyse(df)
-    df = pd.concat([df,tdf,cdf],axis=1)
+    df = pd.concat([df,tdf,cdf],axis=1)        
         
     res_info = {'code':tick,'info':infos.get(tick,{}),'tech':tinfo,'cdl':cinfo,'df':df}
-    res_info['info'].update({'price':df['close'].values[-1],'name':''})    
+    res_info['info'].update({'price':df['close'].values[-1],'name':''})
+    
+    if 'option_chain' in flags:
+        res_info['option_chain'] = ytk.option_chain()
+        
     if 'cat' in flags:
         cat_boost_factor_check(ndf)     
     return res_info
@@ -128,7 +132,7 @@ def us_main_loop(mode):
         ,'s':'onestock','n':'news','r':'realtime'
         ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'vt':"vantage"
         ,'g':"graph",'ia':'intraday','id':'day','im':'month','u':'us','z':'zh'
-        ,'e':'emd','c':'cat'
+        ,'e':'emd','c':'cat','o':'option_chain'
     }
     menu_dict = conf_ticks
     groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
@@ -160,20 +164,21 @@ def us_main_loop(mode):
     for i,result in enumerate(results):
         ndf = result['df']
         info = result['info']
+        tick = result['code']
         print '#'*50
         if 'detail' in flags:
             print analyse_res_to_str([result])
         print ndf[['code','close','volume','pchange','vchange']].tail(3)
-        print '[%s],[%s],[%s],[%s]'%( tk,info.get('shortName',''),info.get('sector',''),info.get('market','') )
+        print '[%s],[%s],[%s],[%s]'%( tick,info.get('shortName',''),info.get('sector',''),info.get('market','') )
         print ''
         if 'graph' in flags:
-            ndf[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[0,0+i*2])
-            ndf[['volume']].plot(title=tk,ax = ax[0,1+i*2])
+            ndf[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tick,ax= ax[0,0+i*2])
+            ndf[['volume']].plot(title=tick,ax = ax[0,1+i*2])
             try:
-                ndf = get_ticker_df_alpha_vantage(tk,'intraday')
+                ndf = get_ticker_df_alpha_vantage(tick,'intraday')
                 add_analyse_columns(ndf)
-                ndf[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tk,ax= ax[1,0+i*2])
-                ndf[['volume']].plot(title=tk,ax = ax[1,1+i*2])
+                ndf[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tick,ax= ax[1,0+i*2])
+                ndf[['volume']].plot(title=tick,ax = ax[1,1+i*2])
             except:
                 pass
         if 'emd' in flags:
@@ -181,14 +186,8 @@ def us_main_loop(mode):
             emd_plot(ndf['close'])
         if 'pdb' in flags:
             pdb.set_trace()
-        #if  'detail' in flags:
-        #    ytk = yf.Ticker(tk)        
-        #    opt = ytk.option_chain()
-        #    print json.dumps(info ,indent=2)
-        #    print opt
-        #else:
-        #    info = {}
-        #    opt = {}
+        if  'option_chain' in flags:
+           print json.dumps(result['option_chain']  ,indent=2)        
     if 'graph' in flags:
         plt.show()    
     return flags
