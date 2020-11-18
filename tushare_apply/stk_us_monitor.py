@@ -138,7 +138,7 @@ def us_main_loop(mode):
     groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
     s_ticks = []
     for group in groups:
-        s_ticks.extend(conf_ticks.get(group,group).replace('  ',' ').split(' '))
+        s_ticks.extend(conf_ticks.get(group,group).replace('`','').replace('  ',' ').split(' '))
     print 'ticks:',s_ticks,'flags:',flags
     if 'quit' in flags:
         sys.exit()
