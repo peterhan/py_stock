@@ -316,9 +316,12 @@ def tech_analyse(df):
     df=df[['date']].copy()
 
     ## MACD
-    macd_anly_res,mdf = macd_analyse(ohlcv)
-    df= pd_concat(df,mdf)
-    ana_res['MACD'] = macd_anly_res
+    try:
+        macd_anly_res,mdf = macd_analyse(ohlcv)
+        df= pd_concat(df,mdf)
+        ana_res['MACD'] = macd_anly_res
+    except:
+        pass
     
     ## MA
     ma_anly_res,mdf = ma_analyse(ohlcv)
@@ -358,10 +361,12 @@ def tech_analyse(df):
     ana_res['CCI'] = cci_anly_res
     
     ## ROC
-    roc_anly_res,rdf = roc_analyse(ohlcv)
-    df= pd_concat(df,rdf)
-    ana_res['ROC'] = roc_anly_res
-    
+    try:
+        roc_anly_res,rdf = roc_analyse(ohlcv)
+        df= pd_concat(df,rdf)
+        ana_res['ROC'] = roc_anly_res
+    except:
+        pass
     ## Forcast
     tsf_res =  'Forcast: %0.2f'%talib.TSF(ohlcv['close'])[-1]
     ana_res['TSF'] = tsf_res

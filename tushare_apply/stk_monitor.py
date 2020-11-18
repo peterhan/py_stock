@@ -240,6 +240,8 @@ def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=2
     try:
         selected_keys = []
         for word in words:
+            if len(word)==0:
+                continue
             if len(word)<=3 and word.isdigit():
                 selected_keys.append(select_map[int(word)]) 
             else:
@@ -354,7 +356,7 @@ def cn_main_loop(mode):
             df['atr']=talib.ATR(df['high'],df['low'],df['close'])
             df['sma10']=talib.SMA(df['close'],10)
             df['ema10']=talib.EMA(df['close'],10)
-            df['diff']=df['ema10']-df['sma10']
+            df['ema_dif']=df['ema10']-df['sma10']
             if cols>1:
                 aax=[ax[0,i],ax[1,i],ax[2,i]]
             else:

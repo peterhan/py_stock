@@ -71,7 +71,7 @@ def yfinance_cache(ticks,use_cache=True):
     
     ## make return/cache data
     if len(results)>0:
-        print results
+        #print results
         for tick,info in results:
             YFINFO_CACHE[tick] = info
             info_dic[tick] = info

@@ -96,7 +96,10 @@ def get_one_tick_data(tick,infos,flags):
         his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
     if 'pdb' in flags:            
         pdb.set_trace()    
-    ndf = add_analyse_columns(his_df)
+    try:
+        ndf = add_analyse_columns(his_df)
+    except:
+        ndf = his_df
     ndf['code']=tick
     
     
@@ -138,7 +141,8 @@ def us_main_loop(mode):
     groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
     s_ticks = []
     for group in groups:
-        s_ticks.extend(conf_ticks.get(group,group).replace('`','').replace('  ',' ').split(' '))
+        s_ticks.extend(conf_ticks.get(group,group).replace('`','').replace('  ',' ').split(' ')) 
+    s_ticks = filter(lambda x:len(x)>0,s_ticks)
     print 'ticks:',s_ticks,'flags:',flags
     if 'quit' in flags:
         sys.exit()
