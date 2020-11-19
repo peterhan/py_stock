@@ -117,7 +117,7 @@ def get_one_tick_data(tick,infos,flags):
         res_info['option_chain'] = ytk.option_chain()
         
     if 'cat' in flags:
-        cat_boost_factor_check(ndf)     
+        cat_boost_factor_check(df)     
     return res_info
 
         
