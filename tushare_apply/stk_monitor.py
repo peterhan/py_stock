@@ -362,7 +362,7 @@ def cn_main_loop(mode):
             else:
                 aax=[ax[0],ax[1],ax[2]]
             df[['close','sma10','ema10']].plot(title=title,ax = aax[0])
-            df[['diff']].plot(title=title,ax = aax[1])
+            df[['ema_dif']].plot(title=title,ax = aax[1])
             df[['volume']].plot(title=title,ax = aax[2])
         plt.show()
     return flags
