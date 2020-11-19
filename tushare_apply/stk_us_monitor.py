@@ -169,8 +169,7 @@ def us_main_loop(mode):
     for i,result in enumerate(results):
         ndf = result['df']
         info = result['info']
-        tick = result['code']
-        print '#'*50
+        tick = result['code']        
         if 'detail' in flags:
             print analyse_res_to_str([result])
         pinfo = '[%s],[%s]'%( info.get('shortName','').replace(', ',''),info.get('sector','') )
