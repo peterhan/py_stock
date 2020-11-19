@@ -165,6 +165,7 @@ def us_main_loop(mode):
         results = [job.value for job in jobs]
       
     # pdb.set_trace()
+    tail3res =  {}
     for i,result in enumerate(results):
         ndf = result['df']
         info = result['info']
@@ -172,8 +173,8 @@ def us_main_loop(mode):
         print '#'*50
         if 'detail' in flags:
             print analyse_res_to_str([result])
-        print ndf[['code','close','volume','pchange','vchange']].tail(3)
-        print '[%s],[%s],[%s],[%s]'%( tick,info.get('shortName',''),info.get('sector',''),info.get('market','') )
+        pinfo = '[%s],[%s]'%( info.get('shortName','').replace(', ',''),info.get('sector','') )
+        tail3res[tick+pinfo]= ndf[['close','volume','pchange','vchange']].tail(3)
         print ''
         if 'graph' in flags:
             ndf[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tick,ax= ax[0,0+i*2])
@@ -191,7 +192,8 @@ def us_main_loop(mode):
         if 'pdb' in flags:
             pdb.set_trace()
         if  'option_chain' in flags:
-           print json.dumps(result['option_chain']  ,indent=2)        
+           print json.dumps(result['option_chain']  ,indent=2)
+    print pd.concat(tail3res,axis=0)
     if 'graph' in flags:
         plt.show()    
     return flags
