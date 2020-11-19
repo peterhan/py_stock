@@ -156,7 +156,7 @@ def us_main_loop(mode):
         for tk in s_ticks:
             results = get_one_tick_data(tk,yinfos,flags)
     else:
-        pool = Pool(8)
+        pool = Pool(32)
         jobs = []
         for tk in s_ticks:
             job = pool.spawn(get_one_tick_data,tk,yinfos,flags)

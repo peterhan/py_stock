@@ -326,7 +326,7 @@ def cn_main_loop(mode):
         for tk in the_ticks:
             result = exec_func(tk,info)
     else:
-        pool = Pool(8)
+        pool = Pool(32)
         jobs = []
         for tk in the_ticks:
             job = pool.spawn(exec_func,tk,info,flags)
