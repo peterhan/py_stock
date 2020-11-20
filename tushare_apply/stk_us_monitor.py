@@ -192,7 +192,8 @@ def us_main_loop(mode):
             pdb.set_trace()
         if  'option_chain' in flags:
            print json.dumps(result['option_chain']  ,indent=2)
-    print pd.concat(tail3res,axis=0)
+    if len(tail3res)>0:
+        print pd.concat(tail3res,axis=0)
     if 'graph' in flags:
         plt.show()    
     return flags
