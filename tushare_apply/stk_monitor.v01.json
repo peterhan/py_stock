@@ -90,8 +90,8 @@
     ,"idx-us":"EURUSD=X GBPUSD=X JPY=X BTC-USD ^CMC200 ^FTSE ^N225 ^ixic"
     ,"fanng":"msft goog amzn fb aapl nflx" 
     ,"p2p":"uber lyft"
+    ,"ev":"tsla xpev nio li nkla niu wkhs gm kndi sbe blnk fuv ayro gp fsr solo plug"
     ,"reits":"stwd cio spg agnc vteb abnb"
-    ,"ev":"tsla xpev nio li nkla niu wkhs gm kndi blnk fuv ayro gp fsr solo plug"
     ,"growth":"work bynd twtr sq shll pton plug pstg orbc siri pins spot"
     ,"marijuana":"gtbif tcnnf iipr grwg smg gwph"
     ,"medical-equi":"tdoc isrg"
@@ -132,9 +132,9 @@
     ,"stream-game":"msft goog nvda"
     ,"gun":"vsto swbi"
     ,"recover":"stmp jwn play"
-    ,"gasoline":"xom vlo oxy"
-    ,"solar":"nee jks fuv arry run sedg"
-    ,"crypto":"p=gbtc p=ethe p=blok sq blcn 1263.hk 1499.hk"
+    ,"gasoline":"xom vlo oxy nee"
+    ,"solar":"spwr sunw jks fuv arry run sedg"
+    ,"crypto":"p=gbtc p=ethe p=blok sq blcn 1263.hk 1499.hk riot"
     ,"ipo":"ipo ipos"
 
     }
