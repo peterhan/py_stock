@@ -1,3 +1,4 @@
+#!coding:utf8
 import json
 import talib 
 import pandas as pd
@@ -105,17 +106,17 @@ def cross_judge(row):
     ag_dif = fast_ag - slow_ag
     value_gap = row['fast_line'] - row['slow_line']
     if fast_ag>0 and slow_ag>0:
-        res='AftGoldX'
+        res='Aft-GX'
     elif fast_ag>0  and slow_ag<0:
-        res='TrnBefGoldX'
+        res='TurnBef-GX'
     elif ag_dif>0 and slow_ag<0:
-        res='CovBefGoldX'
+        res='ConvBef-GX'
     elif fast_ag<0 and slow_ag<0:
-        res='AftDeathX'
+        res='Aft-DX'
     elif fast_ag<0  and slow_ag>0:
-        res='TrnBefDeathX'
+        res='TurnBef-DX'
     elif  ag_dif<0 and slow_ag>0:
-        res='CovBefDeathX'
+        res='ConvBef-DX'
     else:
         # print ag_dif,fast_ag,slow_ag
         res='Unknown'
@@ -218,14 +219,14 @@ def kdj_analyse(ohlcv,period=10):
             sw = 'KD-WEAK,'
         ##
         if row['p_ag']*row['k_ag']<0:
-            sw += 'DVRG'
+            sw += 'DVRG' ## 背离
         elif (row['k_ag']>0 and row['k_aag']<0) or \
              (row['k_ag']<0 and row['k_aag']>0) or \
              (row['d_ag']>0 and row['d_aag']<0) or \
              (row['d_ag']<0 and row['d_aag']>0):
-            sw += 'TURN'
+            sw += 'TURN' ## 转向
         else:
-            sw += 'NORM'
+            sw += 'NORM' ## 无现象
         res = [
             sw 
             # ,'K-'+value_range_judge( row['kdj_k'] ,[80,20],['OB','OS','MD']) +'-'+ value_range_judge( row['kdj_k'] ,[50,50],['S','W','M'])
@@ -242,6 +243,32 @@ def kdj_analyse(ohlcv,period=10):
         ,'ANG-KDJ:%0.2f,%02.f,%02.f'%(row['k_ag'],row['d_ag'],row['j_ag'])
         ]
     res_info = ', '.join(res_info)
+    return res_info,df
+
+def mtm_analyse(ohlcv,period1=6,period2=12):
+    close = ohlcv['close']
+    mom = talib.MOM(close,period1)
+    mamom = talib.SMA(mom,period2)
+    ag_mom = get_angle(mom)
+    ag_mamom = get_angle(mamom)
+    df = pd.DataFrame( {'mom':mom,'mamom':mamom,'ag_mom':ag_mom,'ag_mamom':ag_mamom} )
+    def mom_row(row):
+        res = []
+        if row['mom']-row['mamom']>0:
+            res.append('UP_MA')
+        elif row['mom']-row['mamom']<=0:
+            res.append('DN_MA')
+        if row['mom']>0:
+            res.append('POS_MOM')
+        elif row['mom']<=0:
+            res.append('NEG_MOM')
+        
+        return ' '.join(res)
+    df['mom_cross_stage'] =  get_crossx_type(df['mom'],df['mamom'])['cross_stage']    
+    df['mom_stage'] = df.apply(mom_row, axis=1)
+    # pdb.set_trace()
+    row = df.iloc[-1]
+    res_info = [row['mom_stage'],row['mom_cross_stage'],'MOM:','%0.2f'%row['mom'],'MA-MOM:','%0.2f'%row['mamom']]
     return res_info,df
 
 def ma_analyse(ohlcv,period=10,target_col='close'):    
@@ -323,6 +350,11 @@ def tech_analyse(df):
     except:
         pass
     
+    ## MTM
+    mtm_res,mdf =  mtm_analyse(ohlcv)
+    df= pd_concat(df, mdf)
+    ana_res['MTM'] = mtm_res
+    
     ## MA
     ma_anly_res,mdf = ma_analyse(ohlcv)
     df= pd_concat(df,mdf)
@@ -367,11 +399,12 @@ def tech_analyse(df):
         ana_res['ROC'] = roc_anly_res
     except:
         pass
+    
     ## Forcast
     tsf_res =  'Forcast: %0.2f'%talib.TSF(ohlcv['close'])[-1]
     ana_res['TSF'] = tsf_res
     
-    
+
     
     ## OBV
     obv = talib.OBV(close,vol)
@@ -468,7 +501,6 @@ def caculate_indicator(df, i_stages, target_col):
     return adf
 
 
-
 def rmse(targets,predictions):
     return np.sqrt(((predictions - targets) ** 2).mean())
     
@@ -525,8 +557,8 @@ def train_cat(adf,i_stages,target_col):
 
 
 def cat_boost_factor_check(df):
-    i_stages = [['cci_stage','ema_stage','vol_ema_stage','vol_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage'] ]    
-    i_stage_list = [  ['ema_stage']  ,['sma_stage'],['vol_ema_stage'] ,['vol_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ]
+    i_stages = [['cci_stage','ema_stage','vol_ema_stage','vol_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','mom_stage'] ]    
+    i_stage_list = [  ['ema_stage']  ,['sma_stage'],['vol_ema_stage'] ,['vol_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage']]
     target_col = 'p_change_5d'
     for i_stages in i_stage_list:
         try:
@@ -557,10 +589,10 @@ def main():
     remote_call = False
     remote_call = True
     if remote_call:
-        tick='tsla'
-        df = yf_get_hist_data(tick)
-        # tick='600438'
-        # df = ts.get_hist_data(tick)
+        # tick='tsla'
+        # df = yf_get_hist_data(tick)
+        tick='601601'
+        df = ts.get_hist_data(tick)
         df = df.sort_index()
         
         df.index.name='date'
