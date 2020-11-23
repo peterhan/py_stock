@@ -371,7 +371,9 @@ def tech_analyse(df):
     tsf_res =  'Forcast: %0.2f'%talib.TSF(ohlcv['close'])[-1]
     ana_res['TSF'] = tsf_res
     
-    
+    ## MOM
+    mom = talib.MOM(close)
+    mamom = talib.SMA(mom)
     
     ## OBV
     obv = talib.OBV(close,vol)
