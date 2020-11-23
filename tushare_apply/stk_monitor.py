@@ -77,6 +77,7 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     tcut =  pd.cut(df['time'],5)
     # df['type'].astype('category')
     print pd.crosstab( vcut,df['type'])
+    print pd.crosstab(df['time'].str[0:2],df['type'])
     # print pd.crosstab( ccut,df['type'])
     # print pd.crosstab( ccut,vcut)
     # print pd.crosstab( tcut,vcut)
