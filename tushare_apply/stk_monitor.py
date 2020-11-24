@@ -58,10 +58,14 @@ def real_time_ticks(tick,info,flags,use_cache = False):
             traceback.print_exc()
             pass
     df = pd.read_csv(fname,encoding='utf8',index_col='id')
+    df['time_int'] = df['time']
+    df['time'] = df['time'].apply(lambda x:'%06d'%x)
     df['volume'] = df['vol']    
+    df['amount'] = df['price'] * df['vol']
+    df['hour'] = df['time'].str[:2]
     print ''
     print ''
-    print tick
+    print tick 
     
     print df.groupby('type').agg({'volume':'sum','price':'mean' })
     # print df.groupby('type').agg({'volume':'sum','price':'mean','change':'count'})
@@ -74,10 +78,11 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     # df['time'] = pd.to_datetime(df['time'].apply(lambda x:' '+x))
     vcut =  pd.cut(df['volume'],5)
     # ccut =  pd.cut(df['change'],5)    
-    tcut =  pd.cut(df['time'],5)
+    tcut =  pd.cut(df['time_int'],5)
     # df['type'].astype('category')
     print pd.crosstab( vcut,df['type'])
-    print pd.crosstab(df['time'].str[0:2],df['type'])
+    print df.groupby(['hour','type']).sum()['amount']
+    #print pd.crosstab(df['time'].str[0:2],df['type'])
     # print pd.crosstab( ccut,df['type'])
     # print pd.crosstab( ccut,vcut)
     # print pd.crosstab( tcut,vcut)
