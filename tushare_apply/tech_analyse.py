@@ -78,7 +78,7 @@ def boll_analyse(ohlcv,period=10):
         if m_ag >= 0:
             res = 'UP'
         else:
-            res = 'DOWN'
+            res = 'DN'
         if (u_ag - m_ag) >= 0:
             res += '-EXPAND'
         else:
@@ -291,9 +291,9 @@ def ma_analyse(ohlcv,period=10,target_col='close'):
             ema = row[prefix+'EMA%s'%cyc]
             sma = row[prefix+'SMA%s'%cyc]
             if ema>sma:
-                s= '%s:U'%cyc
+                s= '%s:UP'%cyc
             else:
-                s='%s:D'%cyc
+                s='%s:DN'%cyc
             es_res.append(s)
         return ','.join(es_res)
         
@@ -303,9 +303,9 @@ def ma_analyse(ohlcv,period=10,target_col='close'):
             ma = row[prefix+'%s%s'%(ma_type,cyc)]
             ama = row[prefix+'%s%s'%(ma_type,cycles[i+1])]
             if ma >= ama:
-                s= '%sv%s:U'%(cyc,cycles[i+1])
+                s= '%sv%s:UP'%(cyc,cycles[i+1])
             else:
-                s='%sv%s:D'%(cyc,cycles[i+1])
+                s='%sv%s:DN'%(cyc,cycles[i+1])
             ma_res.append(s)
         return ','.join(ma_res)
     ##
@@ -593,10 +593,11 @@ def main():
     remote_call = False
     remote_call = True
     if remote_call:
-        # tick='tsla'
-        # df = yf_get_hist_data(tick)
-        tick='601601'
-        df = ts.get_hist_data(tick)
+        tick='tsla'
+        df = yf_get_hist_data(tick)
+        # tick='601601'
+        # df = ts.get_hist_data(tick)
+                
         df = df.sort_index()
         
         df.index.name='date'
