@@ -99,33 +99,34 @@ def value_range_judge(vlu,up_down,up_down_mid_name):
     else:
         return up_down_mid_name[2]    
 
-def cross_judge(row):    
-    # pdb.set_trace()
-    fast_ag = row['fast_ag']
-    slow_ag = row['slow_ag']
-    ag_dif = fast_ag - slow_ag
-    value_gap = row['fast_line'] - row['slow_line']
-    if fast_ag>0 and slow_ag>0:
-        res='Aft-GX'
-    elif fast_ag>0  and slow_ag<0:
-        res='TurnBef-GX'
-    elif ag_dif>0 and slow_ag<0:
-        res='ConvBef-GX'
-    elif fast_ag<0 and slow_ag<0:
-        res='Aft-DX'
-    elif fast_ag<0  and slow_ag>0:
-        res='TurnBef-DX'
-    elif  ag_dif<0 and slow_ag>0:
-        res='ConvBef-DX'
-    else:
-        # print ag_dif,fast_ag,slow_ag
-        res='Unknown'
-    return res
+
     
 def get_crossx_type(fast_line,slow_line):
     fast_ag = get_angle(fast_line, 2)
     slow_ag = get_angle(slow_line, 2)
     df=pd.DataFrame({'fast_line':fast_line,'slow_line':slow_line,'fast_ag':fast_ag,'slow_ag':slow_ag})
+    def cross_judge(row):    
+        # pdb.set_trace()
+        fast_ag = row['fast_ag']
+        slow_ag = row['slow_ag']
+        ag_dif = fast_ag - slow_ag
+        value_gap = row['fast_line'] - row['slow_line']
+        if fast_ag>0 and slow_ag>0:
+            res='Aft-GX'
+        elif fast_ag>0  and slow_ag<0:
+            res='TrnBef-GX'
+        elif ag_dif>0 and slow_ag<0:
+            res='CnvBef-GX'
+        elif fast_ag<0 and slow_ag<0:
+            res='Aft-DX'
+        elif fast_ag<0  and slow_ag>0:
+            res='TrnBef-DX'
+        elif  ag_dif<0 and slow_ag>0:
+            res='CnvBef-DX'
+        else:
+            # print ag_dif,fast_ag,slow_ag
+            res='Unknown'
+        return res
     df['cross_stage'] = df.apply(cross_judge,axis=1)#,result_type='expand'    
     # print edf
     return df
@@ -319,7 +320,7 @@ def ma_analyse(ohlcv,period=10,target_col='close'):
             v = row[prefix+k]
             res.append('%s:%0.2f'%(k,v))
         return ', '.join(res)
-    res_info = ['[S] '+row[prefix+'sma_stage'], '[E] '+row[prefix+'ema_stage'], '[ES] '+row[prefix+'ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
+    res_info = ['[S]'+row[prefix+'sma_stage'], '[E]'+row[prefix+'ema_stage'], '[ES]'+row[prefix+'ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
     return res_info,df
     
 def tech_analyse(df):  
@@ -392,6 +393,9 @@ def tech_analyse(df):
     df= pd_concat(df,cdf)
     ana_res['CCI'] = cci_anly_res
     
+    
+    ## talib.APO
+    ## talib.AROON
     ## ROC
     try:
         roc_anly_res,rdf = roc_analyse(ohlcv)
