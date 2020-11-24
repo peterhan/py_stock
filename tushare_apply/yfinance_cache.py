@@ -73,6 +73,10 @@ def yfinance_cache(ticks,use_cache=True):
     if len(results)>0:
         #print results
         for tick,info in results:
+            print info
+            if len(info)==0:
+                print 'skip:',tick
+                continue
             YFINFO_CACHE[tick] = info
             info_dic[tick] = info
         json.dump(YFINFO_CACHE,gzip.open(YFCACHE_FNAME,'w'),indent=2)
@@ -80,15 +84,18 @@ def yfinance_cache(ticks,use_cache=True):
  
 def load_cache(fname,use_cache=True):
     jobj = json.load(open(fname))
-    ticks = set()
+    ticks = set(['xasdf'])
     for k,v in jobj["us-ticks"].items():
         # print k,':',v
         ticks.update(v.replace('  ','').split(' '))
-    print 'Not_In_ConfigTicks:',set(YFINFO_CACHE.keys()) - ticks
+    yfinance_cache([])
+    print 'Not_In_ConfigTicks:', ' '.join(set(YFINFO_CACHE.keys())-ticks)
     print 'Total Ticks:',len(ticks)    
     try:
         info = yfinance_cache(ticks,use_cache)
-        print info
+        for k,v in info.items():
+            print '[%s]'%k
+            print v.get('longBusinessSummary','No_Summary').encode('gbk','ignore')
     except:
         traceback.print_exc()
     
