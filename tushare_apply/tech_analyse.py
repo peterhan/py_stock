@@ -272,7 +272,35 @@ def mtm_analyse(ohlcv,period1=6,period2=12):
     res_info = [row['mom_stage'],row['mom_cross_stage'],'MOM:','%0.2f'%row['mom'],'MA-MOM:','%0.2f'%row['mamom']]
     return res_info,df
 
-def ma_analyse(ohlcv,period=10,target_col='close'):    
+
+def aroon_analyse(ohlcv,period=14):
+    high = ohlcv['high']
+    low = ohlcv['low']    
+    adown,aup = talib.AROON(high,low,period)
+    df = pd.DataFrame( {'aroon_down':adown,'aroon_up':aup} )
+    '''当 AroonUp大于AroonDown，并且AroonUp大于50，多头开仓；
+    当 AroonUp小于AroonDown，或者AroonUp小于50，多头平仓；
+    当 AroonDown大于AroonUp，并且AroonDown大于50，空头开仓；
+    当 AroonDown小于AroonUp，或者AroonDown小于50，空头平仓；'''
+    def aroon_row(row):
+        res = []
+        if  row['aroon_up'] > row['aroon_down']  and row['aroon_up'] >50:
+            res.append('UP_STRONG')
+        elif  row['aroon_up'] < row['aroon_down']  or row['aroon_up'] <50:
+            res.append('DN_WEAK')
+        elif  row['aroon_up'] < row['aroon_down']  or row['aroon_down'] >50:
+            res.append('DN_STRONG')
+        elif  row['aroon_up'] > row['aroon_down']  or row['aroon_down'] <50:
+            res.append('UP_WEAK')
+        else:
+            res.append('UNKNOWN')
+        return ' '.join(res)
+    df['aroon_stage'] = df.apply(aroon_row, axis=1)
+    row = df.iloc[-1]
+    res_info = [row['aroon_stage'],row['aroon_up'], row['aroon_down'] ]
+    return res_info,df
+    
+def ma_analyse(ohlcv,period=10,target_col='close'):
     close = ohlcv[target_col]
     ma = OrderedDict()
     prefix=''
@@ -396,6 +424,10 @@ def tech_analyse(df):
     
     ## talib.APO
     ## talib.AROON
+    aroon_ana_res,adf = aroon_analyse(ohlcv)
+    df= pd_concat(df,adf)
+    ana_res['AROON'] = aroon_ana_res
+    
     ## ROC
     try:
         roc_anly_res,rdf = roc_analyse(ohlcv)
@@ -561,8 +593,8 @@ def train_cat(adf,i_stages,target_col):
 
 
 def cat_boost_factor_check(df):
-    i_stages = [['cci_stage','ema_stage','vol_ema_stage','vol_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','mom_stage'] ]    
-    i_stage_list = [  ['ema_stage']  ,['sma_stage'],['vol_ema_stage'] ,['vol_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage']]
+    i_stages = [['cci_stage','ema_stage','vol_ema_stage','vol_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','mom_stage','aroon_stage'] ]    
+    i_stage_list = [  ['ema_stage']  ,['sma_stage'],['vol_ema_stage'] ,['vol_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage'], ['aroon_stage']]
     target_col = 'p_change_5d'
     for i_stages in i_stage_list:
         try:
