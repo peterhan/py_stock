@@ -139,11 +139,20 @@ def get_angle(ss,p=2):
     
 def macd_analyse(ohlcv,period=10):
     dif, dea, hist =  talib.MACD(ohlcv['close'],period)    
-    df = pd.DataFrame({'macd_dif': dif, 'macd_dea':dea, 'macd_hist':hist })    
-    # pdb.set_trace() 
+    # df = pd.DataFrame({'macd_dif': dif, 'macd_dea':dea, 'macd_hist':hist })        
     res = []    
     df =  get_crossx_type(dif,dea)
+    df['macd_hist'] = hist
     df = df.rename({'fast_line':'dif','slow_line':'dea','cross_stage':'macd_stage','fast_ag':'dif_ag','slow_ag':'dea_ag'},axis=1)
+    def macd_judge(row):
+        res = row['macd_stage']
+        if row['macd_hist']>0:
+            res +=' POS'
+        else:
+            res +=' NEG'        
+        return res
+    # pdb.set_trace()
+    df['macd_stage'] = df.apply(macd_judge,axis=1)    
     row = df.iloc[-1]         
     res += ['%s: ANG[IF:%0.2f, EA:%0.2f]'%(row['macd_stage'],row['dif_ag'],row['dea_ag'])]
     res += ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(dif[-1],dea[-1],hist[-1]*2)]   
@@ -377,7 +386,7 @@ def tech_analyse(df):
         df= pd_concat(df,mdf)
         ana_res['MACD'] = macd_anly_res
     except:
-        pass
+        traceback.print_exc()
     
     ## MTM
     mtm_res,mdf =  mtm_analyse(ohlcv)
@@ -434,7 +443,7 @@ def tech_analyse(df):
         df= pd_concat(df,rdf)
         ana_res['ROC'] = roc_anly_res
     except:
-        pass
+        traceback.print_exc()
     
     ## Forcast
     tsf_res =  'Forcast: %0.2f'%talib.TSF(ohlcv['close'])[-1]
