@@ -636,6 +636,7 @@ def main():
     if remote_call:
         tick='tsla'
         df = yf_get_hist_data(tick)
+        
         # tick='601601'
         # df = ts.get_hist_data(tick)
                 
