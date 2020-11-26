@@ -63,9 +63,10 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     df['volume'] = df['vol']    
     df['amount'] = df['price'] * df['vol']
     df['hour'] = df['time'].str[:2]
+    info_t = info[tick]
     print ''
     print ''
-    print tick 
+    print tick,info_t['name']
     
     print df.groupby('type').agg({'volume':'sum','price':'mean' })
     # print df.groupby('type').agg({'volume':'sum','price':'mean','change':'count'})
