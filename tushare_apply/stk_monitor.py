@@ -66,7 +66,7 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     info_t = info[tick]
     print ''
     print ''
-    print tick,info_t['name']
+    print '[%s][%s]'%(tick,info_t['name'])
     
     print df.groupby('type').agg({'volume':'sum','price':'mean' })
     # print df.groupby('type').agg({'volume':'sum','price':'mean','change':'count'})
@@ -348,7 +348,7 @@ def cn_main_loop(mode):
     fname = 'result.%s.json'%exec_func.func_name
     # print fname
     json.dump(result,open(fname,'w'),indent=2)
-    print '\n'+analyse_res_to_str(result)+'\n'
+    print '\n\n'+analyse_res_to_str(result)+'\n'
     
     if 'graph' in flags and exec_func.func_name=='get_one_ticker_k_data':
         cols = len(result)        
