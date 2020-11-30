@@ -284,7 +284,7 @@ def interact_choose_ticks(mode):
     print 'Input: %s, Ticks: %s'%(ticks,','.join(sel_tks)) 
     info = summary_list_ticks(sel_tks,flags)
     time.sleep(3)
-    if '-d' in mode or 'detail' in flags:
+    if '-d' in mode or 'detail' in flags or 'graph' in flags:
         input = 'y'
     elif 'realtime' in flags:
         # input = raw_input('[ShowDetailInfo?](y/n):')
