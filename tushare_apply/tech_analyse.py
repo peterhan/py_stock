@@ -147,9 +147,9 @@ def macd_analyse(ohlcv,period=10):
     def macd_judge(row):
         res = row['macd_stage']
         if row['macd_hist']>0:
-            res +=' POS'
+            res +=' POS-HIST'
         else:
-            res +=' NEG'        
+            res +=' NEG-HIST'        
         return res
     # pdb.set_trace()
     df['macd_stage'] = df.apply(macd_judge,axis=1)    
@@ -551,6 +551,7 @@ def rmse(targets,predictions):
     
 def predict_cat(fit_model, adf,i_stages,target_col):
     from catboost import CatBoostRegressor
+    factor_results = {}
     test_pool = adf[i_stages][-50:]
     test_labels = adf[target_col].fillna(0)[-50:]
     model = fit_model
@@ -566,24 +567,21 @@ def predict_cat(fit_model, adf,i_stages,target_col):
     ps = model.predict(ss)
     sts = [row[0] for row in ss]
     pdf  = pd.DataFrame({'feature':sts,'weight':ps}).sort_values('weight',ascending=False)
-    print i_stages
-    print pdf
+    
+    key=':'.join(i_stages)
+    factor_results[key] = {}
+    check_result=factor_results[key]
+    check_result['factor_detail']=pdf
     
     # print preds_raw_vals,test_labels
 
     rmsev = rmse( np.sign(test_labels.values), np.sign(preds_raw_vals) )
-    print 'rmse: %0.2f'%rmsev
+    check_result['rmsev']=rmsev
     pos_neg = pd.Series(np.sign(test_labels*preds_raw_vals)*10,index=test_labels.index)
     pnvc = pos_neg.value_counts()    
-    print 'correct_rate: %0.2f%%'%(pnvc[10.0]*1.0/sum(pnvc.values)*100)
-    
-    # from matplotlib import pyplot as plt
-    # plt.title('%s %s'%(i_stages,target_col))
-    # plt.plot(preds_raw_vals[:],'--')
-    # plt.plot(test_labels.values[:])
-    # plt.plot(pos_neg.values[:],':')
-    # plt.show()
-    # return preds_class,preds_proba,preds_raw_vals
+    check_result['correct_rate']=pnvc[10.0]*1.0/sum(pnvc.values)*100    
+    return factor_results
+
 
 def train_cat(adf,i_stages,target_col):
     from catboost import CatBoostRegressor
@@ -601,17 +599,33 @@ def train_cat(adf,i_stages,target_col):
     # pdb.set_trace()
 
 
-def cat_boost_factor_check(df):
+def cat_boost_factor_check(df,print_res=True):
     i_stages = [['cci_stage','ema_stage','vol_ema_stage','vol_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','mom_stage','aroon_stage'] ]    
     i_stage_list = [  ['ema_stage']  ,['sma_stage'],['vol_ema_stage'] ,['vol_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage'], ['aroon_stage']]
     target_col = 'p_change_5d'
+    factor_results = {}
     for i_stages in i_stage_list:
         try:
             adf = caculate_indicator(df, i_stages, target_col)
             fit_model = train_cat(adf,i_stages,target_col)
-            predict_cat(fit_model ,adf,i_stages,target_col)
+            cres = predict_cat(fit_model ,adf,i_stages,target_col)
+            factor_results.update(cres)
         except:
             traceback.print_exc()
+    if print_res:
+        for key,check_result in factor_results.items():
+            print key
+            print check_result['factor_detail']
+            print 'rmse: %0.2f'%check_result['rmsev']
+            print 'correct_rate: %0.2f%%'%(check_result['correct_rate'])
+    # from matplotlib import pyplot as plt
+    # plt.title('%s %s'%(i_stages,target_col))
+    # plt.plot(preds_raw_vals[:],'--')
+    # plt.plot(test_labels.values[:])
+    # plt.plot(pos_neg.values[:],':')
+    # plt.show()
+    # return preds_class,preds_proba,preds_raw_vals
+    return factor_results
 
 
 def yf_get_hist_data(tick):
@@ -634,11 +648,11 @@ def main():
     remote_call = False
     remote_call = True
     if remote_call:
-        tick='tsla'
-        df = yf_get_hist_data(tick)
+        # tick='tsla'
+        # df = yf_get_hist_data(tick)
         
-        # tick='601601'
-        # df = ts.get_hist_data(tick)
+        tick='601601'
+        df = ts.get_hist_data(tick)
                 
         df = df.sort_index()
         
@@ -665,7 +679,9 @@ def main():
     # pprint(cinfo)
     # print df.tail(1)
     ###
-    cat_boost_factor_check(df)
+    factor_results  = cat_boost_factor_check(df)
+
+    
     
 
         
