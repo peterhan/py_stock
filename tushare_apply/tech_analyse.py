@@ -613,11 +613,13 @@ def cat_boost_factor_check(df,print_res=True):
         except:
             traceback.print_exc()
     if print_res:
-        for key,check_result in factor_results.items():
-            print key
+        print ''
+        for key,check_result in sorted(factor_results.items(),key=lambda v:v[1]['correct_rate'],reverse=True):
+            print '[%s]'%key
             print check_result['factor_detail']
             print 'rmse: %0.2f'%check_result['rmsev']
             print 'correct_rate: %0.2f%%'%(check_result['correct_rate'])
+            print ''
     # from matplotlib import pyplot as plt
     # plt.title('%s %s'%(i_stages,target_col))
     # plt.plot(preds_raw_vals[:],'--')
@@ -648,11 +650,11 @@ def main():
     remote_call = False
     remote_call = True
     if remote_call:
-        # tick='tsla'
-        # df = yf_get_hist_data(tick)
+        tick='tsla'
+        df = yf_get_hist_data(tick)
         
-        tick='601601'
-        df = ts.get_hist_data(tick)
+        # tick='601601'
+        # df = ts.get_hist_data(tick)
                 
         df = df.sort_index()
         
@@ -680,10 +682,7 @@ def main():
     # print df.tail(1)
     ###
     factor_results  = cat_boost_factor_check(df)
-
-    
-    
-
+   
         
 if __name__ == '__main__':    
     main()
