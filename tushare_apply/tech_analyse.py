@@ -509,7 +509,6 @@ def analyse_res_to_str(stock_anly_res):
     for name,intro in intro.items():
         pstr+= u"\n  [EXPLAIN:{}]:{}".format(name,intro).encode(ECODE)  
     return pstr
-    
 
 
     
@@ -518,12 +517,15 @@ def caculate_indicator(df, i_stages, target_col):
     # adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
     adf = df[['rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
     bencols = []
-    for i in (1,3,5,7,10,15):
-    # for i in (1,3,5,7):
-        bname = 'p_change_%sd'%i
-        # pdb.set_trace()
-        adf[bname] = (df['close'] / df['close'].shift(i) -1)*100
-        bencols.append(bname)
+    bencols.append(target_col)
+    i=int(target_col.split('_')[-1].strip('d'))
+    adf[target_col] =  (df['close'] / df['close'].shift(i) -1)*100
+    #for i in (1,3,5,7,10,15):
+    ## for i in (1,3,5,7):
+    #    bname = 'p_change_%sd'%i
+    #    # pdb.set_trace()
+    #    adf[bname] = (df['close'] / df['close'].shift(i) -1)*100
+    #    bencols.append(bname)
     # adf['p_change_20d'] = df['p_change'].shift(-20)
     # adf['p_change_30d'] = df['p_change'].shift(-30)
     # print adf.corr()
@@ -568,7 +570,7 @@ def predict_cat(fit_model, adf,i_stages,target_col):
     sts = [row[0] for row in ss]
     pdf  = pd.DataFrame({'feature':sts,'weight':ps}).sort_values('weight',ascending=False)
     
-    key=':'.join(i_stages)
+    key=':'.join (i_stages)+'=>'+target_col
     factor_results[key] = {}
     check_result=factor_results[key]
     check_result['factor_detail']=pdf
@@ -599,23 +601,25 @@ def train_cat(adf,i_stages,target_col):
     # pdb.set_trace()
 
 
-def cat_boost_factor_check(df,print_res=True):
+def cat_boost_factor_check(df,target_days = ['5d'],print_res=True):
     i_stages = [['cci_stage','ema_stage','vol_ema_stage','vol_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','mom_stage','aroon_stage'] ]    
     i_stage_list = [  ['ema_stage']  ,['sma_stage'],['vol_ema_stage'] ,['vol_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage'], ['aroon_stage']]
-    target_col = 'p_change_5d'
     factor_results = {}
-    for i_stages in i_stage_list:
-        try:
-            adf = caculate_indicator(df, i_stages, target_col)
-            fit_model = train_cat(adf,i_stages,target_col)
-            cres = predict_cat(fit_model ,adf,i_stages,target_col)
-            factor_results.update(cres)
-        except:
-            traceback.print_exc()
+    for target_col in ['p_change_%s'%target_day for target_day in target_days]:    
+        for i_stages in i_stage_list:
+            try:
+                if len(target_days)>2:
+                    print '[Training]:',i_stages,target_col
+                adf = caculate_indicator(df, i_stages, target_col)
+                fit_model = train_cat(adf,i_stages,target_col)
+                cres = predict_cat(fit_model ,adf,i_stages,target_col)
+                factor_results.update(cres)
+            except:
+                traceback.print_exc()
     if print_res:
         print ''
         for key,check_result in sorted(factor_results.items(),key=lambda v:v[1]['correct_rate'],reverse=True):
-            print '[%s]'%key
+            print '[%s]'%(key)
             print check_result['factor_detail']
             print 'rmse: %0.2f'%check_result['rmsev']
             print 'correct_rate: %0.2f%%'%(check_result['correct_rate'])
@@ -650,11 +654,11 @@ def main():
     remote_call = False
     remote_call = True
     if remote_call:
-        tick='tsla'
-        df = yf_get_hist_data(tick)
+        # tick='tsla'
+        # df = yf_get_hist_data(tick)
         
-        # tick='601601'
-        # df = ts.get_hist_data(tick)
+        tick='601601'
+        df = ts.get_hist_data(tick)
                 
         df = df.sort_index()
         
@@ -681,7 +685,7 @@ def main():
     # pprint(cinfo)
     # print df.tail(1)
     ###
-    factor_results  = cat_boost_factor_check(df)
+    factor_results  = cat_boost_factor_check(df, target_days=['1d','3d','5d','10d','60d'])
    
         
 if __name__ == '__main__':    
