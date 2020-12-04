@@ -618,7 +618,7 @@ def cat_boost_factor_check(df,target_days = ['5d'],print_res=True):
                 traceback.print_exc()
     if print_res:
         print ''
-        for key,check_result in sorted(factor_results.items(),key=lambda v:v[1]['correct_rate'],reverse=True):
+        for key,check_result in sorted(factor_results.items(),key=lambda v:v[1]['correct_rate'],reverse=False):
             print '[%s]'%(key)
             print check_result['factor_detail']
             print 'rmse: %0.2f'%check_result['rmsev']
