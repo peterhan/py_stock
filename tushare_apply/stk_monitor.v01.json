@@ -105,7 +105,7 @@
     ,"cn-us":"baba se jd pdd ntes jmia"
     ,"cn-vd":"bili iq "
     ,"cn-edu":"tal gsx edu"
-    ,"cn":"lu  seco yrd tour vnet sy renn iq sina wb jt feng viot qd sfun ntes sogo lxtme can vips tcom xyf qfin wei coe sohu jobs uxin yy jrjc xnet tc hmi litb dnk mogu bzun pt yi leju qtt bidu kc yy lu"
+    ,"cn":"lu  seco yrd tour vnet sy renn iq sina wb jt feng viot qd sfun ntes sogo lx tme can vips tcom xyf qfin wei coe sohu jobs uxin yy jrjc xnet tc hmi litb dnk mogu bzun pt yi leju qtt bidu kc yy lu"
     ,"cn-liveshow":"momo huya doyu twou"
     ,"chip":"amd nvda intc qcom tsm"
     ,"semi-equi":"lrcx amat klac asml xlnx txn nxpi mrvl iphi adi mxim mchp on powi mpwr ter mu"
@@ -144,6 +144,15 @@
     "Diebetes":"600867 603087",
     "us":"ethe ads.ge kcg 3188.hk"
   }
+  ,"holding":[
+     "600031 2200 26.334"
+    ,"300012 2300 20.647"
+    ,"600438 1600 29.434"
+    ,"601601 700 34.338"
+    ,"300015 400 7.674"
+    ,"515580 15900 1.055"
+  
+  ]
   ,"logs":[
      {"date":"2019-08-08","action":"buy","code":"518800","amount":18700,"price":3.370,"reason":"unstable news,trade war bad expectation"}
     ,{"date":"2019-08-14","action":"buy","code":"600438","amount":3200,"price":12.877,"reason":"low price"}
