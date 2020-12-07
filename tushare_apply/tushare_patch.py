@@ -11,6 +11,7 @@ import datetime,time
 import pandas as pd
 import re
 import tushare as ts
+from collections import OrderedDict
 from urllib2 import urlopen, Request
 # import jieba
 # import jieba.analyse
@@ -21,7 +22,13 @@ https://api.xuangubao.cn/api/pc/panzhongfengkou?limit=30&page=1
 https://api.xuangubao.cn/q/quote/v1/real
 http://xuangubao.cn/subjects
 http://xuangubao.cn/
+https://flash-api.xuangubao.cn/api/stage2/plate/top_info?count=9&fields=all
+https://flash-api.xuangubao.cn/api/pool/detail?pool_name=limit_up
+https://api.xuangubao.cn/api/pc/fastSubject
 https://api.xuangubao.cn/api/pc/msgs?headmark=1489472187&limit=30&subjids=9,469,35,10
+https://api-ddc-wscn.xuangubao.cn/market/real?fields=prod_name,last_px,px_change,px_change_rate,symbol,trade_status&prod_code=600257.SS,600097.SS,002447.SZ,600702.SS,603290.SS,600360.SS,600746.SS,600623.SS,600776.SS,002017.SZ,000011.SZ,000070.SZ,600511.SS,600196.SS,603986.SS,688008.SS
+https://api-ddc-wscn.xuangubao.cn/extract/news_event/preview?message_ids=809721,809718,809710,809705
+https://flash-api.xuangubao.cn/api/plate/data?fields=plate_id,plate_name,fund_flow,rise_count,fall_count,stay_count,limit_up_count,core_avg_pcp,core_avg_pcp_rank,core_avg_pcp_rank_change,top_n_stocks,bottom_n_stocks&plates=53556594,20621170,16842834,16961441,16930590,38499865,19384882,18469582,62120753,5364594,22431937,21277137,651982,63576990,1008158,36001721,17412529,19218721,6681777,37869777,25019689,38053809,17452705,16950418,16844702,16868321,387225,16847921,20054814,66814321
 '''
 import time
 DATE_FORMAT='%Y-%m-%d %H:%M'
@@ -29,6 +36,9 @@ def ts2unix(str_date,mask=DATE_FORMAT):
     return int(time.mktime(
          time.strptime(str_date, mask)
         )) 
+
+def js_dumps(obj):    
+    return json.dumps(obj,indent=2,ensure_ascii=False).encode('gbk','ignore')
     
 def nest_selector(obj,path):
     patharr=path.split('.')    
@@ -43,41 +53,42 @@ def nest_selector(obj,path):
             except:sel=''
     return sel
         
-def headmark():
+def xgb_headmark():
     dt=''
-    # dt='headmark=%s&'%ts2unix('2017-03-14 10:12')
     r=get('https://api.xuangubao.cn/api/pc/msgs?%slimit=50&subjids=9,469,35,10'%dt)
     jo = r.json()
     jsonpath_expr = parse('$.NewMsgs[*]')
-    # print json.dumps(jo,indent=2)
-    for i,match in enumerate(jsonpath_expr.find(jo) ):
-        # ipdb.set_trace()
-        # print '\nLoop:[%s]'%i,match.full_path
+    res = OrderedDict()
+    for i,match in enumerate(jsonpath_expr.find(jo) ):        
         jo = match.value
         # print u'/'.join(jieba.analyse.textrank(jo['Title']+' '+jo['Summary'], topK=20, withWeight=False, allowPOS=('ns', 'n')) ).encode('gbk')
-        print '\n'.join([jo['CreatedAt'],jo['Title'],jo['Summary'] ]).encode('gbk','ignore')
+        ts,title,summary =jo['CreatedAt'],jo['Title'],jo['Summary']        
         stocks= jo.get('Stocks',)
-        if stocks:
-            print','.join([dic['Symbol'].encode('gbk')+':'+dic['Name'].encode('gbk') for dic in stocks])
-        # print match.value.encode('gbk','ignore') 
+        res['[%s]%s'%(ts,title)] = {'title':title,'ts':ts,'summary':summary,'stocks':stocks}        
+    return res
+        
 
-def fengkou():
-    import requests
-    r = requests.get('https://api.xuangubao.cn/api/pc/panzhongfengkou?limit=30&page=1')
+def xgb_fastsubject():
+    r = get('https://api.xuangubao.cn/api/pc/fastSubject')
     jo= r.json()
-    for elm in jo:
-        # print json.dumps(elm,indent=2)        
-        print ''
-        print (elm['Title']+':'+elm.get('Desc','')).encode('gbk')
-        for n in nest_selector(elm,'SubjSsetInfo.SsetStocks'):
-            print (n['Symbol']+':'+n['Name']+';').encode('gbk')
-
-def get_stock_live():
-    print ts.get_realtime_quotes(['300750','002382','300330','600201','002430'])
-    print ts.get_realtime_quotes(['510070','510150','510050','510190','510030'])
-    pass
+    res = OrderedDict()
+    for elm in jo:        
+        print js_dumps(elm)        
+    return res
     
+def xgb_top_info():
+    r= get('https://flash-api.xuangubao.cn/api/stage2/plate/top_info?count=9&fields=all')
+    jo = r.json()
+    res = OrderedDict()
+    for elm in jo['data']['top_plate_info']: 
+        key = elm['plate_name']
+        res[key] = elm
+    return res
 
+# def get_stock_live():
+    # print ts.get_realtime_quotes(['300750','002382','300330','600201','002430'])
+    # print ts.get_realtime_quotes(['510070','510150','510050','510190','510030'])
+    # pass
 
 def _random(n=16):
     from random import randint
@@ -168,9 +179,12 @@ def get_today_ticks(code=None, mkt='1', retry_count=3, pause=0.001):
         else:
             return df
     raise IOError("ct.NETWORK_URL_ERROR_MSG")
+
+
     
 if __name__=='__main__':
-    headmark()
-    fengkou()
-    get_stock_live()
+    print js_dumps(xgb_headmark())
+    # print xgb_fastsubject()
+    # print js_dumps(xgb_top_info())
+    
     

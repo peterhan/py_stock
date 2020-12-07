@@ -14,6 +14,7 @@ url='http://mnews.gw.com.cn/wap/data/scfl.json'
 url='http://mnews.gw.com.cn/wap/data/ipad/stock/SZ/02/002702/gsgg/1.json'   
 url='http://mnews.gw.com.cn/wap/data/ipad/stock/SZ/02/002702/gsxw/1.json'
 url='http://mnews.gw.com.cn/wap/data/ipad/stock/SH/31/600231/yjbg/1.json' 
+https://www.thepaper.cn/channel_25951
 '''
 def u2g(st):return st.encode('gbk')
 
