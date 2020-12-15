@@ -7,6 +7,11 @@ from collections import OrderedDict
 from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT
 from matplotlib import pyplot as plt
 
+pd.set_option('display.max_rows',None)
+pd.set_option('display.max_columns',80)
+pd.set_option('display.width',None)
+pd.options.display.float_format = '{:.2f}'.format
+
 urls='''http://live.wallstreetcn.com/?
 https://api.wallstcn.com/apiv1/content/information-flow?channel=shares&accept=article&cursor=&limit=20&action=upglide
 ##global,shares,bonds,commodities,enterprise,economy,charts
@@ -40,7 +45,7 @@ def get_url(url):
     return jo
 
 WSCN_INFO_CHANNEL = 'global,shares,bonds,commodities,enterprise,economy,charts'.split(',')
-def wscn_information(type='global'):
+def wscn_content_info_flow(type='global'):
     url='https://api.wallstcn.com/apiv1/content/information-flow?channel={0}&accept=article&cursor=&limit=30&action=upglide'.format(type)
     jo = get_url(url)
     items = [elm['resource'] for elm in jo['data']['items']]
@@ -52,7 +57,7 @@ def wscn_information(type='global'):
     
 #global,a-stock,us-stock,hk-stock,forex,commodity
 WSCN_LIVE_CHANNEL = 'global,a-stock,us-stock,hk-stock,forex,commodity'.split(',')
-def wscn_live_channel(type='a-stock',ts=None):
+def wscn_content_lives(type='a-stock',ts=None):
     ts_cond=''
     if ts!=None:
         ts_cond='&cursor=%s'%ts
@@ -64,7 +69,7 @@ def wscn_live_channel(type='a-stock',ts=None):
     print df[['content_text','c_time']]
     return df
 
-def wscn_stocks_trend(stocks):    
+def wscn_market_trend(stocks):    
     fields ='tick_at%2Cclose_px%2Cavg_px%2Cturnover_volume%2Cturnover_value%2Copen_px%2Chigh_px%2Clow_px%2Cpx_change%2Cpx_change_rate'
     stks ='%2C'.join(stocks)
     url = 'https://api-ddc.wallstcn.com/market/trend?fields={1}&prod_code={0}'.format(stks,fields)
@@ -81,7 +86,7 @@ def wscn_stocks_trend(stocks):
         # pdb.set_trace()
     return result_dic
    
-def wscn_stocks_kline(stocks,days=1,secs=None):
+def wscn_market_kline(stocks,days=1,secs=None):
     if secs is None:
         secs = days*86400
     else:
@@ -102,8 +107,21 @@ def wscn_stocks_kline(stocks,days=1,secs=None):
         # pdb.set_trace()
     return result_dic
    
-
-def wscn_rank():
+def wscn_market_real(stocks=None):
+    stks = 'US500.OTC%2C000001.SS%2CEURUSD.OTC%2CUSDJPY.OTC%2CUS10YR.OTC%2C399001.SZ%2C399006.SZ'
+    if stocks:
+        stks='%2C'.join(stocks)
+    fields='prod_name%2Clast_px%2Cpx_change%2Cpx_change_rate%2Cprice_precision%2Csecurities_type'
+    url='https://api-ddc.wallstcn.com/market/real?prod_code={0}&fields={1}'.format(stks,fields)
+    jo = get_url(url)
+    snapshot = jo['data']['snapshot']
+    fields = jo['data']['fields']
+    df = pd.DataFrame.from_dict(snapshot,orient='index',columns=fields)
+    # pdb.set_trace()
+    print df
+    return df 
+    
+def wscn_market_rank():
     fields = 'prod_name%2Cprod_en_name%2Cprod_code%2Csymbol%2Clast_px%2Cpx_change%2Cpx_change_rate%2Chigh_px%2Clow_px%2Cweek_52_high%2Cweek_52_low%2Cprice_precision%2Cupdate_time'
     url = 'https://api-ddc.wallstcn.com/market/rank?market_type=forexdata&stk_type=index&order_by=none&sort_field=px_change_rate&limit={0}&fields={1}&cursor=0'.format(200,fields)
     jo = get_url(url)
@@ -114,12 +132,12 @@ def wscn_rank():
     # pdb.set_trace()
     return df 
 
-def wscn_macrodatas():
+def wscn_finance_macrodatas(days_before=1,days_after=5):
     import datetime
     fmt = DATE_FORMAT
     dlt = datetime.timedelta(days=5)
-    sts = (datetime.datetime.now()-datetime.timedelta(days=5)).strftime(fmt)
-    ets = (datetime.datetime.now()+datetime.timedelta(days=5)).strftime(fmt)
+    sts = (datetime.datetime.now()-datetime.timedelta(days=days_before)).strftime(fmt)
+    ets = (datetime.datetime.now()+datetime.timedelta(days=days_after)).strftime(fmt)
     sts = ts2unix(sts)
     ets = ts2unix(ets)
     url = 'https://api.wallstcn.com/apiv1/finance/macrodatas?start={}&end={}'.format(sts,ets)
@@ -128,10 +146,9 @@ def wscn_macrodatas():
     df = pd.DataFrame(items)
     df['public_date'] = df['public_date'].apply(to_timestamp)
     df.sort_values(['public_date'],ascending=False,inplace=True)
-    for idx,row in  df[['public_date','title','event','previous','quantity','forecast','unit','importance']].iterrows():
-        print row
-        break
-    pdb.set_trace()
+    df['short_title']='['+df['country']+'] '+df['title'].str[:20]
+    cols = ['public_date','short_title','importance','previous','forecast','actual','unit']
+    print df[cols]
     return df
     
     
@@ -173,10 +190,12 @@ def xgb_top_info():
     return res
 
 if __name__ =='__main__':
-    # wscn_information()
-    # wscn_live_channel('a-stock')
-    # wscn_stocks_trend(['600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX'])
-    # wscn_stocks_kline(['600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX'],days=30)
-    # wscn_stocks_kline(['600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX'],secs=60)
-    # wscn_rank()
-    wscn_macrodatas()
+    stks = ['600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX']
+    # wscn_content_info_flow()
+    # wscn_content_lives('a-stock')
+    # wscn_market_trend(stks)
+    # wscn_market_kline(stks,days=30)
+    # wscn_market_kline(stks,secs=60)
+    # wscn_market_real(stks)
+    # wscn_market_real()
+    # wscn_finance_macrodatas(1,2)
