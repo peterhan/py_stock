@@ -183,8 +183,15 @@ def get_today_ticks(code=None, mkt='1', retry_count=3, pause=0.001):
 
     
 if __name__=='__main__':
-    print js_dumps(xgb_headmark())
+    # print js_dumps(xgb_headmark())
     # print xgb_fastsubject()
     # print js_dumps(xgb_top_info())
-    
-    
+    df = get_latest_news()
+    import pdb
+    for idx,row in df[['time','title','intro']].sort_values(['time']).iterrows():
+        # pdb.set_trace()        
+        print df.iloc[idx]['time']
+        print '\n'.join(row.values[1:]).encode('gbk')
+        print df.iloc[idx]['url']
+        print ','.join(df.iloc[idx]['keywords']).encode('gbk')
+        print ''

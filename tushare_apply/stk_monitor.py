@@ -315,8 +315,14 @@ def cn_main_loop(mode):
     elif 'onestock' in flags:
         exec_func = real_time_ticks
     elif 'news' in flags :
-        df = get_latest_news()       
-        print df.loc[:,['title','keywords','time']]
+        df = get_latest_news()
+        for idx,row in df[['time','title','intro']].sort_values(['time']).iterrows():
+            # pdb.set_trace()        
+            print df.iloc[idx]['time']
+            print '\n'.join(row.values[1:]).encode('gbk')
+            print df.iloc[idx]['url']
+            print ','.join(df.iloc[idx]['keywords']).encode('gbk')
+            print ''
     elif 'top' in flags:
         df = ts.top_list()       
         print df.sort_values('amount',ascending=False)
