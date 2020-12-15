@@ -134,6 +134,15 @@ def get_latest_news(lid='2517'):
     df = pd.DataFrame(data,columns='title,intro,url,keywords,time'.split(','))
     return df    
 
+def print_latest_news(df):
+    for idx,row in df[['time','title','intro']].sort_values(['time']).iterrows():
+        # pdb.set_trace()        
+        tags = '[%s]'%(','.join(df.iloc[idx]['keywords']).encode('gbk'))
+        time = '[%s]'%df.iloc[idx]['time']
+        print time,'\n'.join(row.values[1:]).encode('gbk')
+        print tags,df.iloc[idx]['url']      
+        print ''
+
 def get_today_ticks(code=None, mkt='1', retry_count=3, pause=0.001):
     """
         获取分笔数据
@@ -183,15 +192,9 @@ def get_today_ticks(code=None, mkt='1', retry_count=3, pause=0.001):
 
     
 if __name__=='__main__':
+    import pdb
     # print js_dumps(xgb_headmark())
     # print xgb_fastsubject()
     # print js_dumps(xgb_top_info())
     df = get_latest_news()
-    import pdb
-    for idx,row in df[['time','title','intro']].sort_values(['time']).iterrows():
-        # pdb.set_trace()        
-        print df.iloc[idx]['time']
-        print '\n'.join(row.values[1:]).encode('gbk')
-        print df.iloc[idx]['url']
-        print ','.join(df.iloc[idx]['keywords']).encode('gbk')
-        print ''
+    print_latest_news(df)
