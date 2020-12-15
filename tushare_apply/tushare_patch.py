@@ -52,7 +52,12 @@ def nest_selector(obj,path):
             try:sel=getattr(sel,pathpart)
             except:sel=''
     return sel
-        
+    
+def xgb_subject(url='https://xuangubao.cn/subject/151'):
+    'https://api.xuangubao.cn/api/pc/subj/151?Mark=1606996991&limit=20'
+    r=get(url)
+    
+    
 def xgb_headmark():
     dt=''
     r=get('https://api.xuangubao.cn/api/pc/msgs?%slimit=50&subjids=9,469,35,10'%dt)
@@ -194,7 +199,7 @@ def get_today_ticks(code=None, mkt='1', retry_count=3, pause=0.001):
 if __name__=='__main__':
     import pdb
     # print js_dumps(xgb_headmark())
-    # print xgb_fastsubject()
+    print xgb_fastsubject()
     # print js_dumps(xgb_top_info())
-    df = get_latest_news()
-    print_latest_news(df)
+    # df = get_latest_news()
+    # print_latest_news(df)
