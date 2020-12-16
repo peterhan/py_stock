@@ -34,8 +34,10 @@ def get_url(url):
     return jo
     
 def xgb_subject():
-    'https://api.xuangubao.cn/api/pc/subj/151?Mark=1606996991&limit=20'
-    r=get(url)
+    url='https://api.xuangubao.cn/api/pc/subj/151?Mark=1606996991&limit=20'
+    jo = get_url(url)
+    pdb.set_trace()
+    
     
     
 def xgb_headmark():
@@ -72,11 +74,4 @@ def xgb_top_info():
 
 if __name__ =='__main__':
     stks = ['600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX']
-    # wscn_content_info_flow()
-    # wscn_content_lives('a-stock')
-    # wscn_market_trend(stks)
-    # wscn_market_kline(stks,days=30)
-    # wscn_market_kline(stks,secs=60)
-    # wscn_market_real(stks)
-    # wscn_market_real()
-    # wscn_finance_macrodatas(1,2)
+    xgb_subject()
