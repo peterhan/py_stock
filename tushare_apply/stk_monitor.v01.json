@@ -22,8 +22,11 @@
       
       "Index": "159915 399001 sh000001 399006 sh000300 518800 161226 162411",
       
-      "SolarPower":"600438 601012 601222 300274 002506 601865 603185 515790 600089 688599 300118 300724 002129 300751 300118 600546 002610 603396 601778",
-      
+      "SolarPower":"600438  601222 300274 002506 601865 603185 515790 600089 688599 300118 300724 002129 300751 300118 600546 002610 603396 601778 600732 603806 601012",
+      "SP-panel":"603806 601012",
+      "SP-silicon":"600438 002623",
+      "SP-glass":"601865 600732",
+      "SP-HJT":"300751 300724",
       "Fund2020":"002541 002158 002208 002008",
       "newInfETF":"515050 512930 512480 512720 515030",
       "ETF": "512521 510020 510130 510170 510110 510060 510210 510120 510260 510010 512520 510090 510600 510300 510500 510630 510150 510030 000016  510230 510070 510050 000300 510180 510160 510270 510190 513100 399001 000001 510220 159915 399006 512500 512340 512710 518680", 
@@ -129,7 +132,7 @@
     ,"retail":"hd wmt yum tgt low jwn m se cost"
     ,"game":"ttwo ea atvi u ntdoy sne"
     ,"sportwear":"ua nke lulu goos"
-    ,"airline":"ccl rcl nclh dal mar wynn kss mgm hlt"
+    ,"airline":"ccl rcl nclh dal mar wynn kss mgm hlt expe"
     ,"fastfood":"ko sbux dis mcd cmg shak"
     ,"ark":"arkw arkk"
     ,"aero":"ba ge utc"
@@ -140,7 +143,7 @@
     ,"gun":"vsto swbi"
     ,"recover":"stmp jwn play cat"
     ,"gasoline":"xom vlo oxy nee"
-    ,"solar":"spwr sunw jks fuv arry run sedg"
+    ,"solar":"spwr sunw jks fuv arry run sedg  DQ"
     ,"crypto":"p=gbtc p=ethe p=blok sq blcn 1263.hk 1499.hk riot"
     ,"ipo":"ipo ipos"
     ,"other":"0410.hk futu unit sphb dnkf zom enlf mdna 03690.hk 0674.hk tigr 002409.sz 0694.hk drnf opt kcg skws ornc bek f dada zoom moda s lrng"

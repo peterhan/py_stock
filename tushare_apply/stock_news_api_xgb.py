@@ -4,74 +4,89 @@ from jsonpath_rw import jsonpath,parse
 import pdb
 import pandas as pd
 from collections import OrderedDict
-from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT
+from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
 from matplotlib import pyplot as plt
 
-pd.set_option('display.max_rows',None)
-pd.set_option('display.max_columns',80)
-pd.set_option('display.width',None)
-pd.options.display.float_format = '{:.2f}'.format
 
-urls='''http://xuangubao.cn/
-https://api.xuangubao.cn/api/pc/panzhongfengkou?limit=30&page=1
-https://api.xuangubao.cn/q/quote/v1/real
+
+
+class StockNewsXGB():
+    def __init__(self):
+        self.urls='''http://xuangubao.cn/
 http://xuangubao.cn/subjects
+http://xuangubao.cn/zhutiku
 http://xuangubao.cn/
-https://flash-api.xuangubao.cn/api/stage2/plate/top_info?count=9&fields=all
-https://flash-api.xuangubao.cn/api/pool/detail?pool_name=limit_up
+https://api.xuangubao.cn/q/quote/v1/real
 https://api.xuangubao.cn/api/pc/fastSubject
+https://api.xuangubao.cn/api/pc/panzhongfengkou?limit=30&page=1
 https://api.xuangubao.cn/api/pc/msgs?headmark=1489472187&limit=30&subjids=9,469,35,10
 https://api-ddc-wscn.xuangubao.cn/market/real?fields=prod_name,last_px,px_change,px_change_rate,symbol,trade_status&prod_code=600257.SS,600097.SS,002447.SZ,600702.SS,603290.SS,600360.SS,600746.SS,600623.SS,600776.SS,002017.SZ,000011.SZ,000070.SZ,600511.SS,600196.SS,603986.SS,688008.SS
+https://api-ddc-wscn.xuangubao.cn/market/real?fields=prod_name,last_px,px_change,px_change_rate,symbol,trade_status,market_type&prod_code=600877.SS,600816.SS,600006.SS,688005.SS,603025.SS,000995.SZ,603863.SS,600308.SS,600987.SS,600448.SS
 https://api-ddc-wscn.xuangubao.cn/extract/news_event/preview?message_ids=809721,809718,809710,809705
+https://flash-api.xuangubao.cn/api/stage2/plate/top_info?count=9&fields=all
+https://flash-api.xuangubao.cn/api/pool/detail?pool_name=limit_up
+https://flash-api.xuangubao.cn/api/plate/rank?field=core_avg_pcp&type=0 [0-3]
 https://flash-api.xuangubao.cn/api/plate/data?fields=plate_id,plate_name,fund_flow,rise_count,fall_count,stay_count,limit_up_count,core_avg_pcp,core_avg_pcp_rank,core_avg_pcp_rank_change,top_n_stocks,bottom_n_stocks&plates=53556594,20621170,16842834,16961441,16930590,38499865,19384882,18469582,62120753,5364594,22431937,21277137,651982,63576990,1008158,36001721,17412529,19218721,6681777,37869777,25019689,38053809,17452705,16950418,16844702,16868321,387225,16847921,20054814,66814321
+https://flash-api.xuangubao.cn/api/plate/data?fields=plate_id,plate_name,fund_flow,rise_count,fall_count,stay_count,limit_up_count,core_avg_pcp,core_avg_pcp_rank,core_avg_pcp_rank_change,top_n_stocks,bottom_n_stocks&plates=26021321,2900690,21969081,17731137,24291465,34490066,16888094,16813522,15864050,64731897,4343649,21051521,16907470,18722817,16861993,2525138,16787698,1640169,37268510,13011026,26676721,61407774,31003602,26543321,64879134,34316942,12679250,36489377,25638417,60280094
+https://flash-api.xuangubao.cn/api/plate/data?fields=core_avg_pcp,plate_name,plate_id&plates=24898553,25764977,16961441,31765737,21825682,22032881,64438609,21934737,18651017,54724617,38499865,50522441,17277266,19825650
+https://flash-api.xuangubao.cn/api/surge_stock/plates/info?plate_ids=26021321,2900690,21969081,17731137,24291465,34490066,16888094,16813522,15864050,64731897,4343649,21051521,16907470,18722817,16861993,2525138,16787698,1640169,37268510,13011026,26676721,61407774,31003602,26543321,64879134,34316942,12679250,36489377,25638417,60280094
+https://flash-api.xuangubao.cn/api/surge_stock/plates/info?plate_ids=53556594,17627122,26021321,2900690,17053649,16813522,24291465,1640169,16888094,2525138,36489377,16787698,64731897,34490066,16907470,15864050,6039890,16861993,55779193,21051521,16961441,13608562,13011026,52787230,37268510,18722817,26676721,26543321,24364114,63868018
+https://baoer-api.xuangubao.cn/api/v2/tab/recommend?module=trending_plates
 '''.split()
-
-
-def get_url(url):
-    print url
-    resp = get(url)
-    jo = resp.json()
-    return jo
-    
-def xgb_subject():
-    url='https://api.xuangubao.cn/api/pc/subj/151?Mark=1606996991&limit=20'
-    jo = get_url(url)
-    pdb.set_trace()
-    
-    
-    
-def xgb_headmark():
-    dt=''
-    r=get('https://api.xuangubao.cn/api/pc/msgs?%slimit=50&subjids=9,469,35,10'%dt)
-    jo = r.json()
-    jsonpath_expr = parse('$.NewMsgs[*]')
-    res = OrderedDict()
-    for i,match in enumerate(jsonpath_expr.find(jo) ):        
-        jo = match.value
-        # print u'/'.join(jieba.analyse.textrank(jo['Title']+' '+jo['Summary'], topK=20, withWeight=False, allowPOS=('ns', 'n')) ).encode('gbk')
-        ts,title,summary =jo['CreatedAt'],jo['Title'],jo['Summary']        
-        stocks= jo.get('Stocks',)
-        res['[%s]%s'%(ts,title)] = {'title':title,'ts':ts,'summary':summary,'stocks':stocks}        
-    return res
+        self.flashapi = 'https://flash-api.xuangubao.cn/api'
+        self.ddcwscn = 'https://api-ddc-wscn.xuangubao.cn'
+        self.xgbapi  = 'https://api.xuangubao.cn/api'
+        self.debug = False
+        self.debug = True
+        pass
         
-
-def xgb_fastsubject():
-    r = get('https://api.xuangubao.cn/api/pc/fastSubject')
-    jo= r.json()
-    res = OrderedDict()
-    for elm in jo:        
-        print js_dumps(elm)        
-    return res
+    def get_json(self, url):
+        print url
+        resp = get(url)
+        jo = resp.json()
+        return jo
     
-def xgb_top_info():
-    r= get('https://flash-api.xuangubao.cn/api/stage2/plate/top_info?count=9&fields=all')
-    jo = r.json()
-    res = OrderedDict()
-    for elm in jo['data']['top_plate_info']: 
-        key = elm['plate_name']
-        res[key] = elm
-    return res
+    def top_info(self):
+        url = self.flashapi + '/stage2/plate/top_info?count=9&fields=all'
+        jo  = self.get_json(url)
+        jo['data']['top_plate_info']
+        jo['data']['bottom_plate_info']
+        if self.debug: pdb.set_trace()
+        
+    def subject(self):
+        url = self.xgbapi+'/api/pc/subj/151?Mark=1606996991&limit=20'
+        jo = self.get_json(url)
+        pdb.set_trace()        
+        
+    def headmark(self):
+        dt=''
+        r=get('https://api.xuangubao.cn/api/pc/msgs?%slimit=50&subjids=9,469,35,10'%dt)
+        jo = r.json()
+        jsonpath_expr = parse('$.NewMsgs[*]')
+        res = OrderedDict()
+        for i,match in enumerate(jsonpath_expr.find(jo) ):        
+            jo = match.value
+            # print u'/'.join(jieba.analyse.textrank(jo['Title']+' '+jo['Summary'], topK=20, withWeight=False, allowPOS=('ns', 'n')) ).encode('gbk')
+            ts,title,summary =jo['CreatedAt'],jo['Title'],jo['Summary']        
+            stocks= jo.get('Stocks',)
+            res['[%s]%s'%(ts,title)] = {'title':title,'ts':ts,'summary':summary,'stocks':stocks}        
+        return res
+            
+
+    def fastsubject(self):
+        r = get('https://api.xuangubao.cn/api/pc/fastSubject')
+        jo= r.json()
+        res = OrderedDict()
+        for elm in jo:        
+            print js_dumps(elm)        
+        return res
 
 if __name__ =='__main__':
+    pd.set_option('display.max_rows',None)
+    pd.set_option('display.max_columns',80)
+    pd.set_option('display.width',None)
+    pd.options.display.float_format = '{:.2f}'.format
+
     stks = ['600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX']
-    xgb_subject()
+    xgb = StockNewsXGB()
+    xgb.top_info()
