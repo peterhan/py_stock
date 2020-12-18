@@ -70,6 +70,19 @@ def flatten_json(y,mode='plain',sep='.'):
                 out[name[:]] = x   
     flatten(y) 
     return out 
+ 
+
+def dict_selector(dic,keys=None,mode='keys'):
+    res = dict()
+    if keys!=None:
+        lst = [(k,v) for k,v in dic.items() if k in keys]
+        res = dict(lst)
+    if mode=='plain':
+        for key,sel in dic.items():
+            if isinstance(sel,dict) or isinstance(sel,list):
+                continue
+            res[key] = sel
+    return res
     
 def nest_selector(obj,path):
     patharr=path.split('.')    

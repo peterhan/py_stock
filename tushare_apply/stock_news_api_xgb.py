@@ -4,7 +4,7 @@ from jsonpath_rw import jsonpath,parse
 import pdb
 import pandas as pd
 from collections import OrderedDict
-from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
+from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json,dict_selector
 from matplotlib import pyplot as plt
 
 
@@ -31,8 +31,7 @@ https://flash-api.xuangubao.cn/api/plate/data?fields=plate_id,plate_name,fund_fl
 https://flash-api.xuangubao.cn/api/plate/data?fields=core_avg_pcp,plate_name,plate_id&plates=24898553,25764977,16961441,31765737,21825682,22032881,64438609,21934737,18651017,54724617,38499865,50522441,17277266,19825650
 https://flash-api.xuangubao.cn/api/surge_stock/plates/info?plate_ids=26021321,2900690,21969081,17731137,24291465,34490066,16888094,16813522,15864050,64731897,4343649,21051521,16907470,18722817,16861993,2525138,16787698,1640169,37268510,13011026,26676721,61407774,31003602,26543321,64879134,34316942,12679250,36489377,25638417,60280094
 https://flash-api.xuangubao.cn/api/surge_stock/plates/info?plate_ids=53556594,17627122,26021321,2900690,17053649,16813522,24291465,1640169,16888094,2525138,36489377,16787698,64731897,34490066,16907470,15864050,6039890,16861993,55779193,21051521,16961441,13608562,13011026,52787230,37268510,18722817,26676721,26543321,24364114,63868018
-https://baoer-api.xuangubao.cn/api/v2/tab/recommend?module=trending_plates
-'''.split()
+https://baoer-api.xuangubao.cn/api/v2/tab/recommend?module=trending_plates'''.split('\n')
         self.flashapi = 'https://flash-api.xuangubao.cn/api'
         self.ddcwscn = 'https://api-ddc-wscn.xuangubao.cn'
         self.xgbapi  = 'https://api.xuangubao.cn/api'
@@ -48,15 +47,64 @@ https://baoer-api.xuangubao.cn/api/v2/tab/recommend?module=trending_plates
     
     def top_info(self):
         url = self.flashapi + '/stage2/plate/top_info?count=9&fields=all'
-        jo  = self.get_json(url)
-        jo['data']['top_plate_info']
-        jo['data']['bottom_plate_info']
+        jo  = self.get_json(url)        
+        rows = []
+        def gen_rows(plate_type,stock_type):
+            for elm in jo['data'][plate_type]:
+                bdat = dict_selector(elm,mode='plain')
+                bdat['plate_type'] = plate_type
+                bdat['stock_type'] = stock_type
+                for item in elm[stock_type]['items']:
+                    item.update(bdat)
+                    yield item                    
+        for row in gen_rows('top_plate_info','led_rising_stocks'):
+            rows.append(row)
+            
+        for row in gen_rows('bottom_plate_info','led_falling_stocks'):
+            rows.append(row)
+
+        df = pd.DataFrame.from_records(rows)
         if self.debug: pdb.set_trace()
+        return df
         
-    def subject(self):
-        url = self.xgbapi+'/api/pc/subj/151?Mark=1606996991&limit=20'
+    def pool_detail(self):
+        url = self.flashapi+'/pool/detail?pool_name=limit_up'
         jo = self.get_json(url)
-        pdb.set_trace()        
+        # dic = flatten_json(jo)
+        rows = []
+        for elm in jo['data']:
+            bdat = dict_selector(elm,mode='plain')
+            for item in elm['surge_reason']['related_plates']:
+                item.update(bdat)
+                rows.append(item)
+        df = pd.DataFrame.from_records(rows)
+        if self.debug: pdb.set_trace()
+        return df
+        
+    def plate_rank(self,type):
+        url = self.flashapi+'/plate/rank?field=core_avg_pcp&type={0}'.format(type)
+        jo = self.get_json(url)
+        rows = map(str,jo['data'])
+        # dic = flatten_json(jo['data'])
+        # if self.debug: pdb.set_trace()
+        return rows
+        
+    def plate_data(self,plates):
+        fields ='plate_id,plate_name,fund_flow,rise_count,fall_count,stay_count,limit_up_count,core_avg_pcp,core_avg_pcp_rank,core_avg_pcp_rank_change,top_n_stocks,bottom_n_stocks'
+        url = self.flashapi+'/plate/data?fields={0}&plates={1}'.format(fields,','.join(plates))
+        jo = self.get_json(url)
+        rows = []
+        dic = flatten_json(jo)
+        for plate_id,elm in jo['data'].items():
+            bdat = dict_selector(elm,mode='plain')
+            bdat['key_plate'] = plate_id
+            for item in elm['bottom_n_stocks']['items']:
+                item.update(bdat)
+                rows.append(item)
+        df = pd.DataFrame.from_records(rows)
+        if self.debug: pdb.set_trace()
+        return df
+        
         
     def headmark(self):
         dt=''
@@ -89,4 +137,7 @@ if __name__ =='__main__':
 
     stks = ['600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX']
     xgb = StockNewsXGB()
-    xgb.top_info()
+    # xgb.pool_detail()
+    # xgb.top_info()
+    plates= xgb.plate_rank('0')
+    xgb.plate_data(plates)
