@@ -1,6 +1,7 @@
 from requests import get,post
 from bs4 import BeautifulSoup
 from jsonpath_rw import jsonpath,parse
+import sys
 import pdb
 import pandas as pd
 from collections import OrderedDict
@@ -153,7 +154,31 @@ class StockNewsWSCN():
         df['update_time'] = df['update_time'].apply(to_timestamp)
         # pdb.set_trace()
         print df
-        return df 
+        return df
+        
+    def mode_run(self,mode='',stks=None,**argv):
+        if mode=='':
+            print 'NoModeFound'
+            pass
+        elif mode=='macro':
+            self.macrodatas(1,2)
+        elif mode=='info_flow':
+            self.info_flow()
+        elif mode=='trend':
+            self.trend(stks,**argv)
+        elif mode=='kline':
+            self.kline(stks,**argv)
+        elif mode=='market_real':
+            self.market_real()
+        elif mode=='live':
+            for channel in self.LIVE_CHANNEL:
+                self.lives(channel)
+        elif mode == 'market_rank' :
+            for mstype in  self.MKTSTK_TYPE:    
+                ma=mstype.split('#')
+                self.market_rank(ma[0],ma[1])
+        else:
+            print 'NotValidMode:',mode
 
 
 
@@ -164,15 +189,18 @@ if __name__ =='__main__':
     pd.options.display.float_format = '{:.2f}'.format
     wscn = StockNewsWSCN()
     stks = ['UMC.NYSE','600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX','PLTR.NASD']
+    
+    wscn.mode_run('macro')
+    wscn.mode_run('info_flow')
+    wscn.mode_run('market_rank')
+    wscn.mode_run('live')
+    sys.exit()
     wscn.macrodatas(1,2)
     wscn.info_flow()
-    for channel in wscn.LIVE_CHANNEL:
-        wscn.lives(channel)
+
     wscn.trend(stks)
     # wscn.kline(stks,days=30)
     # wscn.kline(stks,secs=60)
     wscn.market_real()
-    for mstype in  wscn.MKTSTK_TYPE:    
-        ma=mstype.split('#')
-        wscn.market_rank(ma[0],ma[1])
+
     # pdb.set_trace()

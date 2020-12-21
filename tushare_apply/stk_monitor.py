@@ -219,7 +219,7 @@ def get_one_ticker_k_data(tick,info,flags):
 
 def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=22, opt_map = None):    
     select_map = {}
-    flags = set()
+    flags = []
     for i,key in enumerate(select_dic):
         select_map[i+1] = key
         print ('(%s) %s'%(i+1,key)).ljust(column_width),
@@ -233,17 +233,23 @@ def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=2
     words = this_input.strip().replace(',',' ').replace('  ',' ').split(' ')    
     if opt_map is None:
         opt_map = {'q':'quit','d':'detail','i':'pdb'
-        ,'s':'onestock','ns':'news_sina'
+        ,'s':'onestock'
         ,'top':'top','inst':'inst'
         ,'r':'realtime','f':'fullname','g':'graph'
-        ,'u':'us','z':'zh','e':'emd','c':'cat','nw':'news_wscn'
+        ,'u':'us','z':'zh','e':'emd','c':'cat'
+        ,'n':'news_sina'
         }
     
-    for k,v in opt_map.items():
-        if k in words:
-            flags.add(v)
-            words.remove(k)    
-          
+    for key,vlu in opt_map.items():        
+        if key in words:
+            flags.append(vlu)
+            words.remove(key)
+            
+    if '>' in words:
+        idx = words.index('>') 
+        wd = words[idx:]
+        words = words[:idx]
+        flags.append( wd )
     try:
         selected_keys = []
         for word in words:
@@ -267,11 +273,20 @@ def interact_choose_ticks(mode):
     all = set(all)
     all.remove("")
     conf_tks['All'] = list(all)
+    opt_map = {'q':'quit','d':'detail','i':'pdb'
+        ,'s':'onestock'
+        ,'top':'top','inst':'inst'
+        ,'r':'realtime','f':'fullname','g':'graph'
+        ,'u':'us','z':'zh','e':'emd','c':'cat'
+        ,'nw':'news_wscn','ns':'news_sina'
+        ,'n':'news_wscn','p':'pause' 
+    }
+    
     if '-d' in mode:
         input = '3'
-        ticks,flags = cli_select_menu(conf_tks,input)        
+        ticks,flags = cli_select_menu(conf_tks,input,opt_map=opt_map)        
     else:
-        ticks,flags = cli_select_menu(conf_tks)
+        ticks,flags = cli_select_menu(conf_tks,opt_map=opt_map)
     #### selected ticks
     sel_tks=set()
     for id in ticks:
@@ -281,7 +296,7 @@ def interact_choose_ticks(mode):
             sel_tks.add( id)
     sel_tks = list(sel_tks)
     #####
-    print 'Input: %s, Ticks: %s'%(ticks,','.join(sel_tks)) 
+    print 'Input: %s, Ticks: %s, Flags: %s'%(ticks,','.join(sel_tks),flags) 
     info = summary_list_ticks(sel_tks,flags)
     time.sleep(3)
     if '-d' in mode or 'detail' in flags or 'graph' in flags:
@@ -319,11 +334,17 @@ def cn_main_loop(mode):
         print_latest_news(df)
     elif 'news_wscn' in flags :
         from stock_news_api_wscn import StockNewsWSCN
-        wscn = StockNewsWSCN()
-        for channel in wscn.LIVE_CHANNEL:
-            df = wscn.lives(channel)
-            if 'pdb' in flags:
-                pdb.set_trace()
+        wscn = StockNewsWSCN()        
+        sflag = flags[-1]        
+        if isinstance(sflag,list):
+            if 'm' in sflag:
+                wscn.mode_run('macro')
+            if 'i' in sflag:            
+                wscn.mode_run('info_flow')
+            if 'r' in sflag:
+                wscn.mode_run('market_rank')
+            if 'l' in sflag:           
+                wscn.mode_run('live')        
     elif 'top' in flags:
         df = ts.top_list()       
         print df.sort_values('amount',ascending=False)
@@ -379,6 +400,8 @@ def cn_main_loop(mode):
             df[['ema_dif']].plot(title=title,ax = aax[1])
             df[['volume']].plot(title=title,ax = aax[2])
         plt.show()
+    if 'pause' in flags:
+        raw_input('pause')
     return flags
     
  
