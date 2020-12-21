@@ -164,16 +164,14 @@ if __name__ =='__main__':
     pd.options.display.float_format = '{:.2f}'.format
     wscn = StockNewsWSCN()
     stks = ['UMC.NYSE','600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX','PLTR.NASD']
-    # wscn.info_flow()
-    # wscn.lives('us-stock')
-    # wscn.macrodatas(1,2)
-    # wscn.lives('a-stock')
-    # wscn.lives('hk-stock')
+    wscn.macrodatas(1,2)
+    wscn.info_flow()
+    for channel in wscn.LIVE_CHANNEL:
+        wscn.lives(channel)
     wscn.trend(stks)
     # wscn.kline(stks,days=30)
     # wscn.kline(stks,secs=60)
-    # wscn.real(stks)
-    # wscn.market_real()
+    wscn.market_real()
     for mstype in  wscn.MKTSTK_TYPE:    
         ma=mstype.split('#')
         wscn.market_rank(ma[0],ma[1])

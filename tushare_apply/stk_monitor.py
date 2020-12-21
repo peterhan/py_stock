@@ -233,10 +233,10 @@ def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=2
     words = this_input.strip().replace(',',' ').replace('  ',' ').split(' ')    
     if opt_map is None:
         opt_map = {'q':'quit','d':'detail','i':'pdb'
-        ,'s':'onestock','n':'news'
+        ,'s':'onestock','ns':'news_sina'
         ,'top':'top','inst':'inst'
         ,'r':'realtime','f':'fullname','g':'graph'
-        ,'u':'us','z':'zh','e':'emd','c':'cat'
+        ,'u':'us','z':'zh','e':'emd','c':'cat','nw':'news_wscn'
         }
     
     for k,v in opt_map.items():
@@ -314,9 +314,16 @@ def cn_main_loop(mode):
         exec_func = real_time_ticks   
     elif 'onestock' in flags:
         exec_func = real_time_ticks
-    elif 'news' in flags :
+    elif 'news_sina' in flags :
         df = get_latest_news()
         print_latest_news(df)
+    elif 'news_wscn' in flags :
+        from stock_news_api_wscn import StockNewsWSCN
+        wscn = StockNewsWSCN()
+        for channel in wscn.LIVE_CHANNEL:
+            df = wscn.lives(channel)
+            if 'pdb' in flags:
+                pdb.set_trace()
     elif 'top' in flags:
         df = ts.top_list()       
         print df.sort_values('amount',ascending=False)
