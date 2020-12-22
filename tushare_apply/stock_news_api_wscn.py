@@ -5,7 +5,7 @@ import sys
 import pdb
 import pandas as pd
 from collections import OrderedDict
-from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT
+from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
 from matplotlib import pyplot as plt
 
 
@@ -15,6 +15,7 @@ class StockNewsWSCN():
     def __init__(self):
         self.urls='''http://live.wallstreetcn.com
         https://api-ddc.wallstcn.com/market/kline?prod_code=000001.SS&period_type=300&tick_count=256&fields=tick_at%2Copen_px%2Cclose_px%2Chigh_px%2Clow_px
+        https://api-ddc.wallstcn.com/extract/asset/extreprob?wscn_ticker=UK141623&public_date=1608620400
         '''
         self.apiv1='https://api.wallstcn.com/apiv1'
         self.apiddc='https://api-ddc.wallstcn.com/market'
@@ -41,7 +42,22 @@ class StockNewsWSCN():
             }
         return df.rename(columns=mapping)
         
+        
+    def hot_article(self):
+        url=  self.apiv1 + '/content/articles/hot?period=all'
+        jo = self.get_json(url)
+        df1 = pd.DataFrame.from_records(jo['data']['day_items'])
+        df1['type']='day'
+        df2 = pd.DataFrame.from_records(jo['data']['week_items'])
+        df2['type']='week'
+        df = pd.concat([df1,df2],axis=0,sort=True)
+        df['display_time'] = df['display_time'].apply(to_timestamp)
+        print df[['type','title','uri']]
+        # pdb.set_trace()
+        return df
+        
     def info_flow(self,type='global'):
+        '''news flow'''
         url=self.apiv1+'/content/information-flow?channel={0}&accept=article&cursor=&limit=30&action=upglide'.format(type)
         jo = self.get_json(url)
         items = [elm['resource'] for elm in jo['data']['items']]
@@ -54,6 +70,7 @@ class StockNewsWSCN():
     #global,a-stock,us-stock,hk-stock,forex,commodity
     
     def lives(self,type='a-stock',ts=None):
+        '''quick news info'''
         ts_cond=''
         if ts!=None:
             ts_cond='&cursor=%s'%ts
@@ -67,6 +84,7 @@ class StockNewsWSCN():
         return df
     
     def macrodatas(self,days_before=1,days_after=5):
+        '''macro calender'''
         import datetime
         fmt = DATE_FORMAT
         dlt = datetime.timedelta(days=5)
@@ -143,6 +161,7 @@ class StockNewsWSCN():
         return df 
         
     def market_rank(self,mkt_type,stk_type,cursor=0,limit=20,sort_by='px_change_rate',order_by='desc'):
+        '''market_rank'''
         fields = 'prod_name,prod_en_name,prod_code,symbol,last_px,px_change,px_change_rate,high_px,low_px,week_52_high,week_52_low,price_precision,update_time'.replace(',','%2C')
         url = self.apiddc\
             +'/rank?market_type={3}&stk_type={4}&order_by={6}&sort_field={5}&limit={1}&fields={0}&cursor={2}'\
@@ -168,6 +187,8 @@ class StockNewsWSCN():
             self.trend(stks,**argv)
         elif mode=='kline':
             self.kline(stks,**argv)
+        elif mode=='hot_article':
+            self.hot_article()
         elif mode=='market_real':
             self.market_real()
         elif mode=='live':
@@ -190,11 +211,12 @@ if __name__ =='__main__':
     wscn = StockNewsWSCN()
     stks = ['UMC.NYSE','600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX','PLTR.NASD']
     
+    wscn.mode_run('hot_article')
+    sys.exit()
     wscn.mode_run('macro')
     wscn.mode_run('info_flow')
     wscn.mode_run('market_rank')
     wscn.mode_run('live')
-    sys.exit()
     wscn.macrodatas(1,2)
     wscn.info_flow()
 

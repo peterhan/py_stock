@@ -143,5 +143,5 @@ if __name__ =='__main__':
     # xgb.pool_detail()
     # xgb.top_info()
     plates= xgb.plate_rank('0')
-    # xgb.plate_data(plates)
-    xgb.surge_stock(plates)
+    xgb.plate_data(plates)
+    # xgb.surge_stock(plates)

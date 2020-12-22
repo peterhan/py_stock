@@ -286,8 +286,9 @@ def interact_choose_ticks(mode):
         ,'top':'top','inst':'inst'
         ,'r':'realtime','f':'fullname','g':'graph'
         ,'u':'us','z':'zh','e':'emd','c':'cat'
-        ,'nw':'news_wscn','ns':'news_sina'
-        ,'n':'news_wscn','p':'pause' 
+        ,'nw':'news_wscn','wscn':'news_wscn'
+        ,'ns':'news_sina'
+        ,'n':'news_sina','p':'pause' 
     }
     
     if '-d' in mode:
@@ -345,14 +346,16 @@ def cn_main_loop(mode):
         wscn = StockNewsWSCN()        
         sflag = flags[-1]        
         if isinstance(sflag,list):
-            if 'm' in sflag:
-                wscn.mode_run('macro')
-            if 'i' in sflag:            
-                wscn.mode_run('info_flow')
-            if 'r' in sflag:
-                wscn.mode_run('market_rank')
             if 'l' in sflag or len(sflag)<=1:           
                 wscn.mode_run('live')
+            if 'i' in sflag:            
+                wscn.mode_run('info_flow')
+            if 'h' in sflag:            
+                wscn.mode_run('hot_article')
+            if 'm' in sflag:
+                wscn.mode_run('macro')
+            if 'r' in sflag:
+                wscn.mode_run('market_rank')
     elif 'top' in flags:
         df = ts.top_list()       
         print df.sort_values('amount',ascending=False)
