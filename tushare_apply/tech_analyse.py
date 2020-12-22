@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import traceback
 import pdb
+import locale
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 
@@ -483,7 +484,7 @@ def tech_analyse(df):
 def jsdump(info, indent=None):
     return json.dumps(info, ensure_ascii=False, indent=indent) 
     
-ECODE='gbk'    
+ECODE=locale.getpreferredencoding()
 def analyse_res_to_str(stock_anly_res):
     intro = {}
     pstr = ''
@@ -649,7 +650,7 @@ def main():
     import tushare as ts
     
     def pprint(info, indent=None):
-        print json.dumps(info, ensure_ascii=False, indent=2).encode('gbk')
+        print json.dumps(info, ensure_ascii=False, indent=2).encode(ENCODE)
     
     remote_call = False
     remote_call = True

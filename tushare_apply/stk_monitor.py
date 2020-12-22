@@ -8,6 +8,7 @@ import time
 import json
 import pdb
 import traceback
+import locale
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 from tushare_patch import get_latest_news,get_today_ticks,print_latest_news
@@ -30,6 +31,7 @@ pd.set_option('display.max_columns',80)
 pd.set_option('display.width',None)
 pd.options.display.float_format = '{:.2f}'.format
 
+ENCODE = locale.getpreferredencoding()
 def get_mkt(tks):
     if tks[0] in ('0','3'):
         return '0'
@@ -53,20 +55,21 @@ def real_time_ticks(tick,info,flags,use_cache = False):
             # print dt
             # df = ts.get_tick_data(tick,date=dt,src='sn')
             df.index.name = 'id'
-            df.to_csv(fname,encoding='utf8')
+            # df.to_csv(fname,encoding='utf8')
         except Exception as e:
             traceback.print_exc()
             pass
-    df = pd.read_csv(fname,encoding='utf8',index_col='id')
-    df['time_int'] = df['time']
-    df['time'] = df['time'].apply(lambda x:'%06d'%x)
+    # df = pd.read_csv(fname,encoding='utf8',index_col='id')
+    # pdb.set_trace()
+    df['time_int'] = df['time'].astype(int)
+    df['time'] = df['time']
     df['volume'] = df['vol']    
     df['amount'] = df['price'] * df['vol']
     df['hour'] = df['time'].str[:2]
     info_t = info[tick]
     print ''
-    print ''
-    print '[%s][%s]'%(tick,info_t['name'])
+    pdb.set_trace()
+    print '[%s][%s]'%(tick,info_t['name'].encode(ENCODE))
     
     print df.groupby('type').agg({'volume':'sum','price':'mean' })
     # print df.groupby('type').agg({'volume':'sum','price':'mean','change':'count'})
@@ -191,11 +194,11 @@ def add_delta_n(df):
     return df
     
 def get_one_ticker_k_data(tick,info,flags):    
-    fname =  FNAME_PAT_HIST%tick
     df = ts.get_k_data(tick)
     # add_delta_n(df)
-    df.to_csv(fname,index='date')
-    df = pd.read_csv(fname,index_col='date')
+    # fname =  FNAME_PAT_HIST%tick
+    # df.to_csv(fname,index='date')
+    # df = pd.read_csv(fname,index_col='date')
     df['date'] = df.index
     # print df.shape
     if df.shape[0] == 0:
@@ -204,16 +207,20 @@ def get_one_ticker_k_data(tick,info,flags):
     tech_info,tdf = tech_analyse(df)
     ## japanese candle pattern
     cdl_info,cdf = candle_analyse(df)
+    tdf.pop('date')
+    cdf.pop('date')
     df = pd.concat([df,tdf,cdf],axis=1)
     if 'cat' in flags:
         cat_boost_factor_check(df)
     # cdl_info = None
-    df.to_csv(fname)
+    # df.to_csv(fname)
     if 'emd' in flags:
         from stock_emd import emd_plot
         emd_res = emd_plot(df['close'])  
+    # pdb.set_trace()
+    dic = df.to_dict()
     return {'code':tick,'info':info[tick]
-        ,'tech':tech_info,'cdl':cdl_info}
+        ,'tech':tech_info,'cdl':cdl_info,'df':dic}
 
  
 
@@ -239,17 +246,18 @@ def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=2
         ,'u':'us','z':'zh','e':'emd','c':'cat'
         ,'n':'news_sina'
         }
-    
-    for key,vlu in opt_map.items():        
-        if key in words:
-            flags.append(vlu)
-            words.remove(key)
-            
+
     if '>' in words:
         idx = words.index('>') 
         wd = words[idx:]
         words = words[:idx]
         flags.append( wd )
+
+    for key,vlu in opt_map.items():
+        for word in words:
+            if key == word:
+                flags.insert(0,vlu)
+                words.remove(key)
     try:
         selected_keys = []
         for word in words:
@@ -343,15 +351,15 @@ def cn_main_loop(mode):
                 wscn.mode_run('info_flow')
             if 'r' in sflag:
                 wscn.mode_run('market_rank')
-            if 'l' in sflag:           
-                wscn.mode_run('live')        
+            if 'l' in sflag or len(sflag)<=1:           
+                wscn.mode_run('live')
     elif 'top' in flags:
         df = ts.top_list()       
         print df.sort_values('amount',ascending=False)
     elif 'inst' in flags:
         df = ts.inst_tops()
         print df.sort_values('net',ascending=False)
-        raw_input('pause')
+        raw_input('[pause]')
         df = ts.inst_detail()
         print df.sort_values('bamount',ascending=False)
     elif 'quit' in flags:
@@ -361,7 +369,7 @@ def cn_main_loop(mode):
         for tk in the_ticks:
             result = exec_func(tk,info)
     else:
-        pool = Pool(32)
+        pool = Pool(8)
         jobs = []
         for tk in the_ticks:
             job = pool.spawn(exec_func,tk,info,flags)
@@ -373,9 +381,9 @@ def cn_main_loop(mode):
         result = [job.value for job in jobs]
     
     ## 读取分析结果
-    fname = 'result.%s.json'%exec_func.func_name
+    # fname = 'result.%s.json'%exec_func.func_name
     # print fname
-    json.dump(result,open(fname,'w'),indent=2)
+    # json.dump(result,open(fname,'w'),indent=2)
     print '\n\n'+analyse_res_to_str(result)+'\n'
     
     if 'graph' in flags and exec_func.func_name=='get_one_ticker_k_data':
@@ -384,8 +392,9 @@ def cn_main_loop(mode):
         for i,onestk in enumerate(result):
             tick = onestk['code']
             name = onestk['info'].get('name')
-            fname = FNAME_PAT_HIST%tick
-            df = pd.read_csv(fname,encoding='utf8',index_col='date')
+            # fname = FNAME_PAT_HIST%tick
+            # df = pd.read_csv(fname,encoding='utf8',index_col='date')
+            df = pd.DataFrame.from_dict(onestk['df'])
             df = df[-50:]
             title = '%s'%(tick)
             df['atr']=talib.ATR(df['high'],df['low'],df['close'])
