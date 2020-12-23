@@ -88,9 +88,10 @@ def boll_analyse(ohlcv,period=10):
     df['boll_stage'] = df.apply(boll_judge,axis=1)
     row = df.iloc[-1]
     res = [row['boll_stage']]
-    res += ['ANG[MID:%0.2f, UP:%0.2f], MID_PRC:%0.2f'%(mag[-1], uag[-1]-mag[-1], boll_mid[-1])]
-    res += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(boll_up[-1],boll_mid[-1],boll_low[-1])]
+    res += ['ANG[MID:%0.2f, UP:%0.2f], MID_PRC:%0.2f'%(row['bollmid_ag'], row['bollup_ag']-row['bollmid_ag'], row['boll_mid'])]
+    res += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(row['boll_up'],row['boll_mid'],row['boll_low'])]
     return res,df
+    
  
 def value_range_judge(vlu,up_down,up_down_mid_name): 
     if vlu>=up_down[0]:
@@ -139,9 +140,10 @@ def get_angle(ss,p=2):
     
     
 def macd_analyse(ohlcv,period=10):
-    dif, dea, hist =  talib.MACD(ohlcv['close'],period)    
+    dif, dea, hist =  talib.MACD(ohlcv['close'],period)
+    # pdb.set_trace()
     # df = pd.DataFrame({'macd_dif': dif, 'macd_dea':dea, 'macd_hist':hist })        
-    res = []    
+    res = [] 
     df =  get_crossx_type(dif,dea)
     df['macd_hist'] = hist
     df = df.rename({'fast_line':'dif','slow_line':'dea','cross_stage':'macd_stage','fast_ag':'dif_ag','slow_ag':'dea_ag'},axis=1)
@@ -156,7 +158,7 @@ def macd_analyse(ohlcv,period=10):
     df['macd_stage'] = df.apply(macd_judge,axis=1)    
     row = df.iloc[-1]         
     res += ['%s: ANG[IF:%0.2f, EA:%0.2f]'%(row['macd_stage'],row['dif_ag'],row['dea_ag'])]
-    res += ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(dif[-1],dea[-1],hist[-1]*2)]   
+    res += ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(row['dif'],row['dea'],row['macd_hist']*2)]   
     return res,df
     
 def rsi_analyse(ohlcv,period=10):
@@ -406,14 +408,14 @@ def tech_analyse(df):
     close = df['close'].values
     vol = df['volume'].values.astype(float)
     # ohlcv= {'open':open,'high':high,'low':low,'close':close,'volume':vol}
-    ohlcv= df    
+    ohlcv = df    
     
     ana_res = OrderedDict()
     
     def pd_concat(df1,df2):
         return pd.concat([df1,df2.set_index(df1.index)],axis=1)
     
-    df=df[['date']].copy()
+    df = df[['date']].copy()
 
     ## MACD
     try:
@@ -486,7 +488,7 @@ def tech_analyse(df):
         traceback.print_exc()
     
     ## Forcast
-    tsf_res =  'Forcast: %0.2f'%talib.TSF(ohlcv['close'])[-1]
+    tsf_res =  'Forcast: %0.2f'%list(talib.TSF(ohlcv['close']))[-1]
     ana_res['TSF'] = tsf_res
     
     ## OBV
@@ -721,7 +723,7 @@ def main():
     
     df = pd.concat([df,tdf,cdf],axis=1)
     df.to_csv('veri/tech.csv')
-    pdb.set_trace()
+    # pdb.set_trace()
     # pprint(cinfo)
     # print df.tail(1)
     ###

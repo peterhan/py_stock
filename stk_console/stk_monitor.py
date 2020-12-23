@@ -220,7 +220,7 @@ def get_one_ticker_k_data(tick,info,flags):
     # pdb.set_trace()
     dic = df.to_dict()
     return {'code':tick,'info':info[tick]
-        ,'tech':tech_info,'cdl':cdl_info,'df':dic}
+           ,'tech':tech_info,'cdl':cdl_info,'df':dic}
 
  
 
