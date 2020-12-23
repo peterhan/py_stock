@@ -221,7 +221,6 @@ def get_one_ticker_k_data(tick,info,flags):
     dic = df.to_dict()
     return {'code':tick,'info':info[tick]
            ,'tech':tech_info,'cdl':cdl_info,'df':dic}
-
  
 
 def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=22, opt_map = None):    
