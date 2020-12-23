@@ -344,18 +344,17 @@ def cn_main_loop(mode):
     elif 'news_wscn' in flags :
         from stock_news_api_wscn import StockNewsWSCN
         wscn = StockNewsWSCN()        
-        sflag = flags[-1]        
-        if isinstance(sflag,list):
-            if 'l' in sflag or len(sflag)<=1:           
-                wscn.mode_run('live')
-            if 'i' in sflag:            
-                wscn.mode_run('info_flow')
-            if 'h' in sflag:            
-                wscn.mode_run('hot_article')
-            if 'm' in sflag:
-                wscn.mode_run('macro')
-            if 'r' in sflag:
-                wscn.mode_run('market_rank')
+        sflag = flags[-1]
+        if 'l' in sflag or len(flags)<=1:           
+            wscn.mode_run('live')
+        if 'i' in sflag:            
+            wscn.mode_run('info_flow')
+        if 'h' in sflag:            
+            wscn.mode_run('hot_article')
+        if 'm' in sflag:
+            wscn.mode_run('macro')
+        if 'r' in sflag:
+            wscn.mode_run('market_rank')
     elif 'top' in flags:
         df = ts.top_list()       
         print df.sort_values('amount',ascending=False)

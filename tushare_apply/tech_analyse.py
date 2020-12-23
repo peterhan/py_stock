@@ -158,8 +158,7 @@ def macd_analyse(ohlcv,period=10):
     res += ['%s: ANG[IF:%0.2f, EA:%0.2f]'%(row['macd_stage'],row['dif_ag'],row['dea_ag'])]
     res += ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(dif[-1],dea[-1],hist[-1]*2)]   
     return res,df
-   
-
+    
 def rsi_analyse(ohlcv,period=10):
     close = ohlcv['close']
     rsi = talib.RSI(close)
@@ -309,6 +308,40 @@ def aroon_analyse(ohlcv,period=14):
     row = df.iloc[-1]
     res_info = [row['aroon_stage'],row['aroon_up'], row['aroon_down'] ]
     return res_info,df
+   
+    
+def vwap_analyse(ohlcv,period = 3):  
+    close,high,low,volume = ohlcv['close'],ohlcv['high'],ohlcv['low'],ohlcv['volume']
+    df = ohlcv
+    mse = np.square(close-(high+low)/2)
+    df['mse'] = mse
+    vwap,vswap = [],[]
+    for i  in range(0,df.shape[0]):
+        if i < period-1:
+            vwap.append(np.NaN)
+            vswap.append(np.NaN)
+            continue
+        idxs = [p for p in range(i-period,i+1)]
+        ##
+        v_sum = sum([df.iloc[p]['volume'] for p in range(i-period,i+1) ])
+        pvsum = sum([df.iloc[p]['close']*df.iloc[p]['volume']/v_sum for p in range(i-period,i+1) ])
+        vwap.append(pvsum)
+        ##
+        vm_sum    = sum([df.iloc[p]['mse']  *df.iloc[p]['volume'] for p in range(i-period,i+1) ])
+        pvsum_fix = sum([df.iloc[p]['close']*df.iloc[p]['volume']*df.iloc[p]['mse']/vm_sum for p in range(i-period,i+1) ])
+        vswap.append(pvsum_fix)
+    ndf = pd.DataFrame(df['close'])
+    ndf['vwap']=vwap
+    ndf['vwap_stage']=  get_crossx_type(vwap,close)['cross_stage']
+    ndf['vswap']=vswap
+    ndf['vswap_stage']=  get_crossx_type(vswap,close)['cross_stage']
+    row=ndf.iloc[-1]
+    vwap_info={'close':row['close']
+        ,'vswap':'%0.2f'%row['vswap'],'vswap_stage':row['vswap_stage']
+        ,'vwap':'%0.2f'%row['vwap'],'vwap_stage':row['vwap_stage']
+        }
+    ndf.pop('close')
+    return vwap_info,ndf
     
 def ma_analyse(ohlcv,period=10,target_col='close'):
     close = ohlcv[target_col]
@@ -334,16 +367,16 @@ def ma_analyse(ohlcv,period=10,target_col='close'):
                 s='%s:DN'%cyc
             es_res.append(s)
         return ','.join(es_res)
-        
+    ##    
     def ma_stage_judge(row,ma_type):
         ma_res = []
         for i,cyc in enumerate(cycles[:-1]):
             ma = row[prefix+'%s%s'%(ma_type,cyc)]
             ama = row[prefix+'%s%s'%(ma_type,cycles[i+1])]
             if ma >= ama:
-                s= '%sv%s:UP'%(cyc,cycles[i+1])
+                s= '%s-%s:UP'%(cyc,cycles[i+1])
             else:
-                s='%sv%s:DN'%(cyc,cycles[i+1])
+                s= '%s-%s:DN'%(cyc,cycles[i+1])
             ma_res.append(s)
         return ','.join(ma_res)
     ##
@@ -372,7 +405,8 @@ def tech_analyse(df):
     low = df['low'].values
     close = df['close'].values
     vol = df['volume'].values.astype(float)
-    ohlcv= {'open':open,'high':high,'low':low,'close':close,'vol':vol}
+    # ohlcv= {'open':open,'high':high,'low':low,'close':close,'volume':vol}
+    ohlcv= df    
     
     ana_res = OrderedDict()
     
@@ -394,6 +428,11 @@ def tech_analyse(df):
     df= pd_concat(df, mdf)
     ana_res['MTM'] = mtm_res
     
+    ## VWAP VSWAP
+    vwap_res,vdf = vwap_analyse(ohlcv)
+    df= pd_concat(df,vdf)
+    ana_res['VWAP'] = vwap_res
+    
     ## MA
     ma_anly_res,mdf = ma_analyse(ohlcv)
     df= pd_concat(df,mdf)
@@ -404,12 +443,12 @@ def tech_analyse(df):
 
     ## volma
     # pdb.set_trace()
-    vol_ma_res, vdf = ma_analyse(ohlcv,target_col='vol')
+    volume_ma_res, vdf = ma_analyse(ohlcv,target_col='volume')
     df= pd_concat(df,vdf)
-    ana_res['VOL_MA'] = vol_ma_res[0] + ' ' + vol_ma_res[1]    
-    ana_res['VOL_ES-MA'] = vol_ma_res[2]
-    # ana_res['VOL_EMA-DTL'] = vol_ma_res[3]
-    # ana_res['VOL_SMA-DTL'] = vol_ma_res[4]   
+    ana_res['VOL_MA'] = volume_ma_res[0] + ' ' + volume_ma_res[1]    
+    ana_res['VOL_ES-MA'] = volume_ma_res[2]
+    # ana_res['VOL_EMA-DTL'] = volume_ma_res[3]
+    # ana_res['VOL_SMA-DTL'] = volume_ma_res[4]   
     
     ## BOLL
     boll_anly_res,bdf = boll_analyse(ohlcv)
@@ -449,8 +488,6 @@ def tech_analyse(df):
     ## Forcast
     tsf_res =  'Forcast: %0.2f'%talib.TSF(ohlcv['close'])[-1]
     ana_res['TSF'] = tsf_res
-    
-
     
     ## OBV
     obv = talib.OBV(close,vol)
@@ -603,8 +640,8 @@ def train_cat(adf,i_stages,target_col):
 
 
 def cat_boost_factor_check(df,target_days = ['5d'],print_res=True):
-    i_stages = [['cci_stage','ema_stage','vol_ema_stage','vol_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','mom_stage','aroon_stage'] ]    
-    i_stage_list = [  ['ema_stage']  ,['sma_stage'],['vol_ema_stage'] ,['vol_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage'], ['aroon_stage']]
+    i_stages = [['cci_stage','ema_stage','volume_ema_stage','volume_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','mom_stage','aroon_stage','vswap_stage','vwap_stage'] ]    
+    i_stage_list = [  ['ema_stage']  ,['sma_stage'],['volume_ema_stage'] ,['volume_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage'], ['aroon_stage'],['vswap_stage'],['vwap_stage']]
     factor_results = {}
     for target_col in ['p_change_%s'%target_day for target_day in target_days]:    
         for i_stages in i_stage_list:
@@ -653,12 +690,12 @@ def main():
         print json.dumps(info, ensure_ascii=False, indent=2).encode(ENCODE)
     
     remote_call = False
-    remote_call = True
+    # remote_call = True
+    # tick='tsla'
+    tick='601601'
     if remote_call:
-        # tick='tsla'
         # df = yf_get_hist_data(tick)
         
-        tick='601601'
         df = ts.get_hist_data(tick)
                 
         df = df.sort_index()
@@ -671,6 +708,7 @@ def main():
     
     df=pd.read_csv('veri/origin.csv',index_col='date')
     df['date'] = df.index
+    
     # df = df.sort_values('date')
     tinfo,tdf = tech_analyse(df)
     # print df.tail(1)
@@ -683,10 +721,12 @@ def main():
     
     df = pd.concat([df,tdf,cdf],axis=1)
     df.to_csv('veri/tech.csv')
+    pdb.set_trace()
     # pprint(cinfo)
     # print df.tail(1)
     ###
     factor_results  = cat_boost_factor_check(df, target_days=['1d','3d','5d','10d','60d'])
+    # factor_results  = cat_boost_factor_check(df, target_days=['5d'])
    
         
 if __name__ == '__main__':    
