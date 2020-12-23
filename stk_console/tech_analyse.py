@@ -482,7 +482,7 @@ def tech_analyse(df):
     ## ROC
     try:
         roc_anly_res,rdf = roc_analyse(ohlcv)
-        df= pd_concat(df,rdf)
+        df = pd_concat(df,rdf)
         ana_res['ROC'] = roc_anly_res
     except:
         traceback.print_exc()
