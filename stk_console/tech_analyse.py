@@ -1,11 +1,14 @@
 #!coding:utf8
 import json
 import talib 
-import pandas as pd
-import numpy as np
 import traceback
 import pdb
+import datetime
 import locale
+import itertools
+
+import pandas as pd
+import numpy as np
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 
@@ -311,6 +314,16 @@ def aroon_analyse(ohlcv,period=14):
     res_info = [row['aroon_stage'],row['aroon_up'], row['aroon_down'] ]
     return res_info,df
    
+def get_weekday(dt):
+    d = datetime.datetime.strptime(dt,'%Y-%m-%d')
+    dic = ['Mon','Tue','Wed','Thu','Fri']
+    w = dic[d.weekday()]
+    return w
+
+def weekday_analyse(df,col='date'):
+    wd =pd.DataFrame()
+    wd['week_stage'] = df[col].apply(get_weekday)
+    return wd
     
 def vwap_analyse(ohlcv,period = 3):  
     close,high,low,volume = ohlcv['close'],ohlcv['high'],ohlcv['low'],ohlcv['volume']
@@ -443,7 +456,7 @@ def tech_analyse(df):
     ana_res['EMA-DTL'] = ma_anly_res[3]
     ana_res['SMA-DTL'] = ma_anly_res[4]    
 
-    ## volma
+    ## VOLMA
     # pdb.set_trace()
     volume_ma_res, vdf = ma_analyse(ohlcv,target_col='volume')
     df= pd_concat(df,vdf)
@@ -451,6 +464,10 @@ def tech_analyse(df):
     ana_res['VOL_ES-MA'] = volume_ma_res[2]
     # ana_res['VOL_EMA-DTL'] = volume_ma_res[3]
     # ana_res['VOL_SMA-DTL'] = volume_ma_res[4]   
+    
+    ## weekday
+    wdf = weekday_analyse(df)
+    df= pd_concat(df,wdf)
     
     ## BOLL
     boll_anly_res,bdf = boll_analyse(ohlcv)
@@ -514,7 +531,7 @@ def tech_analyse(df):
     ana_res['VOL_Rate'] = round_float([vol[-1]*1.0/vol[-2]])
     # ana_res['ATR14'] = round_float(list(atr14[-10::2]))
     # ana_res['ATR28'] = round_float(list(atr28[-10::2]))
-    ana_res['PIVOT'] = 'Resistance:%s, Mid:%s, Support:%s'%(pivot_point[0:3],pivot_point[3],pivot_point[4:])
+    ana_res['PIVOT'] = 'Resist:%s, Mid:%s, Support:%s'%(pivot_point[0:3],pivot_point[3],pivot_point[4:])
     ### put into output 
     analyse_info['data']= ana_res
     # pdb.set_trace()
@@ -594,8 +611,8 @@ def rmse(targets,predictions):
 def predict_cat(fit_model, adf,i_stages,target_col):
     from catboost import CatBoostRegressor
     factor_results = {}
-    test_pool = adf[i_stages][-50:]
-    test_labels = adf[target_col].fillna(0)[-50:]
+    test_pool = adf[i_stages][-100:]
+    test_labels = adf[target_col].fillna(0)[-100:]
     model = fit_model
     # model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=i_stages)
     # model.load_model('first.model')
@@ -604,10 +621,24 @@ def predict_cat(fit_model, adf,i_stages,target_col):
     preds_raw_vals = model.predict(test_pool, prediction_type='RawFormulaVal')
     # pdb.set_trace()
     
-    ss = [[k] for k in  test_pool[i_stages[0]].value_counts().index]
+    feat = [] 
+    for i in range(0,len(i_stages)):
+        srs = test_pool[i_stages[i]].unique()
+        # pdb.set_trace()
+        edf = pd.DataFrame(srs)
+        edf['key']=1
+        feat.append(edf)
+    if len(feat)==1:
+        cfeat=feat[0]
+    else:
+        cfeat = reduce(lambda x1,x2:pd.merge(x1,x2,on='key') ,feat)
+        # pdb.set_trace()
+    cfeat.pop('key')
+    cfeat = cfeat.to_records(index=False)
+    cfeat = [list(row) for row in cfeat]
     
-    ps = model.predict(ss)
-    sts = [row[0] for row in ss]
+    ps = model.predict(cfeat)
+    sts = [row[0] for row in cfeat]
     pdf  = pd.DataFrame({'feature':sts,'weight':ps}).sort_values('weight',ascending=False)
     
     key=':'.join (i_stages)+'=>'+target_col
@@ -642,8 +673,8 @@ def train_cat(adf,i_stages,target_col):
 
 
 def cat_boost_factor_check(df,target_days = ['5d'],print_res=True):
-    i_stages = [['cci_stage','ema_stage','volume_ema_stage','volume_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','mom_stage','aroon_stage','vswap_stage','vwap_stage'] ]    
-    i_stage_list = [  ['ema_stage']  ,['sma_stage'],['volume_ema_stage'] ,['volume_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage'], ['aroon_stage'],['vswap_stage'],['vwap_stage']]
+    i_stages = [['cci_stage','ema_stage','volume_ema_stage','volume_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','mom_stage','aroon_stage','vswap_stage','vwap_stage','week_stage'] ]    
+    i_stage_list = [  ['ema_stage']  ,['sma_stage'],['volume_ema_stage'] ,['volume_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage'], ['aroon_stage'],['vswap_stage'],['vwap_stage'],['week_stage','ema_stage']]
     factor_results = {}
     for target_col in ['p_change_%s'%target_day for target_day in target_days]:    
         for i_stages in i_stage_list:
@@ -727,8 +758,8 @@ def main():
     # pprint(cinfo)
     # print df.tail(1)
     ###
-    factor_results  = cat_boost_factor_check(df, target_days=['1d','3d','5d','10d','60d'])
-    # factor_results  = cat_boost_factor_check(df, target_days=['5d'])
+    # factor_results  = cat_boost_factor_check(df, target_days=['1d','3d','5d','10d','60d'])
+    factor_results  = cat_boost_factor_check(df, target_days=['5d'])
    
         
 if __name__ == '__main__':    
