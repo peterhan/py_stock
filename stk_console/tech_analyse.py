@@ -322,6 +322,7 @@ def get_weekday(dt):
 
 def weekday_analyse(df,col='date'):
     wd =pd.DataFrame()
+    # pdb.set_trace()
     wd['week_stage'] = df[col].apply(get_weekday)
     return wd
     
@@ -638,7 +639,7 @@ def predict_cat(fit_model, adf,i_stages,target_col):
     cfeat = [list(row) for row in cfeat]
     
     ps = model.predict(cfeat)
-    sts = [row[0] for row in cfeat]
+    sts = [' & '.join(row) for row in cfeat]
     pdf  = pd.DataFrame({'feature':sts,'weight':ps}).sort_values('weight',ascending=False)
     
     key=':'.join (i_stages)+'=>'+target_col

@@ -10,7 +10,7 @@ import keyring
 from alpha_vantage.timeseries import TimeSeries
 from matplotlib import pyplot as plt
 import yfinance as yf
-from stk_monitor import cli_select_menu
+from stk_console import cli_select_menu
 import talib
 from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str,cat_boost_factor_check
 from yfinance_cache import yfinance_cache
@@ -122,7 +122,7 @@ def get_one_tick_data(tick,infos,flags):
 
         
 def us_main_loop(mode):
-    fname = 'stk_monitor.v01.json'
+    fname = 'stk_console.v01.json'
     conf_ticks = json.load(open(fname), object_pairs_hook=OrderedDict)
     conf_ticks = conf_ticks['us-ticks']
     # pdb.set_trace()

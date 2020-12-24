@@ -195,11 +195,13 @@ def add_delta_n(df):
     
 def get_one_ticker_k_data(tick,info,flags):    
     df = ts.get_k_data(tick)
+    # df = ts.get_hist_data(tick)
     # add_delta_n(df)
     # fname =  FNAME_PAT_HIST%tick
     # df.to_csv(fname,index='date')
     # df = pd.read_csv(fname,index_col='date')
-    df['date'] = df.index
+    if 'date' not in df.columns:
+        df['date'] = df.index
     # print df.shape
     if df.shape[0] == 0:
         return
@@ -273,7 +275,7 @@ def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=2
 
         
 def interact_choose_ticks(mode):
-    fname = 'stk_monitor.v01.json'
+    fname = 'stk_console.v01.json'
     conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
     conf_tks = split_stocks(conf_tks['cn-ticks'])
     all = reduce(lambda x,y:x+y, conf_tks.values(),[])
@@ -438,7 +440,7 @@ def test():
 if __name__ == '__main__':    
     mode = sys.argv
     main_loop = cn_main_loop
-    from stk_us_monitor import us_main_loop   
+    from stk_us_console import us_main_loop   
     flags = set()
     while 1:
         # print 'MENU_FLAG:',flags
