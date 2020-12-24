@@ -65,6 +65,10 @@ def add_analyse_columns(df):
         ndf['ema%s'%i] = talib.EMA(df['close'],i)    
     ndf['pchange'] = df['close'].pct_change()*100
     ndf['vchange'] = df['volume'].pct_change()*100
+    if 'date' not in df.columns:
+        print 'ndf date'
+        ndf['date']=df.index
+        ndf['date']=ndf['date'].apply(lambda x:x.strftime('%Y-%m-%d'))
     return ndf
     
     
@@ -90,22 +94,24 @@ def get_one_tick_data(tick,infos,flags):
         if 'intraday' in flags:
             mode='intraday'
         his_df = get_ticker_df_alpha_vantage(tick,mode)
-    else:
-        ytk = yf.Ticker(tick)            
-        his_df = ytk.history(start=start)
+    else:         
+        his_df = yf.Ticker(tick).history(start=start)
         his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
+        
     if 'pdb' in flags:            
-        pdb.set_trace()    
+        pdb.set_trace()
+
     try:
         ndf = add_analyse_columns(his_df)
     except:
+        traceback.print_exc()
         ndf = his_df
-    ndf['code']=tick
-    
+    ndf['code']=tick   
     
     df = ndf
     df['vol']= pd.to_numeric(df['volume'])
-    df['date']  = df.index
+    
+    # pdb.set_trace()
     tinfo,tdf = tech_analyse(df)
     cinfo,cdf = candle_analyse(df)
     df = pd.concat([df,tdf,cdf],axis=1)        
