@@ -469,7 +469,7 @@ def tech_analyse(df):
     ## weekday
     wdf = weekday_analyse(df)
     df= pd_concat(df,wdf)
-    
+    ana_res['WeekDay'] = wdf.iloc[-1]['week_stage']
     ## BOLL
     boll_anly_res,bdf = boll_analyse(ohlcv)
     df= pd_concat(df,bdf)
@@ -724,7 +724,7 @@ def main():
         print json.dumps(info, ensure_ascii=False, indent=2).encode(ENCODE)
     
     remote_call = False
-    # remote_call = True
+    remote_call = True
     # tick='tsla'
     tick='601601'
     if remote_call:
