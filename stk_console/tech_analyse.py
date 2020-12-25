@@ -311,7 +311,7 @@ def aroon_analyse(ohlcv,period=14):
         return ' '.join(res)
     df['aroon_stage'] = df.apply(aroon_row, axis=1)
     row = df.iloc[-1]
-    res_info = [row['aroon_stage'],row['aroon_up'], row['aroon_down'] ]
+    res_info = [row['aroon_stage'],'%0.2f'%row['aroon_up'], '%0.2f'%row['aroon_down'] ]
     return res_info,df
    
 def get_weekday(dt):
@@ -348,9 +348,9 @@ def vwap_analyse(ohlcv,period = 3):
         vswap.append(pvsum_fix)
     ndf = pd.DataFrame(df['close'])
     ndf['vwap']=vwap
-    ndf['vwap_stage']=  get_crossx_type(vwap,close)['cross_stage']
+    ndf['vwap_stage'] = get_crossx_type(close,vwap)['cross_stage']
     ndf['vswap']=vswap
-    ndf['vswap_stage']=  get_crossx_type(vswap,close)['cross_stage']
+    ndf['vswap_stage'] = get_crossx_type(close,vswap)['cross_stage']
     row=ndf.iloc[-1]
     vwap_info={'close':row['close']
         ,'vswap':'%0.2f'%row['vswap'],'vswap_stage':row['vswap_stage']
@@ -609,7 +609,7 @@ def caculate_indicator(df, i_stages, target_col):
 def rmse(targets,predictions):
     return np.sqrt(((predictions - targets) ** 2).mean())
     
-def predict_cat(fit_model, adf,i_stages,target_col):
+def predict_cat_boost(fit_model, adf,i_stages,target_col):
     from catboost import CatBoostRegressor
     factor_results = {}
     test_pool = adf[i_stages][-100:]
@@ -657,7 +657,7 @@ def predict_cat(fit_model, adf,i_stages,target_col):
     return factor_results
 
 
-def train_cat(adf,i_stages,target_col):
+def train_cat_boost(adf,i_stages,target_col):
     from catboost import CatBoostRegressor
     dataset = adf[i_stages][:]
     train_labels = adf[target_col].fillna(0)[:]
@@ -675,7 +675,9 @@ def train_cat(adf,i_stages,target_col):
 
 def cat_boost_factor_check(df,target_days = ['5d'],print_res=True):
     i_stages = [['cci_stage','ema_stage','volume_ema_stage','volume_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','mom_stage','aroon_stage','vswap_stage','vwap_stage','week_stage'] ]    
-    i_stage_list = [  ['ema_stage']  ,['sma_stage'],['volume_ema_stage'] ,['volume_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage'], ['aroon_stage'],['vswap_stage'],['vwap_stage'],['week_stage','ema_stage']]
+    i_stage_list = [  ['ema_stage']  ,['sma_stage'],['volume_ema_stage'] ,['volume_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] 
+        ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage'], ['aroon_stage'],['vswap_stage'],['vwap_stage']
+        ,['vwap_stage','ema_stage'],['week_stage','ema_stage'],['macd_stage','rsi_stage']]
     factor_results = {}
     for target_col in ['p_change_%s'%target_day for target_day in target_days]:    
         for i_stages in i_stage_list:
@@ -683,8 +685,8 @@ def cat_boost_factor_check(df,target_days = ['5d'],print_res=True):
                 if len(target_days)>2:
                     print '[Training]:',i_stages,target_col
                 adf = caculate_indicator(df, i_stages, target_col)
-                fit_model = train_cat(adf,i_stages,target_col)
-                cres = predict_cat(fit_model ,adf,i_stages,target_col)
+                fit_model = train_cat_boost(adf,i_stages,target_col)
+                cres = predict_cat_boost(fit_model ,adf,i_stages,target_col)
                 factor_results.update(cres)
             except:
                 traceback.print_exc()
