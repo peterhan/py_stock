@@ -66,9 +66,8 @@ def add_analyse_columns(df):
     ndf['pchange'] = df['close'].pct_change()*100
     ndf['vchange'] = df['volume'].pct_change()*100
     if 'date' not in df.columns:
-        print 'ndf date'
         ndf['date']=df.index
-        ndf['date']=ndf['date'].apply(lambda x:x.strftime('%Y-%m-%d'))
+        ndf['date']=pd.to_datetime(ndf['date']).apply(lambda x:x.strftime('%Y-%m-%d'))
     return ndf
     
     
