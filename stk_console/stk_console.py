@@ -68,7 +68,8 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     df['hour'] = df['time'].str[:2]
     info_t = info[tick]
     print ''
-    pdb.set_trace()
+    if 'pdb' in flags:
+        pdb.set_trace()
     print '[%s][%s]'%(tick,info_t['name'].encode(ENCODE))
     
     print df.groupby('type').agg({'volume':'sum','price':'mean' })
