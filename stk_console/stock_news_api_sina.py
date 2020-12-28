@@ -11,11 +11,16 @@ from bs4 import BeautifulSoup
 
 
 
-class StockNewsWSCN():
+class StockNewsSina():
     def __init__(self):
-        self.urls='''http://live.wallstreetcn.com
-        https://api-ddc.wallstcn.com/market/kline?prod_code=000001.SS&period_type=300&tick_count=256&fields=tick_at%2Copen_px%2Cclose_px%2Chigh_px%2Clow_px
-        https://api-ddc.wallstcn.com/extract/asset/extreprob?wscn_ticker=UK141623&public_date=1608620400
+        self.urls='''http://finance.sina.com.cn/roll/index.d.html?cid=56615&page=1
+        http://vip.stock.finance.sina.com.cn/moneyflow/#sczjlx
+        http://vip.stock.finance.sina.com.cn/moneyflow/#blocktol_sina
+        http://vip.stock.finance.sina.com.cn/moneyflow/#blocktol_zjh
+        http://vip.stock.finance.sina.com.cn/q/go.php/vInvestConsult/kind/lhb/index.phtml
+        http://vip.stock.finance.sina.com.cn/mkt/#chgn_700532
+        http://stock.finance.sina.com.cn/hkstock/view/money_flow.php
+        http://data.eastmoney.com/hsgt/index.html
         '''
         self.apiv1='https://api.wallstcn.com/apiv1'
         self.apiddc='https://api-ddc.wallstcn.com/market'

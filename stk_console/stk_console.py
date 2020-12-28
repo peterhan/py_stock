@@ -364,9 +364,9 @@ def cn_main_loop(mode):
         if 'a' in sflag:
             wscn.mode_run('article',ids=sflag[-1])
         if 't' in sflag:
-            wscn.mode_run('trend',stk=sflag[-1])
+            wscn.mode_run('trend',stocks=sflag[-1].split('#'))
         if 'k' in sflag:
-            wscn.mode_run('kline',stk=sflag[-1])
+            wscn.mode_run('kline',stocks=sflag[-1].split('#'))
     elif 'top' in flags:
         df = ts.top_list()       
         print df.sort_values('amount',ascending=False)
