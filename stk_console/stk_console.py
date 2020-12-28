@@ -347,6 +347,8 @@ def cn_main_loop(mode):
         from stock_news_api_wscn import StockNewsWSCN
         wscn = StockNewsWSCN()        
         sflag = flags[-1]
+        if 'help' in sflag:
+            print 'mode:',list('hlimrRatk')
         if 'l' in sflag or len(flags)<=1:           
             wscn.mode_run('live')
         if 'i' in sflag:            
@@ -357,6 +359,14 @@ def cn_main_loop(mode):
             wscn.mode_run('macro')
         if 'r' in sflag:
             wscn.mode_run('market_rank')
+        if 'R' in sflag:
+            wscn.mode_run('market_real')
+        if 'a' in sflag:
+            wscn.mode_run('article',ids=sflag[-1])
+        if 't' in sflag:
+            wscn.mode_run('trend',stk=sflag[-1])
+        if 'k' in sflag:
+            wscn.mode_run('kline',stk=sflag[-1])
     elif 'top' in flags:
         df = ts.top_list()       
         print df.sort_values('amount',ascending=False)

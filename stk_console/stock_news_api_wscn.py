@@ -7,7 +7,7 @@ import pandas as pd
 from collections import OrderedDict
 from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
 from matplotlib import pyplot as plt
-
+from bs4 import BeautifulSoup
 
 
 
@@ -67,8 +67,16 @@ class StockNewsWSCN():
         # pdb.set_trace()
         return df
         
-    #global,a-stock,us-stock,hk-stock,forex,commodity
-    
+    def article_detail(self,id):
+        url = 'https://wallstreetcn.com/articles/{}'.format(id)
+        html = get(url).text
+        # pdb.set_trace()
+        soup = BeautifulSoup(html,"lxml")
+        text =  soup.find_all('article')[0].text
+        
+        return text
+        
+    #global,a-stock,us-stock,hk-stock,forex,commodity    
     def lives(self,type='a-stock',ts=None):
         '''quick news info'''
         ts_cond=''
@@ -185,12 +193,20 @@ class StockNewsWSCN():
             self.info_flow()
         elif mode=='trend':
             self.trend(stks,**argv)
+        elif mode=='article':
+            for id in argv.get("ids","").split('#'):
+                text = self.article_detail(id)
+                print text.encode('gbk','ignore')
         elif mode=='kline':
             self.kline(stks,**argv)
         elif mode=='hot_article':
             self.hot_article()
         elif mode=='market_real':
             self.market_real()
+        elif mode=='trend':
+            self.trend(argv['stk'])
+        elif mode=='kline':
+            self.kline(argv['stk'])
         elif mode=='live':
             for channel in self.LIVE_CHANNEL:
                 self.lives(channel)
@@ -211,8 +227,9 @@ if __name__ =='__main__':
     wscn = StockNewsWSCN()
     stks = ['UMC.NYSE','600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX','PLTR.NASD']
     
-    wscn.mode_run('hot_article')
+    wscn.article()
     sys.exit()
+    wscn.mode_run('hot_article')
     wscn.mode_run('macro')
     wscn.mode_run('info_flow')
     wscn.mode_run('market_rank')
