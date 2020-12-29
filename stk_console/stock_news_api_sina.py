@@ -13,27 +13,47 @@ from bs4 import BeautifulSoup
 
 class StockNewsSina():
     def __init__(self):
-        self.urls='''http://finance.sina.com.cn/roll/index.d.html?cid=56615&page=1
+        self.urls='''
+        http://finance.sina.com.cn/roll/index.d.html?cid=56615&page=1
         http://vip.stock.finance.sina.com.cn/moneyflow/#sczjlx
         http://vip.stock.finance.sina.com.cn/moneyflow/#blocktol_sina
         http://vip.stock.finance.sina.com.cn/moneyflow/#blocktol_zjh
         http://vip.stock.finance.sina.com.cn/q/go.php/vInvestConsult/kind/lhb/index.phtml
         http://vip.stock.finance.sina.com.cn/mkt/#chgn_700532
+        http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeStockCount?node=sh_a
+        http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?page=1&num=5&sort=changepercent&asc=0&node=sh_a&symbol=
+        http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getRTHKStockCount?node=qbgg_hk
+        http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getRTHKStockData?page=1&num=5&sort=changepercent&asc=0&node=qbgg_hk
+        http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getFundNetCount?page=1&num=5&sort=date&asc=0&node=open_fund
+        http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getFundNetData?page=1&num=5&sort=date&asc=0&node=open_fund
+        http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeStockCount?node=chgn_700532
+        http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?page=1&num=40&sort=symbol&asc=1&node=chgn_700532&symbol=&_s_r_a=init
         http://stock.finance.sina.com.cn/hkstock/view/money_flow.php
+        http://money.finance.sina.com.cn/quotes_service/api/jsonp.php/var%20liveDateTableList=/HK_MoneyFlow.getDayMoneyFlowOtherInfo?ts=2342354353&_=1609139875777
+        http://money.finance.sina.com.cn/quotes_service/api/jsonp.php/var%20liveChartDataList=/HK_MoneyFlow.getDayTotalMoneyFlowList?type=south&date=20201228&begintime=0900&endtime=1610&_=1609139875778
+        http://money.finance.sina.com.cn/quotes_service/api/jsonp.php/var%20liveChartDataList=/HK_MoneyFlow.getDayTotalMoneyFlowList?type=north&date=20201228&begintime=0900&endtime=1500&_=1609139875779
+        http://money.finance.sina.com.cn/quotes_service/api/jsonp.php/var%20historyDataList=/HK_MoneyFlow.getDailyHistoryMoneyFlowList?type=south&begindate=2020-11-28&enddate=2020-12-28&_=1609139875780
+        http://money.finance.sina.com.cn/quotes_service/api/jsonp.php/var%20historyDataList=/HK_MoneyFlow.getDailyHistoryMoneyFlowList?type=north&begindate=2020-11-28&enddate=2020-12-28&_=1609139875781
+        http://money.finance.sina.com.cn/quotes_service/api/jsonp.php/var%20totalDataList=/HK_MoneyFlow.getMoneyFlowSumByDate?begindate=2020-11-28&enddate=2020-12-28&_=1609139875782
+        http://quotes.sina.cn/hq/api/openapi.php/XTongService.getTopTongList?type=1&callback=sina_160913987595611056164049210193&page=1&pagesize=10
+        http://quotes.sina.cn/hq/api/openapi.php/XTongService.getTongHoldingRatioList?type=sh&callback=sina_16091398762458268830063516346&page=1&pagesize=10
         http://data.eastmoney.com/hsgt/index.html
+        https://www.investopedia.com/articles/active-trading/020915/mustknow-simple-effective-exit-trading-strategies.asp
         '''
-        self.apiv1='https://api.wallstcn.com/apiv1'
-        self.apiddc='https://api-ddc.wallstcn.com/market'
-        
-        self.LIVE_CHANNEL = 'global,a-stock,us-stock,hk-stock,forex,commodity'.split(',')
-        self.INFO_CHANNEL = 'global,shares,bonds,commodities,enterprise,economy,charts'.split(',')
-        self.MKTSTK_TYPE = 'forexdata#index,US#china,US#star,US#stock,HK#stock,mdc#stock'.split(',')       
+        self.vip_api = 'http://vip.stock.finance.sina.com.cn/'
+        self.money_api = 'http://money.finance.sina.com.cn/quotes_service/api/jsonp.php/'        
+        self.quotes_api = 'http://quotes.sina.cn/hq/api/openapi.php/XTongService.getTopTongList'
         pass
         
-    def get_json(self,url):
+    def get_json(self,url,mode='json'):
         print url
         resp = get(url)
-        jo = resp.json()
+        if mode=='json':
+            jo = resp.json()
+        elif mode=='jsonp':
+            jsonp = ' '.join(res.text.splitlines())
+            start = jsonp.find('(')
+            jo = json.loads(jsonp[start+1:-1])
         return jo
 
     def unify_column(self,df):
@@ -46,20 +66,6 @@ class StockNewsSina():
             ,'px_change_rate' :'change_rate'
             }
         return df.rename(columns=mapping)
-        
-        
-    def hot_article(self):
-        url=  self.apiv1 + '/content/articles/hot?period=all'
-        jo = self.get_json(url)
-        df1 = pd.DataFrame.from_records(jo['data']['day_items'])
-        df1['type']='day'
-        df2 = pd.DataFrame.from_records(jo['data']['week_items'])
-        df2['type']='week'
-        df = pd.concat([df1,df2],axis=0,sort=True)
-        df['display_time'] = df['display_time'].apply(to_timestamp)
-        print df[['type','title','uri']]
-        # pdb.set_trace()
-        return df
         
     def info_flow(self,type='global'):
         '''news flow'''
@@ -80,113 +86,6 @@ class StockNewsSina():
         text =  soup.find_all('article')[0].text
         
         return text
-        
-    #global,a-stock,us-stock,hk-stock,forex,commodity    
-    def lives(self,type='a-stock',ts=None):
-        '''quick news info'''
-        ts_cond=''
-        if ts!=None:
-            ts_cond='&cursor=%s'%ts
-        url = self.apiv1+'/content/lives?channel={type}-channel&client=pc{ts_cond}&limit=20&first_page=false&accept=live%2Cvip-live'.format(type=type,ts_cond=ts_cond)
-        jo = self.get_json(url)    
-        items = jo['data']['items']
-        df = pd.DataFrame.from_dict(items,orient='columns')
-        df['c_time'] = df['display_time'].apply(to_timestamp)    
-        print df[['content_text','c_time']]
-        # pdb.set_trace()
-        return df
-    
-    def macrodatas(self,days_before=1,days_after=5):
-        '''macro calender'''
-        import datetime
-        fmt = DATE_FORMAT
-        dlt = datetime.timedelta(days=5)
-        sts = (datetime.datetime.now()-datetime.timedelta(days=days_before)).strftime(fmt)
-        ets = (datetime.datetime.now()+datetime.timedelta(days=days_after)).strftime(fmt)
-        sts = ts2unix(sts)
-        ets = ts2unix(ets)
-        url = self.apiv1+'/finance/macrodatas?start={}&end={}'.format(sts,ets)
-        jo = self.get_json(url)
-        items = jo['data']['items']
-        df = pd.DataFrame(items)
-        df['public_date'] = df['public_date'].apply(to_timestamp)
-        df.sort_values(['public_date'],ascending=False,inplace=True)
-        df['short_title']='['+df['country']+'] '+df['title'].str[:20]
-        cols = ['public_date','short_title','importance','previous','forecast','actual','unit']
-        print df[cols]
-        return df
-        
-    def trend(self,stocks):    
-        fields ='tick_at,close_px,avg_px,turnover_volume,turnover_value,open_px,high_px,low_px,px_change,px_change_rate'.replace(',','%2C')
-        stks ='%2C'.join(stocks)
-        url = self.apiddc+'/trend?fields={1}&prod_code={0}'.format(stks,fields)
-        jo = self.get_json(url)
-        candle = jo['data']['candle']
-        fields = jo['data']['fields']
-        result_dic = OrderedDict()
-        for tick,data in candle.items():
-            df = pd.DataFrame(data['lines'],columns=fields)
-            df['tick_ts'] = df['tick_at'].apply(to_timestamp)
-            df.set_index(df['tick_at'],inplace=True)
-            df =  self.unify_column(df)
-            print '\n[%s]'%tick
-            print df.tail()
-            result_dic[tick] = df
-            # pdb.set_trace()
-        return result_dic
-       
-    def kline(self, stocks,days=1,secs=None):
-        if secs is None:
-            secs = days*86400
-        else:
-            secs = secs
-        stks = '%2C'.join(stocks)
-        fields = 'tick_at,open_px,close_px,high_px,low_px,turnover_volume,turnover_value,average_px,px_change,px_change_rate,avg_px,ma2'.replace(',','%2C')
-        url = self.apiddc+'/kline?prod_code={0}&tick_count=512&period_type={1}&fields={2}'.format(stks,secs,fields)
-        jo = self.get_json(url)
-        candle = jo['data']['candle']
-        fields = jo['data']['fields']
-        result_dic = OrderedDict()
-        for tick,data in candle.items():
-            df = pd.DataFrame(data['lines'],columns=fields)
-            df['tick_ts'] = df['tick_at'].apply(to_timestamp)
-            df.set_index(df['tick_at'],inplace=True)
-            df =  self.unify_column(df)
-            print '\n[%s]'%tick
-            print df.tail()
-            result_dic[tick] = df
-            # pdb.set_trace()
-        return result_dic
-       
-    def market_real(self,stocks=None):
-        stks = 'US500.OTC,XAUUSD.OTC,BTCUSD.Bitfinex,UKOIL.OTC,USDCNH.OTC,EURUSD.OTC,USDJPY.OTC,US10YR.OTC,UK10YR.OTC,JP10YR.OTC,CN10YR.OTC,000001.SS,399001.SZ,399006.SZ'.replace(',','%2C')
-        # stks = ''.replace(',','%2C')
-        if stocks:
-            stks='%2C'.join(stocks)
-        fields='prod_name,last_px,px_change,px_change_rate,price_precision,securities_type'.replace(',','%2C')
-        url = self.apiddc+'/real?prod_code={0}&fields={1}'.format(stks,fields)
-        jo = self.get_json(url)
-        snapshot = jo['data']['snapshot']
-        fields = jo['data']['fields']
-        df = pd.DataFrame.from_dict(snapshot,orient='index',columns=fields)
-        # pdb.set_trace()
-        print df
-        return df 
-        
-    def market_rank(self,mkt_type,stk_type,cursor=0,limit=20,sort_by='px_change_rate',order_by='desc'):
-        '''market_rank'''
-        fields = 'prod_name,prod_en_name,prod_code,symbol,last_px,px_change,px_change_rate,high_px,low_px,week_52_high,week_52_low,price_precision,update_time'.replace(',','%2C')
-        url = self.apiddc\
-            +'/rank?market_type={3}&stk_type={4}&order_by={6}&sort_field={5}&limit={1}&fields={0}&cursor={2}'\
-            .format(fields,limit,cursor,mkt_type,stk_type,sort_by,order_by)
-        jo = self.get_json(url)
-        candle = jo['data']['candle']
-        fields = jo['data']['fields']
-        df = pd.DataFrame(candle,columns = fields)
-        df['update_time'] = df['update_time'].apply(to_timestamp)
-        # pdb.set_trace()
-        print df
-        return df
         
     def mode_run(self,mode='',**argv):
         if mode=='':
