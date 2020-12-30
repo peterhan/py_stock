@@ -37,6 +37,9 @@ class StockNewsSina():
         http://money.finance.sina.com.cn/quotes_service/api/jsonp.php/var%20totalDataList=/HK_MoneyFlow.getMoneyFlowSumByDate?begindate=2020-11-28&enddate=2020-12-28&_=1609139875782
         http://quotes.sina.cn/hq/api/openapi.php/XTongService.getTopTongList?type=1&callback=sina_160913987595611056164049210193&page=1&pagesize=10
         http://quotes.sina.cn/hq/api/openapi.php/XTongService.getTongHoldingRatioList?type=sh&callback=sina_16091398762458268830063516346&page=1&pagesize=10
+        https://finance.sina.com.cn/realstock/company/sh600438/nc.shtml
+        https://vip.stock.finance.sina.com.cn/quotes_service/view/cn_bill.php?symbol=sh600438
+        https://vip.stock.finance.sina.com.cn/q/go.php/vInvestConsult/kind/nbjy/index.phtml?symbol=sh600438&bdate=2&edate=2
         http://data.eastmoney.com/hsgt/index.html
         https://www.investopedia.com/articles/active-trading/020915/mustknow-simple-effective-exit-trading-strategies.asp
         '''
