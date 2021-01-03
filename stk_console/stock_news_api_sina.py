@@ -90,35 +90,7 @@ class StockNewsSina():
         
         return text
         
-    def mode_run(self,mode='',**argv):
-        if mode=='':
-            print 'NoModeFound'
-            pass
-        elif mode=='macro':
-            self.macrodatas(1,2)
-        elif mode=='info_flow':
-            self.info_flow()
-        elif mode=='trend':
-            self.trend(**argv)
-        elif mode=='kline':
-            self.kline(**argv)
-        elif mode=='article':
-            for id in argv.get("ids","").split('#'):
-                text = self.article_detail(id)
-                print text.encode('gbk','ignore')
-        elif mode=='hot_article':
-            self.hot_article()
-        elif mode=='market_real':
-            self.market_real()        
-        elif mode=='live':
-            for channel in self.LIVE_CHANNEL:
-                self.lives(channel)
-        elif mode == 'market_rank' :
-            for mstype in  self.MKTSTK_TYPE:    
-                ma=mstype.split('#')
-                self.market_rank(ma[0],ma[1])
-        else:
-            print 'NotValidMode:',mode
+    
 
 
 
@@ -127,22 +99,7 @@ if __name__ =='__main__':
     pd.set_option('display.max_columns',80)
     pd.set_option('display.width',None)
     pd.options.display.float_format = '{:.2f}'.format
-    wscn = StockNewsWSCN()
+    sn_sina = StockNewsSina()
     stks = ['UMC.NYSE','600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX','PLTR.NASD']
     
-    wscn.article()
-    sys.exit()
-    wscn.mode_run('hot_article')
-    wscn.mode_run('macro')
-    wscn.mode_run('info_flow')
-    wscn.mode_run('market_rank')
-    wscn.mode_run('live')
-    wscn.macrodatas(1,2)
-    wscn.info_flow()
-
-    wscn.trend(stks)
-    # wscn.kline(stks,days=30)
-    # wscn.kline(stks,secs=60)
-    wscn.market_real()
-
-    # pdb.set_trace()
+    pdb.set_trace()
