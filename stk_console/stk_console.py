@@ -71,7 +71,7 @@ def real_time_ticks(tick,info,flags,use_cache = False):
     print ''
     if 'pdb' in flags:
         pdb.set_trace()
-    print '[%s][%s]'%(tick,info_t['name'].encode(ENCODE))
+    print ('[%s][%s]'%(tick,info_t['name'])).encode(ENCODE,'ignore')
     
     print df.groupby('type').agg({'volume':'sum','price':'mean' })
     # print df.groupby('type').agg({'volume':'sum','price':'mean','change':'count'})
