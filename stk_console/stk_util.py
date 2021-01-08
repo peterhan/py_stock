@@ -1,6 +1,9 @@
 import datetime
 import time
 import json
+import pdb
+from requests import get,post
+from bs4 import BeautifulSoup
 
 def to_timestamp(ts):
     return datetime.datetime.fromtimestamp(float(ts))
@@ -20,7 +23,14 @@ def gen_random(n=16):
     end = (10 ** n) - 1
     return str(randint(start, end))
     
-  
+def get_article_detail(url,tag='article'):
+    url = url
+    html = get(url).text
+    # pdb.set_trace()
+    soup = BeautifulSoup(html,"lxml")
+    # pdb.set_trace()
+    text =  map(lambda x:x.text ,soup.find_all(tag))
+    return '\n'.join(text)
 
 def json_extract(obj, key):
     """Recursively fetch values from nested JSON."""

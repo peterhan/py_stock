@@ -9,8 +9,6 @@ from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatte
 from matplotlib import pyplot as plt
 from bs4 import BeautifulSoup
 
-
-
 class StockNewsWSCN():
     def __init__(self):
         self.urls='''http://live.wallstreetcn.com
