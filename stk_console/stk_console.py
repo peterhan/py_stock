@@ -214,7 +214,7 @@ def get_one_ticker_k_data(tick,info,flags):
     tdf.pop('date')
     cdf.pop('date')
     df = pd.concat([df,tdf,cdf],axis=1)
-    if 'cat' in flags:
+    if 'catboost' in flags:
         cat_boost_factor_check(df)
     # cdl_info = None
     # df.to_csv(fname)
@@ -243,7 +243,7 @@ def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=2
     words = this_input.strip().replace(',',' ').replace('  ',' ').split(' ')    
     default_opt = {
         'q':'quit','d':'detail','i':'pdb','s':'onestock','top':'top','inst':'inst'
-        ,'r':'realtime','f':'fullname','g':'graph','u':'us','z':'zh','e':'emd','c':'cat'
+        ,'r':'realtime','f':'fullname','g':'graph','u':'us','z':'zh','e':'emd','c':'catboost'
         ,'n':'news_sina'
     }
     if opt_map is None:
