@@ -29,8 +29,8 @@ def get_article_detail(url,tag='article'):
     # pdb.set_trace()
     soup = BeautifulSoup(html,"lxml")
     # pdb.set_trace()
-    text =  map(lambda x:x.text ,soup.find_all(tag))
-    return '\n'.join(text)
+    texts =  map(lambda x:x.text ,soup.find_all(tag))
+    return texts,html
 
 def json_extract(obj, key):
     """Recursively fetch values from nested JSON."""

@@ -346,9 +346,10 @@ def cn_main_loop(mode):
         if isinstance(flags[-1],list):
             sflag = flags[-1]
         print 'url:',sflag[-1],'tag:',sflag[-2]
-        text = get_article_detail(sflag[-1],sflag[-2])
-        pdb.set_trace()
-        print text.encode('gbk','ignore')
+        texts,html = get_article_detail(sflag[-1],sflag[-2])
+        if 'pdb' in flags:
+            pdb.set_trace()
+        print texts
     elif 'news_wscn' in flags :
         from stock_news_api_wscn import StockNewsWSCN
         wscn = StockNewsWSCN()        
