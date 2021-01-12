@@ -6,6 +6,7 @@ import talib
 import datetime
 import time
 import json
+import ConfigParser
 import pdb
 import traceback
 import locale
@@ -275,9 +276,14 @@ def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=2
 
         
 def interact_choose_ticks(mode):
-    fname = 'stk_console.v01.json'
-    conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
-    conf_tks = split_stocks(conf_tks['cn-ticks'])
+    # fname = 'stk_console.v01.json'
+    # conf_tks = json.load(open(fname), object_pairs_hook=OrderedDict)
+    # conf_tks = split_stocks(conf_tks['cn-ticks'])
+    fname = 'stk_console.v01.ini'
+    conf  = ConfigParser.ConfigParser()
+    conf.readfp(open(fname))
+    conf_tks  = OrderedDict(conf.items('cn-ticks'))
+    conf_tks = split_stocks(conf_tks)
     all = reduce(lambda x,y:x+y, conf_tks.values(),[])
     all = set(all)
     all.remove("")

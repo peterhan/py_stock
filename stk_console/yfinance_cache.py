@@ -53,8 +53,8 @@ def yfinance_cache(ticks,use_cache=True):
         info =  yf.Ticker(tk).get_info(proxy = proxy)
         print 'basic_info_get:%s'%tk
         return tk,info
-    
-    print 'need_update',need_update
+    if len(need_update)>0:
+        print '[yfinance info need update]',need_update
     ## loop get info
     results = []
     if not Pool:

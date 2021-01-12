@@ -5,6 +5,7 @@ import json
 import traceback
 import datetime,time
 from collections import OrderedDict
+import ConfigParser
 import sys
 import keyring
 from alpha_vantage.timeseries import TimeSeries
@@ -127,14 +128,19 @@ def get_one_tick_data(tick,infos,flags):
 
         
 def us_main_loop(mode):
-    fname = 'stk_console.v01.json'
-    conf_ticks = json.load(open(fname), object_pairs_hook=OrderedDict)
-    conf_ticks = conf_ticks['us-ticks']
-    # pdb.set_trace()
-    all = reduce(lambda x,y:x+' '+y, conf_ticks.values())
+    # fname = 'stk_console.v01.json'
+    # conf_ticks = json.load(open(fname), object_pairs_hook=OrderedDict)
+    # conf_ticks = conf_ticks['us-ticks']
+    fname = 'stk_console.v01.ini'
+    conf  = ConfigParser.ConfigParser()
+    conf.readfp(open(fname))
+    conf_tks  = OrderedDict(conf.items('us-ticks'))
+    
+    all = ' '.join( conf_tks.values())
+    # pdb.set_trace()    
     all = all.replace('  ',' ')
     
-    conf_ticks['all'] = all
+    conf_tks['all'] = all
     opt_map = {
         'q':'quit','d':'detail','i':'pdb'
         ,'s':'onestock','n':'news','r':'realtime'
@@ -142,11 +148,11 @@ def us_main_loop(mode):
         ,'g':"graph",'ia':'intraday','id':'day','im':'month','u':'us','z':'zh'
         ,'e':'emd','c':'cat','o':'option_chain'
     }
-    menu_dict = conf_ticks
+    menu_dict = conf_tks
     groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
     s_ticks = []
     for group in groups:
-        s_ticks.extend(conf_ticks.get(group,group).replace('`','').replace('  ',' ').split(' ')) 
+        s_ticks.extend(conf_tks.get(group,group).replace('`','').replace('  ',' ').split(' ')) 
     s_ticks = filter(lambda x:len(x)>0,s_ticks)
     print 'ticks:',s_ticks,'flags:',flags
     if 'quit' in flags:
