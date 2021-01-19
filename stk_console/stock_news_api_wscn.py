@@ -202,7 +202,7 @@ class StockNewsWSCN():
         elif mode=='market_real':
             self.market_real()        
         elif mode=='live':
-            for channel in self.LIVE_CHANNEL:
+            for channel in reversed(self.LIVE_CHANNEL):
                 self.lives(channel)
         elif mode == 'market_rank' :
             for mstype in  self.MKTSTK_TYPE:    
