@@ -194,7 +194,7 @@ class StockNewsWSCN():
         elif mode=='kline':
             self.kline(**argv)
         elif mode=='article':
-            for id in argv.get("ids","").split('#'):
+            for id in argv.get("ids",[]):
                 text = self.article_detail(id)
                 print text.encode('gbk','ignore')
         elif mode=='hot_article':

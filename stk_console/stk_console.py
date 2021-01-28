@@ -359,27 +359,20 @@ def cn_main_loop(mode):
     elif 'news_wscn' in flags :
         from stock_news_api_wscn import StockNewsWSCN
         wscn = StockNewsWSCN()        
-        sflag = flags[-1]
-        if 'help' in sflag:
-            print 'mode:',list('hlimrRatk')
-        if 'l' in sflag or len(flags)<=1:           
-            wscn.mode_run('live')
-        if 'i' in sflag:            
-            wscn.mode_run('info_flow')
-        if 'h' in sflag:            
-            wscn.mode_run('hot_article')
-        if 'm' in sflag:
-            wscn.mode_run('macro')
-        if 'r' in sflag:
-            wscn.mode_run('market_rank')
-        if 'R' in sflag:
-            wscn.mode_run('market_real')
-        if 'a' in sflag:
-            wscn.mode_run('article',ids=sflag[-1])
-        if 't' in sflag:
-            wscn.mode_run('trend',stocks=sflag[-1].split('#'))
-        if 'k' in sflag:
-            wscn.mode_run('kline',stocks=sflag[-1].split('#'))
+        # sflag = flags[-1]
+        mode='live,info_flow,hot_article,macro,market_rank,market_real,article,trend,kline,quit'.split(',')
+        select_entry = dict(zip(mode,mode))
+        chooseds = []
+        while 'quit' not in chooseds:
+            chooseds,flags = cli_select_menu(select_entry)            
+            # pdb.set_trace()
+            for choosed in chooseds:
+                if choosed in ('article','trend','kline'):
+                    if len(flags)>0:
+                        sflag = flags[-1]
+                        wscn.mode_run(choosed,stocks=sflag[-1].split('#'))
+                else:
+                    wscn.mode_run(choosed)        
     elif 'top' in flags:
         df = ts.top_list()       
         print df.sort_values('amount',ascending=False)
