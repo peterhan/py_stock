@@ -335,7 +335,27 @@ def interact_choose_ticks(mode):
     #####
     return the_ticks, info, flags
 
-  
+def wscn_loop():
+    from stock_news_api_wscn import StockNewsWSCN
+    wscn = StockNewsWSCN()        
+    # sflag = flags[-1]
+    mode='live,info_flow,hot_article,macro,market_rank,market_real,article,trend,kline,quit'.split(',')
+    select_entry = OrderedDict(zip(mode,mode))
+    chooseds = []
+    while 'quit' not in chooseds:
+        chooseds,flags = cli_select_menu(select_entry)            
+        # pdb.set_trace()
+        for choosed in chooseds:
+            try:
+                if choosed in ('article','trend','kline'):
+                    if len(flags)>0:
+                        sflag = flags[-1]
+                        wscn.mode_run(choosed,stocks=sflag[-1].split('#'))
+                else:
+                    wscn.mode_run(choosed)   
+            except:
+                traceback.print_exc()
+    
 def cn_main_loop(mode):
     the_ticks, info, flags = interact_choose_ticks(mode)       
     # print the_ticks
@@ -357,22 +377,7 @@ def cn_main_loop(mode):
             pdb.set_trace()
         print texts
     elif 'news_wscn' in flags :
-        from stock_news_api_wscn import StockNewsWSCN
-        wscn = StockNewsWSCN()        
-        # sflag = flags[-1]
-        mode='live,info_flow,hot_article,macro,market_rank,market_real,article,trend,kline,quit'.split(',')
-        select_entry = dict(zip(mode,mode))
-        chooseds = []
-        while 'quit' not in chooseds:
-            chooseds,flags = cli_select_menu(select_entry)            
-            # pdb.set_trace()
-            for choosed in chooseds:
-                if choosed in ('article','trend','kline'):
-                    if len(flags)>0:
-                        sflag = flags[-1]
-                        wscn.mode_run(choosed,stocks=sflag[-1].split('#'))
-                else:
-                    wscn.mode_run(choosed)        
+        wscn_loop()     
     elif 'top' in flags:
         df = ts.top_list()       
         print df.sort_values('amount',ascending=False)
