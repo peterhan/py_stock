@@ -65,6 +65,21 @@ def print_latest_news(df,encode='gbk'):
         print tags,df.iloc[idx]['url']      
         print ''
 
+
+def get_current_ticks_tx(stks):
+    url = 'http://qt.gtimg.cn/q=%s'%stks
+    r=Request(url)    
+    print r.get_full_url()
+    content = urlopen(r).read().decode('gbk')
+    name_arr = '''未知,名字,代码,当前价格,昨收,今开,成交量（手）,外盘,内盘,买一,买一量（手）,买二,买二量（手）,买三,买三量（手）,买四,买四量（手）,买五,买五量（手）,卖一,卖一量（手）,卖二,卖二量（手）,卖三,卖三量（手）,卖四,卖四量（手）,卖五,卖五量（手）,最近逐笔成交,时间,涨跌,涨跌%,最高,最低,价格/成交量（手）/成交额,成交量（手）,成交额（万）,换手率,市盈率,,最高,最低,振幅,流通市值,总市值,市净率,涨停价,跌停价'''.split(',')
+    res_arr = []
+    for row in content.splitlines():
+        info_arr = row.split('"')[1].split('~')
+        res_dic = dict(zip(name_arr,info_arr))
+        res_arr.append(res_dic)
+    return res_arr
+    
+
 def get_today_ticks(code=None, mkt='1', retry_count=3, pause=0.001):
     """
         获取分笔数据
