@@ -13,7 +13,8 @@ from matplotlib import pyplot as plt
 import yfinance as yf
 from stk_console import cli_select_menu
 import talib
-from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str,cat_boost_factor_check
+from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str
+from tech_algo_analyse import cat_boost_factor_check
 from yfinance_cache import yfinance_cache
 
 try:    
@@ -146,7 +147,7 @@ def us_main_loop(mode):
         ,'s':'onestock','n':'news','r':'realtime'
         ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'vt':"vantage"
         ,'g':"graph",'ia':'intraday','id':'day','im':'month','u':'us','z':'zh'
-        ,'e':'emd','c':'cat','o':'option_chain'
+        ,'e':'emd','c':'catboost','o':'option_chain'
     }
     menu_dict = conf_tks
     groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 

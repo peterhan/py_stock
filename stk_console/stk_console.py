@@ -13,8 +13,10 @@ import locale
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 from tushare_patch import get_latest_news,get_today_ticks,print_latest_news
-from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_str,cat_boost_factor_check
+from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_str
+from tech_algo_analyse import cat_boost_factor_check
 from stk_util import get_article_detail
+
 
 try:    
     import gevent
@@ -292,7 +294,7 @@ def interact_choose_ticks(mode):
          'q':'quit', 'd':'detail', 'i':'pdb'
         ,'s':'onestock','top':'top','inst':'inst'
         ,'r':'realtime','f':'fullname','g':'graph'
-        ,'u':'us','z':'zh','e':'emd','c':'cat'
+        ,'u':'us','z':'zh','e':'emd','c':'catboost'
         ,'nw':'news_wscn','wscn':'news_wscn'
         ,'ns':'news_sina','n':'news_sina'
         ,'p':'pause' ,'a':'article'
