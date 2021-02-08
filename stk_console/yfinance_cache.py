@@ -1,7 +1,6 @@
 #!coding:utf8
 import os
 import json
-import gzip
 import socket
 import traceback,pdb
 import yfinance as yf
@@ -18,7 +17,7 @@ except:
     print '[Not Found gevent]'
 
 YFINFO_CACHE = {}
-YFCACHE_FNAME = 'yf_info_cache.json.gz'
+YFCACHE_FNAME = 'yf_info_cache.json'
 
 def check_socket(ip,port):
     a_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -29,9 +28,9 @@ def check_socket(ip,port):
 def yfinance_cache(ticks,use_cache=True):
     global YFINFO_CACHE,YFCACHE_FNAME
     if not os.path.exists(YFCACHE_FNAME):
-        json.dump({},gzip.open(YFCACHE_FNAME,'w'))
+        json.dump({},open(YFCACHE_FNAME,'w'))
     if len(YFINFO_CACHE)==0:
-        YFINFO_CACHE = json.load(gzip.open(YFCACHE_FNAME))
+        YFINFO_CACHE = json.load(open(YFCACHE_FNAME))
     info_dic = {}
     need_update = set()
     for tick in ticks:
@@ -41,7 +40,8 @@ def yfinance_cache(ticks,use_cache=True):
             # print 'use cache:',tick
             info_dic[tick] = YFINFO_CACHE[tick]
         else:
-            need_update.add(tick)
+            info_dic[tick]={}
+            #need_update.add(tick)
     ## check proxy
     proxy=None
     if check_socket('127.0.0.1',7890):
@@ -61,7 +61,7 @@ def yfinance_cache(ticks,use_cache=True):
         for tk in need_update:
             results = get_one_data(tk)
     else:
-        pool = Pool(8)
+        pool = Pool(2)
         jobs = []
         for tk in need_update:
             job = pool.spawn(get_one_data,tk,)
@@ -79,13 +79,17 @@ def yfinance_cache(ticks,use_cache=True):
                 continue
             YFINFO_CACHE[tick] = info
             info_dic[tick] = info
-        json.dump(YFINFO_CACHE,gzip.open(YFCACHE_FNAME,'w'),indent=2)
+        json.dump(YFINFO_CACHE,open(YFCACHE_FNAME,'w'),indent=2)
     return info_dic
  
 def load_cache(fname,use_cache=True):
-    jobj = json.load(open(fname))
+    import ConfigParser
+    from collections import OrderedDict
+    conf  = ConfigParser.ConfigParser()
+    conf.readfp(open(fname))
+    conf_tks = OrderedDict(conf.items('us-ticks'))
     ticks = set(['xasdf'])
-    for k,v in jobj["us-ticks"].items():
+    for k,v in conf_tks.items():
         # print k,':',v
         ticks.update(v.replace('  ','').split(' '))
     yfinance_cache([])
@@ -97,9 +101,8 @@ def load_cache(fname,use_cache=True):
             print '[%s]'%k
             print v.get('longBusinessSummary','No_Summary').encode('gbk','ignore')
     except:
-        traceback.print_exc()
-    
+        traceback.print_exc()    
     
 if __name__ == '__main__':
-    load_cache('stk_monitor.v01.json')
+    load_cache('stk_console.v01.ini')
         

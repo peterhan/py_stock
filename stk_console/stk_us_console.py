@@ -162,13 +162,14 @@ def us_main_loop(mode):
         fig, ax = plt.subplots(nrows=2, ncols=2*len(s_ticks), sharex=False)
     ### get infos
     yinfos = yfinance_cache(s_ticks)
+    # yinfos = {}
     
     ### get data
     if not Pool:
         for tk in s_ticks:
             results = get_one_tick_data(tk,yinfos,flags)
     else:
-        pool = Pool(32)
+        pool = Pool(8)
         jobs = []
         for tk in s_ticks:
             job = pool.spawn(get_one_tick_data,tk,yinfos,flags)

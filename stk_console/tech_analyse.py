@@ -568,10 +568,7 @@ def analyse_res_to_str(stock_anly_res):
         pstr+= u"\n  [EXPLAIN:{}]:{}".format(name,intro).encode(ECODE)  
     return pstr
 
-    
-
-
-
+   
 def yf_get_hist_data(tick):
     import yfinance as yf    
     import datetime
