@@ -13,6 +13,23 @@ def ts2unix(str_date,mask=DATE_FORMAT):
     return int(time.mktime(
          time.strptime(str_date, mask)
         )) 
+
+def unix2ts(uxts,mask=DATE_FORMAT,base=10):
+    return \
+        datetime.datetime.fromtimestamp( 
+         int(uxts,base)/1000 
+        ).strftime(mask)
+
+def get_date(fmt=DATE_FORMAT,base= datetime.datetime.now(), isobj=False, **kwargs ):
+    i_str2date=lambda str_date,fmt: datetime.datetime.fromtimestamp(time.mktime(time.strptime(str_date,fmt)))
+    if type(base)==str:
+        dateobj= i_str2date(base,fmt)+ datetime.timedelta( **kwargs)
+    else:
+        dateobj = base + datetime.timedelta( **kwargs)
+    if isobj: 
+        return dateobj
+    else: 
+        return dateobj.strftime(fmt)
     
 def js_dumps(obj,encode='gbk'):    
     return json.dumps(obj,indent=2,ensure_ascii=False).encode(encode,'ignore')
