@@ -29,7 +29,7 @@ import logging
 ## https://www.futunn.com/new-quote/news-list?page=0&page_size=10&_=1614060549335
 # https://finance.futunn.com/api/finance/company-info?code=01682&label=hk
 # https://finance.futunn.com/api/finance/dividend?code=01682&label=hk
-# https://finance.futunn.com/api/finance/company-info?code=03690&label=hk
+
 class StockNewsFUTUNN():
     def __init__(self):
         self.debug = False
@@ -117,6 +117,26 @@ class StockNewsFUTUNN():
             pdb.set_trace()
         return df
         
+    def set_referer(self,input_code):
+        self.headers['Referer']='https://www.futunn.com/stock/%s/company-profile#company'%input_code
+        
+    def get_company_info(self,sec_id):
+        if not isinstance(sec_id,dict):
+            sec_id = self.get_futu_sec_id(sec_id)
+        self.set_referer(sec_id['input_code'])
+        url='https://finance.futunn.com/api/finance/company-info?code=%s&label=%s'%(sec_id['code'],sec_id['label'])
+        # print url
+        resp = requests.get(url,headers=self.headers)
+        jo = resp.json()
+        url='https://finance.futunn.com/api/finance/dividend?code=%s&label=%s'%(sec_id['code'],sec_id['label'])
+        resp2 = requests.get(url,headers=self.headers)
+        jo2 = resp2.json()
+        info = jo['data']
+        info.update(jo2['data'])
+        df = pd.DataFrame.from_dict([jo['data']])
+        # pdb.set_trace()
+        return df
+        
     def get_news(self):
         url='https://www.futunn.com/new-quote/'\
             +'news-list?page=0&page_size=20&_=%s'%(self.get_ts())
@@ -124,7 +144,9 @@ class StockNewsFUTUNN():
         jo = resp.json()
         df = pd.DataFrame.from_dict(jo['data']['news'],orient='columns')
         df.index = pd.to_datetime(df['time'],unit='s')
-        pdb.set_trace()
+        df.pop('audio_url')
+        df.pop('audio_duration')
+        # pdb.set_trace()
         return df
         
 # GET /questions/750604/freeing-up-a-tcp-ip-port HTTP/1.1
@@ -142,8 +164,9 @@ if __name__ =='__main__':
     ftnn = StockNewsFUTUNN()
     ftnn.get_news()
     for stk in ['03690-HK']:#['CCIV-US','TSLA-US','01682-HK']:
-        ftnn.debug=True
+        # ftnn.debug=True
         ftnn.get_futu_sec_id(stk)
+        ftnn.get_company_info(stk)
         df = ftnn.get_stock_minute(stk)
         df2 = ftnn.get_kline(stk,'day')
         pdb.set_trace()

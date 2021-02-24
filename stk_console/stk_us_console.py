@@ -79,14 +79,13 @@ def stock_map():
     return 
     
     
-def get_one_tick_data(tick,infos,flags):
-    yfinance = True
+def get_one_tick_data(tick,infos,flags,api_route = 'yfinance'):
     start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
     if tick.split('.')[0].isdigit() or '=' in tick or '^' in tick:
-        yfinance = True
+        api_route = 'yfinance'
     if 'vantage' in flags:
-        yfinance = False
-    if not yfinance:
+        api_route = 'vantage'
+    if api_route == 'vantage':
         mode = 'day'
         if 'month' in flags:
             mode='month'
@@ -95,13 +94,18 @@ def get_one_tick_data(tick,infos,flags):
         if 'intraday' in flags:
             mode='intraday'
         his_df = get_ticker_df_alpha_vantage(tick,mode)
-    else:         
+    elif api_route=='yfinance':         
         his_df = yf.Ticker(tick).history(start=start)
-        his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
-        
+        his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high'
+        ,'Low':'low','Close':'close','Volume':'volume'
+        ,'Dividends':'dividends','Stock Splits':'splits'})        
+    elif api_route=='futu':         
+        his_df = yf.Ticker(tick).history(start=start)
+        his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high'
+        ,'Low':'low','Close':'close','Volume':'volume'
+        ,'Dividends':'dividends','Stock Splits':'splits'})        
     if 'pdb' in flags:            
         pdb.set_trace()
-
     try:
         ndf = add_analyse_columns(his_df)
     except:
