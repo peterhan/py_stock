@@ -51,7 +51,9 @@ class StockNewsFUTUNN():
     def get_ts(self):
         return '%0.0f'%(time.time()*1000)
         
-    def get_futu_sec_id(self,stock_code):
+    def get_sec_id(self,stock_code):
+        if isinstance(stock_code, dict):
+            return stock_code
         stock_code = stock_code.upper()
         url = "https://www.futunn.com/stock/%s/company-profile#company" % stock_code
         if stock_code in self.stock_code_cache:
@@ -79,9 +81,8 @@ class StockNewsFUTUNN():
             traceback.print_exc()
             return {}
             
-    def get_kline(self,sec_id,cyc='day'):
-        if not isinstance(sec_id,dict):
-            sec_id = self.get_futu_sec_id(sec_id)
+    def get_kline(self,sec_id,cyc='day'):        
+        sec_id = self.get_sec_id(sec_id)
         ts = self.get_ts()
         date_mode = self.cyc_mode.get(cyc,cyc)
         url ='https://www.futunn.com/new-quote'\
@@ -99,9 +100,8 @@ class StockNewsFUTUNN():
             pdb.set_trace()
         return df
     
-    def get_stock_minute(self,sec_id):
-        if not isinstance(sec_id,dict):
-            sec_id = self.get_futu_sec_id(sec_id)
+    def get_stock_minute(self,sec_id):        
+        sec_id = self.get_sec_id(sec_id)
         ts = self.get_ts()
         url = 'https://www.futunn.com/new-quote'\
             +'/quote-minute?security_id=%s&market_type=%s&_=%s'%(sec_id['id'],sec_id['mkt_type'],ts)        
@@ -121,20 +121,24 @@ class StockNewsFUTUNN():
         self.headers['Referer']='https://www.futunn.com/stock/%s/company-profile#company'%input_code
         
     def get_company_info(self,sec_id):
-        if not isinstance(sec_id,dict):
-            sec_id = self.get_futu_sec_id(sec_id)
+        sec_id = self.get_sec_id(sec_id)
         self.set_referer(sec_id['input_code'])
         url='https://finance.futunn.com/api/finance/company-info?code=%s&label=%s'%(sec_id['code'],sec_id['label'])
         # print url
         resp = requests.get(url,headers=self.headers)
-        jo = resp.json()
-        url='https://finance.futunn.com/api/finance/dividend?code=%s&label=%s'%(sec_id['code'],sec_id['label'])
-        resp2 = requests.get(url,headers=self.headers)
-        jo2 = resp2.json()
-        info = jo['data']
-        info.update(jo2['data'])
+        jo = resp.json()        
         df = pd.DataFrame.from_dict([jo['data']])
-        # pdb.set_trace()
+        pdb.set_trace()
+        return df
+    
+    def get_dividend(self,sec_id):
+        sec_id = self.get_sec_id(sec_id)    
+        self.set_referer(sec_id['input_code'])
+        url='https://finance.futunn.com/api/finance/dividend?code=%s&label=%s'%(sec_id['code'],sec_id['label'])
+        resp = requests.get(url,headers=self.headers)
+        jo = resp.json() 
+        df = pd.DataFrame.from_dict(jo['data'])
+        pdb.set_trace()
         return df
         
     def get_news(self):
@@ -163,10 +167,12 @@ if __name__ =='__main__':
     pd.options.display.float_format = '{:.2f}'.format
     ftnn = StockNewsFUTUNN()
     ftnn.get_news()
-    for stk in ['03690-HK']:#['CCIV-US','TSLA-US','01682-HK']:
+    for stk in ['STWD-US']:
+    # for stk in ['CCIV-US','TSLA-US','03690-HK']:
         # ftnn.debug=True
-        ftnn.get_futu_sec_id(stk)
-        ftnn.get_company_info(stk)
+        # ftnn.get_sec_id(stk)
+        # ftnn.get_company_info(stk)
+        # ftnn.get_dividend(stk)
         df = ftnn.get_stock_minute(stk)
         df2 = ftnn.get_kline(stk,'day')
         pdb.set_trace()

@@ -16,6 +16,7 @@ import talib
 from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str
 from tech_algo_analyse import cat_boost_factor_check
 from yfinance_cache import yfinance_cache
+from stock_news_api_futunn import StockNewsFUTUNN
 
 try:    
     import gevent
@@ -78,13 +79,14 @@ def stock_map():
     "https://finviz.com/api/map_perf.ashx?t=sec"
     return 
     
-    
-def get_one_tick_data(tick,infos,flags,api_route = 'yfinance'):
+_ftnn = StockNewsFUTUNN()
+def get_one_tick_data(tick,infos,flags,api_route = 'futu'):
     start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
     if tick.split('.')[0].isdigit() or '=' in tick or '^' in tick:
         api_route = 'yfinance'
-    if 'vantage' in flags:
-        api_route = 'vantage'
+    for type in ['futu','yfinance','vantage']:
+        if type in flags:
+            api_route = type
     if api_route == 'vantage':
         mode = 'day'
         if 'month' in flags:
@@ -100,12 +102,10 @@ def get_one_tick_data(tick,infos,flags,api_route = 'yfinance'):
         ,'Low':'low','Close':'close','Volume':'volume'
         ,'Dividends':'dividends','Stock Splits':'splits'})        
     elif api_route=='futu':         
-        his_df = yf.Ticker(tick).history(start=start)
-        his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high'
-        ,'Low':'low','Close':'close','Volume':'volume'
-        ,'Dividends':'dividends','Stock Splits':'splits'})        
+        his_df = _ftnn.get_kline(tick)        
     if 'pdb' in flags:            
         pdb.set_trace()
+    ### 
     try:
         ndf = add_analyse_columns(his_df)
     except:
@@ -149,7 +149,7 @@ def us_main_loop(mode):
     opt_map = {
         'q':'quit','d':'detail','i':'pdb'
         ,'s':'onestock','n':'news','r':'realtime'
-        ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'vt':"vantage"
+        ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'f':'futu','vt':"vantage"
         ,'g':"graph",'ia':'intraday','id':'day','im':'month','u':'us','z':'zh'
         ,'e':'emd','c':'catboost','o':'option_chain'
     }
