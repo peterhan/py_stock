@@ -63,18 +63,18 @@ class StockNewsFUTUNN():
             if self.debug:
                 pdb.set_trace()
             result = filter(lambda x:x.find('_params.security')!=-1, resp.text.splitlines())
-            id = result[0].split("'")[1]
-            label = result[1].split("'")[1]
-            code = result[2].split("'")[1]
-            if label=='HK':
+            sec_id = result[0].split("'")[1]
+            sec_label = result[1].split("'")[1]
+            sec_code = result[2].split("'")[1]
+            if sec_label=='HK':
                 mkt_type='1'
-            elif label=='US':
+            elif sec_label=='US':
                 mkt_type='2'
-            elif label=='SH':
+            elif sec_label in ('SH','SZ'):
                 mkt_type='3'
             else:
                 mkt_type='0'            
-            ret_dic = {'id':id,'label':label,'code':code,'mkt_type':mkt_type,'input_code':stock_code}
+            ret_dic = {'id':sec_id,'label':sec_label,'code':sec_code,'mkt_type':mkt_type,'input_code':stock_code}
             self.stock_code_cache[stock_code] = ret_dic
             return ret_dic
         except Exception, e:
@@ -92,10 +92,11 @@ class StockNewsFUTUNN():
         jo = resp.json()
         lst = jo['data'].pop('list')
         df = pd.DataFrame.from_dict(lst ,orient='columns')        
-        df.rename(mapper={'k':'time','o':'open','h':'high','l':'low','c':'close','t':'amount','v':'volume'},axis=1,inplace=True)        
+        df.rename(mapper={'k':'date','o':'open','h':'high','l':'low','c':'close','t':'amount','v':'volume'},axis=1,inplace=True)        
         for field in ('open','high','low','close','amount'):
             df[field] = df[field]/1000
-        df.index = pd.to_datetime(df['time'],unit='s')
+        df['date'] = pd.to_datetime(df['date'],unit='s')
+        df.index = df['date']
         if self.debug:
             pdb.set_trace()
         return df
@@ -110,7 +111,8 @@ class StockNewsFUTUNN():
         jo = resp.json()
         lst = jo['data'].pop('list')
         df = pd.DataFrame.from_dict(lst ,orient='columns')
-        df.index = pd.to_datetime(df['time'],unit='s')
+        df['time'] = pd.to_datetime(df['time'],unit='s')
+        df.index = df['time']
         df['price'] = df['price']/1000
         df['turnover'] = df['turnover']/1000
         if self.debug:
@@ -141,13 +143,22 @@ class StockNewsFUTUNN():
         pdb.set_trace()
         return df
         
-    def get_news(self):
+    def get_stock_news(self,sec_id):
+        sec_id = self.get_sec_id(sec_id)    
+        url = 'https://www.futunn.com/stock/%s/news'%(sec_id['input_code'])
+        resp = requests.get(url,headers=self.headers)
+        soup = BeautifulSoup(resp.text,'lxml')
+        pdb.set_trace()
+    
+    
+    def get_news(self,start=0,cnt=20):
         url='https://www.futunn.com/new-quote/'\
-            +'news-list?page=0&page_size=20&_=%s'%(self.get_ts())
+            +'news-list?page=%s&page_size=%s&_=%s'%(start,cnt,self.get_ts())
         resp = requests.get(url,headers=self.headers)
         jo = resp.json()
         df = pd.DataFrame.from_dict(jo['data']['news'],orient='columns')
-        df.index = pd.to_datetime(df['time'],unit='s')
+        df['time'] = pd.to_datetime(df['time'],unit='s')
+        df.index = df['time'] 
         df.pop('audio_url')
         df.pop('audio_duration')
         # pdb.set_trace()
@@ -167,14 +178,15 @@ if __name__ =='__main__':
     pd.options.display.float_format = '{:.2f}'.format
     ftnn = StockNewsFUTUNN()
     ftnn.get_news()
-    for stk in ['STWD-US']:
+    for stk in ['300012-SZ','STWD-US']:
     # for stk in ['CCIV-US','TSLA-US','03690-HK']:
-        # ftnn.debug=True
+        ftnn.debug=True
         # ftnn.get_sec_id(stk)
         # ftnn.get_company_info(stk)
         # ftnn.get_dividend(stk)
-        df = ftnn.get_stock_minute(stk)
-        df2 = ftnn.get_kline(stk,'day')
+        df = ftnn.get_stock_news(stk)
+        df = ftnn.get_kline(stk,'day')
+        df2 = ftnn.get_stock_minute(stk)
         pdb.set_trace()
     
     

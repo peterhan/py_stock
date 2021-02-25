@@ -7,6 +7,7 @@ import datetime,time
 from collections import OrderedDict
 import ConfigParser
 import sys
+import re
 import keyring
 from alpha_vantage.timeseries import TimeSeries
 from matplotlib import pyplot as plt
@@ -79,15 +80,17 @@ def stock_map():
     "https://finviz.com/api/map_perf.ashx?t=sec"
     return 
     
-_ftnn = StockNewsFUTUNN()
-def get_one_tick_data(tick,infos,flags,api_route = 'futu'):
+def get_stock_kline(tick,flags,api_route='futu'):
     start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
-    if tick.split('.')[0].isdigit() or '=' in tick or '^' in tick:
-        api_route = 'yfinance'
+    # if tick.split('.')[0].isdigit() or '=' in tick or '^' in tick:
+        # api_route = 'yfinance'
     for type in ['futu','yfinance','vantage']:
         if type in flags:
             api_route = type
+    print 'api_route:',api_route
     if api_route == 'vantage':
+        if '.' or '-' in tick:
+            tick = tick.replace('-','.').split('.')[0]
         mode = 'day'
         if 'month' in flags:
             mode='month'
@@ -101,8 +104,23 @@ def get_one_tick_data(tick,infos,flags,api_route = 'futu'):
         his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high'
         ,'Low':'low','Close':'close','Volume':'volume'
         ,'Dividends':'dividends','Stock Splits':'splits'})        
-    elif api_route=='futu':         
-        his_df = _ftnn.get_kline(tick)        
+    elif api_route=='futu':
+        _ftnn = StockNewsFUTUNN()
+        tick=tick.upper().replace('.','-')
+        if tick.find('-')==-1:
+            if re.match('[A-z]+',tick):
+                tick+='-US'
+            elif re.match('\d+',tick):
+                tick+='-SH'
+        if tick.endswith('-HK') and len(tick)==7:
+            tick='0'+tick
+        print tick
+        his_df = _ftnn.get_kline(tick) 
+    return his_df
+    
+def get_one_tick_data(tick,infos,flags,api_route = 'futu'):
+    his_df = get_stock_kline(tick,flags,api_route) 
+    his_df = his_df[-365:]
     if 'pdb' in flags:            
         pdb.set_trace()
     ### 
@@ -217,7 +235,7 @@ def us_main_loop(mode):
 
     
 if __name__ == '__main__':
-    while 1:        
+    while 1:
         try:
             us_main_loop('')
         except Exception as e:

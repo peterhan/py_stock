@@ -315,9 +315,10 @@ def aroon_analyse(ohlcv,period=14):
     return res_info,df
    
 def get_weekday(dt):
-    d = datetime.datetime.strptime(dt,'%Y-%m-%d')
-    dic = ['Mon','Tue','Wed','Thu','Fri']
-    w = dic[d.weekday()]
+    if isinstance(dt,basestring):
+        dt = datetime.datetime.strptime(dt,'%Y-%m-%d')
+    dic = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    w = dic[dt.weekday()]
     return w
 
 def weekday_analyse(df,col='date'):
