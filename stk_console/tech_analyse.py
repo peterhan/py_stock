@@ -3,7 +3,7 @@ import json
 import talib 
 import traceback
 import pdb
-import datetime
+import datetime,time
 import locale
 import itertools
 
@@ -11,13 +11,14 @@ import pandas as pd
 import numpy as np
 from collections import OrderedDict
 from matplotlib import pyplot as plt
-
+from stk_util import time_count
 
 def load_ta_pat_map():
     return json.load(open('talib_pattern_name.json'))
 TA_PATTERN_MAP = load_ta_pat_map()
 
 cdl_pat_names =  []
+@time_count
 def candle_analyse(df):
     '''
     input:OHLC dataframe
@@ -67,35 +68,6 @@ def pivot_line(open,high,low,close, mode='classic'):
     rm3 = (r2+r3)/2
     return r3,r2,r1,pivot,s1,s2,s3    
     
-def boll_analyse(ohlcv,period=10):
-    boll_up, boll_mid, boll_low = talib.BBANDS(ohlcv['close'],period)
-    scale = period
-    uag = get_angle(boll_up *scale, 2)
-    mag = get_angle(boll_mid*scale, 2)    
-    lag = get_angle(boll_low*scale, 2)
-    df = pd.DataFrame({'boll_up': boll_up, 'boll_mid':boll_mid, 'boll_low':boll_low 
-        ,'bollup_ag':uag,'bollmid_ag':mag,'bolllow_ag':lag })
-    def boll_judge(row):
-        m_ag = row['bollmid_ag']
-        u_ag = row['bollup_ag']
-        # print m,u
-        if m_ag >= 0:
-            res = 'UP'
-        else:
-            res = 'DN'
-        if (u_ag - m_ag) >= 0:
-            res += '-EXPAND'
-        else:
-            res += '-SHRINK'
-        return res
-    df['boll_stage'] = df.apply(boll_judge,axis=1)
-    row = df.iloc[-1]
-    res = [row['boll_stage']]
-    res += ['ANG[MID:%0.2f, UP:%0.2f], MID_PRC:%0.2f'%(row['bollmid_ag'], row['bollup_ag']-row['bollmid_ag'], row['boll_mid'])]
-    res += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(row['boll_up'],row['boll_mid'],row['boll_low'])]
-    return res,df
-    
- 
 def value_range_judge(vlu,up_down,up_down_mid_name): 
     if vlu>=up_down[0]:
         return up_down_mid_name[0]
@@ -104,8 +76,6 @@ def value_range_judge(vlu,up_down,up_down_mid_name):
     else:
         return up_down_mid_name[2]    
 
-
-    
 def get_crossx_type(fast_line,slow_line):
     fast_ag = get_angle(fast_line, 2)
     slow_ag = get_angle(slow_line, 2)
@@ -140,8 +110,37 @@ def get_angle(ss,p=2):
     fss = np.nan_to_num(ss,0)
     ang =  talib.LINEARREG_ANGLE(fss, timeperiod=p)    
     return ang
-    
-    
+   
+@time_count
+def boll_analyse(ohlcv,period=10):
+    boll_up, boll_mid, boll_low = talib.BBANDS(ohlcv['close'],period)
+    scale = period
+    uag = get_angle(boll_up *scale, 2)
+    mag = get_angle(boll_mid*scale, 2)    
+    lag = get_angle(boll_low*scale, 2)
+    df = pd.DataFrame({'boll_up': boll_up, 'boll_mid':boll_mid, 'boll_low':boll_low 
+        ,'bollup_ag':uag,'bollmid_ag':mag,'bolllow_ag':lag })
+    def boll_judge(row):
+        m_ag = row['bollmid_ag']
+        u_ag = row['bollup_ag']
+        # print m,u
+        if m_ag >= 0:
+            res = 'UP'
+        else:
+            res = 'DN'
+        if (u_ag - m_ag) >= 0:
+            res += '-EXPAND'
+        else:
+            res += '-SHRINK'
+        return res
+    df['boll_stage'] = df.apply(boll_judge,axis=1)
+    row = df.iloc[-1]
+    res = [row['boll_stage']]
+    res += ['ANG[MID:%0.2f, UP:%0.2f], MID_PRC:%0.2f'%(row['bollmid_ag'], row['bollup_ag']-row['bollmid_ag'], row['boll_mid'])]
+    res += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(row['boll_up'],row['boll_mid'],row['boll_low'])]
+    return res,df
+   
+@time_count
 def macd_analyse(ohlcv,period=10):
     dif, dea, hist =  talib.MACD(ohlcv['close'],period)
     # pdb.set_trace()
@@ -164,6 +163,7 @@ def macd_analyse(ohlcv,period=10):
     res += ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(row['dif'],row['dea'],row['macd_hist']*2)]   
     return res,df
     
+@time_count
 def rsi_analyse(ohlcv,period=10):
     close = ohlcv['close']
     rsi = talib.RSI(close)
@@ -177,6 +177,7 @@ def rsi_analyse(ohlcv,period=10):
     res_info = row['rsi_stage']+', '+'RSI: %0.2f, ANG:%02.f'%(row['rsi'],row['rsi_ag'])
     return res_info,df
 
+@time_count
 def cci_analyse(ohlcv,period=10):
     high,low,close = ohlcv['high'],ohlcv['low'],ohlcv['close']
     cci = talib.CCI(high,low,close)    
@@ -190,6 +191,7 @@ def cci_analyse(ohlcv,period=10):
     res_info = row['cci_stage']+', '+'CCI: %0.2f, ANG:%02.f'%(row['cci'],row['cci_ag'])
     return res_info,df
 
+@time_count
 def roc_analyse(ohlcv,period=10):
     high,low,close = ohlcv['high'],ohlcv['low'],ohlcv['close']
     roc = talib.ROCP(close)    
@@ -208,6 +210,7 @@ def roc_analyse(ohlcv,period=10):
     res_info = row['roc_stage']+', '+'ROC: %0.2f, ANG:%02.f'%(row['roc'],row['roc_ag'])
     return res_info,df
 
+@time_count
 def kdj_analyse(ohlcv,period=10):
     high,low,close = ohlcv['high'],ohlcv['low'],ohlcv['close']
     slk,sld = talib.STOCH(high,low,close, fastk_period=9,slowk_period=3,slowk_matype=0,slowd_period=3,slowd_matype=0)
@@ -260,6 +263,7 @@ def kdj_analyse(ohlcv,period=10):
     res_info = ', '.join(res_info)
     return res_info,df
 
+@time_count
 def mtm_analyse(ohlcv,period1=6,period2=12):
     close = ohlcv['close']
     mom = talib.MOM(close,period1)
@@ -286,7 +290,7 @@ def mtm_analyse(ohlcv,period1=6,period2=12):
     res_info = [row['mom_stage'],row['mom_cross_stage'],'MOM:','%0.2f'%row['mom'],'MA-MOM:','%0.2f'%row['mamom']]
     return res_info,df
 
-
+@time_count
 def aroon_analyse(ohlcv,period=14):
     high = ohlcv['high']
     low = ohlcv['low']    
@@ -321,36 +325,35 @@ def get_weekday(dt):
     w = dic[dt.weekday()]
     return w
 
+@time_count
 def weekday_analyse(df,col='date'):
     wd =pd.DataFrame()
     # pdb.set_trace()
     wd['week_stage'] = df[col].apply(get_weekday)
     return wd
     
+@time_count    
 def vwap_analyse(ohlcv,period = 3):  
     close,high,low,volume = ohlcv['close'],ohlcv['high'],ohlcv['low'],ohlcv['volume']
     df = ohlcv
     mse = np.square(close-(high+low)/2)
     df['mse'] = mse
     vwap,vswap = [],[]
-    for i  in range(0,df.shape[0]):
-        if i < period-1:
-            vwap.append(np.NaN)
-            vswap.append(np.NaN)
-            continue
-        idxs = [p for p in range(i-period,i+1)]
-        ##
-        v_sum = sum([df.iloc[p]['volume'] for p in range(i-period,i+1) ])
-        pvsum = sum([df.iloc[p]['close']*df.iloc[p]['volume']/v_sum for p in range(i-period,i+1) ])
-        vwap.append(pvsum)
-        ##
-        vm_sum    = sum([df.iloc[p]['mse']  *df.iloc[p]['volume'] for p in range(i-period,i+1) ])
-        pvsum_fix = sum([df.iloc[p]['close']*df.iloc[p]['volume']*df.iloc[p]['mse']/vm_sum for p in range(i-period,i+1) ])
-        vswap.append(pvsum_fix)
+    # pdb.set_trace()
+    
+    vsum = df['volume'].rolling(period).sum()
+    pvsum = df['volume']*df['close']/vsum*period
+    ma_pvsum = talib.SMA(pvsum, period)
+    
+    s_vsum = (df['volume']*df['mse']).rolling(period).sum()
+    s_pvsum = (df['volume']*df['mse']*df['close'])/s_vsum*period
+    s_ma_pvsum = talib.SMA(pvsum, period) 
+    vwap = ma_pvsum
+    vswap = s_ma_pvsum
     ndf = pd.DataFrame(df['close'])
-    ndf['vwap']=vwap
+    ndf['vwap'] = vwap
     ndf['vwap_stage'] = get_crossx_type(close,vwap)['cross_stage']
-    ndf['vswap']=vswap
+    ndf['vswap'] = vswap
     ndf['vswap_stage'] = get_crossx_type(close,vswap)['cross_stage']
     row=ndf.iloc[-1]
     vwap_info={'close':row['close']
@@ -360,6 +363,7 @@ def vwap_analyse(ohlcv,period = 3):
     ndf.pop('close')
     return vwap_info,ndf
     
+@time_count
 def ma_analyse(ohlcv,period=10,target_col='close'):
     close = ohlcv[target_col]
     ma = OrderedDict()
@@ -410,7 +414,8 @@ def ma_analyse(ohlcv,period=10,target_col='close'):
         return ', '.join(res)
     res_info = ['[S]'+row[prefix+'sma_stage'], '[E]'+row[prefix+'ema_stage'], '[ES]'+row[prefix+'ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
     return res_info,df
-    
+
+@time_count
 def tech_analyse(df):  
     def round_float(lst):
         return map(lambda x:'%0.2f'%x,lst)   
@@ -542,7 +547,7 @@ def tech_analyse(df):
 def jsdump(info, indent=None):
     return json.dumps(info, ensure_ascii=False, indent=indent) 
     
-ECODE=locale.getpreferredencoding()
+SYS_ENCODE = locale.getpreferredencoding()
 def analyse_res_to_str(stock_anly_res):
     intro = {}
     pstr = ''
@@ -552,7 +557,7 @@ def analyse_res_to_str(stock_anly_res):
         code = stock.get('code','no-code')
         name = stock.get('info',{}).get('name','')
         price = stock.get('info',{}).get('price','')
-        pstr+= "\n[{0}:{1}] Price:{2}".format(code,name.encode(ECODE),price)
+        pstr+= "\n[{0}:{1}] Price:{2}".format(code,name.encode(SYS_ENCODE),price)
         if 'tech' in stock and stock['tech'] != None:
             tech = stock['tech']
             for key,vlu in tech['data'].items():
@@ -563,13 +568,12 @@ def analyse_res_to_str(stock_anly_res):
             cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
             for name,info in cdl['data'].items():
                 intro[info['en_name']+info['cn_name']] = info['intro']
-            pstr+= "\n  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(ECODE) )
+            pstr+= "\n  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(SYS_ENCODE) )
     pstr += '\n'
     for name,intro in intro.items():
-        pstr+= u"\n  [EXPLAIN:{}]:{}".format(name,intro).encode(ECODE)  
+        pstr+= u"\n  [EXPLAIN:{}]:{}".format(name,intro).encode(SYS_ENCODE)  
     return pstr
 
-   
 def yf_get_hist_data(tick):
     import yfinance as yf    
     import datetime

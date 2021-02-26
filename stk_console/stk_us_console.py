@@ -13,6 +13,7 @@ from alpha_vantage.timeseries import TimeSeries
 from matplotlib import pyplot as plt
 import yfinance as yf
 from stk_console import cli_select_menu
+from stk_util import time_count
 import talib
 from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str
 from tech_algo_analyse import cat_boost_factor_check
@@ -54,7 +55,8 @@ def get_ticker_df_alpha_vantage(ticker,mode='day'):
     # print ndf.describe()
     # print ndf
     return df
-
+    
+# @time_count
 def add_analyse_columns(df):
     ndf =  df
     ndf['pivot']= (df['high']+df['low']+df['close']*2)/4
@@ -79,8 +81,9 @@ def stock_map():
     "https://finviz.com/js/maps/sec_788.js?rev=226"
     "https://finviz.com/api/map_perf.ashx?t=sec"
     return 
-    
-def get_stock_kline(tick,flags,api_route='futu'):
+  
+@time_count
+def get_stock_kline(tick,flags,api_route='futu'):    
     start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
     # if tick.split('.')[0].isdigit() or '=' in tick or '^' in tick:
         # api_route = 'yfinance'
@@ -115,12 +118,15 @@ def get_stock_kline(tick,flags,api_route='futu'):
         if tick.endswith('-HK') and len(tick)==7:
             tick='0'+tick
         print tick
-        his_df = _ftnn.get_kline(tick) 
+        his_df = _ftnn.get_kline(tick)     
     return his_df
-    
+ 
+@time_count 
 def get_one_tick_data(tick,infos,flags,api_route = 'futu'):
+    
     his_df = get_stock_kline(tick,flags,api_route) 
     his_df = his_df[-365:]
+    
     if 'pdb' in flags:            
         pdb.set_trace()
     ### 
@@ -134,14 +140,16 @@ def get_one_tick_data(tick,infos,flags,api_route = 'futu'):
     df = ndf
     df['vol']= pd.to_numeric(df['volume'])
     
-    # pdb.set_trace()
-    tinfo,tdf = tech_analyse(df)
-    cinfo,cdf = candle_analyse(df)
-    df = pd.concat([df,tdf,cdf],axis=1)        
-        
-    res_info = {'code':tick,'info':infos.get(tick,{}),'tech':tinfo,'cdl':cinfo,'df':df}
+    res_info = {'code':tick,'info':infos.get(tick,{}),'df':df}
     res_info['info'].update({'price':df['close'].values[-1],'name':''})
-    
+    # pdb.set_trace()
+    if 'detail' in flags:
+        tinfo,tdf = tech_analyse(df)
+        cinfo,cdf = candle_analyse(df)
+        df = pd.concat([df,tdf,cdf],axis=1)        
+        
+        res_info['info'].update({'price':df['close'].values[-1],'name':''})
+        res_info.update({'tech':tinfo,'cdl':cinfo})
     if 'option_chain' in flags:
         res_info['option_chain'] = ytk.option_chain()
         

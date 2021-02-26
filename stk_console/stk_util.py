@@ -123,3 +123,14 @@ def nest_selector(obj,path):
             try:sel=getattr(sel,pathpart)
             except:sel=''
     return sel
+    
+def time_count(func):
+    def wrapper(*arg, **kw):
+        t1 = time.time()
+        res = func(*arg, **kw)
+        t2 = time.time()
+        tcnt = (t2-t1)*1000
+        if tcnt>1000:
+            print '#[%s] take %0.2f ms'%(func.__name__, tcnt)
+        return res
+    return wrapper

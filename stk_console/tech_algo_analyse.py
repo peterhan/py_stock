@@ -2,7 +2,10 @@
 import pandas as pd
 import numpy as np
 import traceback
+from stk_util import time_count
+
 ## algo_analyse
+@time_count
 def caculate_indicator(df, i_stages, target_col):
     # i_stages = cdl_pat_names
     # adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
@@ -41,7 +44,8 @@ def caculate_indicator(df, i_stages, target_col):
 
 def rmse(targets,predictions):
     return np.sqrt(((predictions - targets) ** 2).mean())
-    
+
+@time_count    
 def predict_cat_boost(fit_model, adf,i_stages,target_col):
     from catboost import CatBoostRegressor
     factor_results = {}
@@ -89,7 +93,7 @@ def predict_cat_boost(fit_model, adf,i_stages,target_col):
     check_result['correct_rate']=pnvc[10.0]*1.0/sum(pnvc.values)*100    
     return factor_results
 
-
+@time_count
 def train_cat_boost(adf,i_stages,target_col):
     from catboost import CatBoostRegressor
     dataset = adf[i_stages][:]
@@ -105,7 +109,7 @@ def train_cat_boost(adf,i_stages,target_col):
     return fit_model
     # pdb.set_trace()
 
-
+@time_count
 def cat_boost_factor_check(df,target_days = ['5d'],print_res=True):
     i_stages = [['cci_stage','ema_stage','volume_ema_stage','volume_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','mom_stage','aroon_stage','vswap_stage','vwap_stage','week_stage'] ]    
     i_stage_list = [  ['ema_stage']  ,['sma_stage'],['volume_ema_stage'] ,['volume_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] 
