@@ -347,7 +347,7 @@ def vwap_analyse(ohlcv,period = 3):
     
     s_vsum = (df['volume']*df['mse']).rolling(period).sum()
     s_pvsum = (df['volume']*df['mse']*df['close'])/s_vsum*period
-    s_ma_pvsum = talib.SMA(pvsum, period) 
+    s_ma_pvsum = talib.SMA(s_pvsum, period) 
     vwap = ma_pvsum
     vswap = s_ma_pvsum
     ndf = pd.DataFrame(df['close'])
@@ -356,9 +356,10 @@ def vwap_analyse(ohlcv,period = 3):
     ndf['vswap'] = vswap
     ndf['vswap_stage'] = get_crossx_type(close,vswap)['cross_stage']
     row=ndf.iloc[-1]
-    vwap_info={'close':row['close']
-        ,'vswap':'%0.2f'%row['vswap'],'vswap_stage':row['vswap_stage']
-        ,'vwap':'%0.2f'%row['vwap'],'vwap_stage':row['vwap_stage']
+    vwap_info={
+        'vswap':'%0.2f'%row['vswap'],'vswap_stage':row['vswap_stage']
+        ,'vwap':'%0.2f'%row['vwap'],  'vwap_stage':row['vwap_stage']
+        ,'close':row['close']
         }
     ndf.pop('close')
     return vwap_info,ndf
