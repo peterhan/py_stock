@@ -3,7 +3,8 @@ import pdb
 
 from requests import get,post
 from bs4 import BeautifulSoup
-from jsonpath_rw import jsonpath,parse
+import json
+# from jsonpath_rw import jsonpath,parse
 import sys
 import pdb,traceback
 import time
@@ -55,14 +56,53 @@ class StockNewsFUTUNN():
         if isinstance(stock_code, dict):
             return stock_code
         stock_code = stock_code.upper()
+        url = "https://www.futunn.com/stock/%s" %stock_code
+        if stock_code in self.stock_code_cache:
+            return self.stock_code_cache[stock_code]
+        try:
+            resp = requests.get(url,headers=self.headers)
+            if self.debug:
+                print url
+                pdb.set_trace()
+            for line in resp.text.splitlines():
+                if line.startswith(' <script>window._langParams'):
+                    jsline = line
+            start_seg = 'window.__INITIAL_STATE__='
+            start = jsline.find(start_seg)
+            end = jsline.find(',window._params')
+            jss = jsline[start+len(start_seg):end]
+            jo = json.loads(jss)
+            # pdb.set_trace()
+            sinfo = jo['prefetch']['stockInfo']
+            sec_id = sinfo['stock_id'] 
+            sec_label = sinfo['stock_market']
+            sec_code = sinfo['stock_code']
+            mkt_type = sinfo['market_type']
+            ret_dic = {'id':sec_id,'label':sec_label,'code':sec_code,'mkt_type':mkt_type,'input_code':stock_code}
+            self.stock_code_cache[stock_code] = ret_dic
+            return ret_dic
+        except Exception as e:            
+            traceback.print_exc()
+            return {'input_code':stock_code}
+        
+    def o_get_sec_id(self,stock_code):
+        if isinstance(stock_code, dict):
+            return stock_code
+        stock_code = stock_code.upper()
         url = "https://www.futunn.com/stock/%s/company-profile#company" % stock_code
         if stock_code in self.stock_code_cache:
             return self.stock_code_cache[stock_code]
         try:
             resp = requests.get(url,headers=self.headers)
             if self.debug:
+                print url
                 pdb.set_trace()
-            result = filter(lambda x:x.find('_params.security')!=-1, resp.text.splitlines())
+            result = [] 
+            if resp.text.find('_params.security')==-1:
+                raise Exception("Not found sec_id javascript snippet")
+            for l in resp.text.splitlines():
+                if l.find('_params.security')!=-1:
+                    result.append(l)            
             sec_id = result[0].split("'")[1]
             sec_label = result[1].split("'")[1]
             sec_code = result[2].split("'")[1]
@@ -79,7 +119,7 @@ class StockNewsFUTUNN():
             return ret_dic
         except Exception, e:
             traceback.print_exc()
-            return {}
+            return {'input_code':stock_code}
             
     def get_kline(self,sec_id,cyc='day'):        
         sec_id = self.get_sec_id(sec_id)
@@ -98,6 +138,7 @@ class StockNewsFUTUNN():
         df['date'] = pd.to_datetime(df['date'],unit='s')
         df.index = df['date']
         if self.debug:
+            print url
             pdb.set_trace()
         return df
     
@@ -116,6 +157,7 @@ class StockNewsFUTUNN():
         df['price'] = df['price']/1000
         df['turnover'] = df['turnover']/1000
         if self.debug:
+            print url
             pdb.set_trace()
         return df
         
@@ -178,7 +220,7 @@ if __name__ =='__main__':
     pd.options.display.float_format = '{:.2f}'.format
     ftnn = StockNewsFUTUNN()
     ftnn.get_news()
-    for stk in ['300012-SZ','STWD-US']:
+    for stk in ['STWD-US','300012-SZ']:
     # for stk in ['CCIV-US','TSLA-US','03690-HK']:
         ftnn.debug=True
         # ftnn.get_sec_id(stk)
