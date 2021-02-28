@@ -44,10 +44,10 @@ class StockNewsFUTUNN():
             ,"Cache-Control": "max-age=0"
             ,"Referer": "https://www.futunn.com/"
         }
-        self.cyc_mode={'day':'2','week':'3','month':'4','year':'5'
+        self.cyc_mode = {'day':'2','week':'3','month':'4','year':'5'
             ,'5min':'6','15min':'7','30min':'8','hour':'9','3min':'10'
             ,'season':'11','season':'12','pre':'12','minute':'13'}
-        self.stock_code_cache={}
+        self.stock_code_cache = {}
         
     def get_ts(self):
         return '%0.0f'%(time.time()*1000)
