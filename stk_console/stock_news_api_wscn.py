@@ -225,9 +225,9 @@ if __name__ =='__main__':
     wscn = StockNewsWSCN()
     stks = ['UMC.NYSE','600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX','PLTR.NASD']
     
-    wscn.article()
-    sys.exit()
+    # sys.exit()
     wscn.mode_run('hot_article')
+    # wscn.article_detail('')
     wscn.mode_run('macro')
     wscn.mode_run('info_flow')
     wscn.mode_run('market_rank')
