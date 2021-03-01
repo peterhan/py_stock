@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from jsonpath_rw import jsonpath,parse
 import sys
 import pdb
+import time
 import pandas as pd
 from collections import OrderedDict
 from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
@@ -197,6 +198,7 @@ class StockNewsWSCN():
             for id in argv.get("stocks",[]):
                 text = self.article_detail(id)
                 print text.encode('gbk','ignore')
+                time.sleep(3)
         elif mode=='hot_article':
             self.hot_article()
         elif mode=='market_real':
@@ -204,10 +206,12 @@ class StockNewsWSCN():
         elif mode=='live':
             for channel in reversed(self.LIVE_CHANNEL):
                 self.lives(channel)
+                time.sleep(3)
         elif mode == 'market_rank' :
             for mstype in  self.MKTSTK_TYPE:    
                 ma=mstype.split('#')
                 self.market_rank(ma[0],ma[1])
+                time.sleep(3)
         else:
             print 'NotValidMode:',mode
 

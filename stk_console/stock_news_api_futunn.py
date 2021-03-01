@@ -61,12 +61,12 @@ class StockNewsFUTUNN():
             return self.stock_code_cache[stock_code]
         try:
             resp = requests.get(url,headers=self.headers)
-            if self.debug:
-                print url
-                pdb.set_trace()
             for line in resp.text.splitlines():
                 if line.startswith(' <script>window._langParams'):
                     jsline = line
+            if self.debug:
+                print url
+                pdb.set_trace()
             start_seg = 'window.__INITIAL_STATE__='
             start = jsline.find(start_seg)
             end = jsline.find(',window._params')
@@ -191,7 +191,7 @@ class StockNewsFUTUNN():
         resp = requests.get(url,headers=self.headers)
         soup = BeautifulSoup(resp.text,'lxml')
         pdb.set_trace()
-    
+        return
     
     def get_news(self,start=0,cnt=20):
         url='https://www.futunn.com/new-quote/'\
@@ -226,8 +226,8 @@ if __name__ =='__main__':
         # ftnn.get_sec_id(stk)
         # ftnn.get_company_info(stk)
         # ftnn.get_dividend(stk)
-        df = ftnn.get_stock_news(stk)
-        df = ftnn.get_kline(stk,'day')
+        dfn = ftnn.get_stock_news(stk)
+        df1 = ftnn.get_kline(stk,'day')
         df2 = ftnn.get_stock_minute(stk)
         pdb.set_trace()
     
