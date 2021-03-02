@@ -67,7 +67,12 @@ class StockNewsWSCN():
         return df
         
     def article_detail(self,id):
-        url = 'https://wallstreetcn.com/articles/{}'.format(id)
+        if id.startswith('http'):
+            url=id
+        if id.startswith('/'):
+            url='https://wallstreetcn.com'+id
+        else:
+            url = 'https://wallstreetcn.com/articles/{}'.format(id)
         html = get(url).text
         # pdb.set_trace()
         soup = BeautifulSoup(html,"lxml")
@@ -189,7 +194,9 @@ class StockNewsWSCN():
         elif mode=='macro':
             self.macrodatas(1,2)
         elif mode=='info_flow':
-            self.info_flow()
+            return self.info_flow()
+        elif mode=='hot_article':
+            return self.hot_article()
         elif mode=='trend':
             self.trend(**argv)
         elif mode=='kline':
@@ -199,8 +206,6 @@ class StockNewsWSCN():
                 text = self.article_detail(id)
                 print text.encode('gbk','ignore')
                 time.sleep(3)
-        elif mode=='hot_article':
-            self.hot_article()
         elif mode=='market_real':
             self.market_real()        
         elif mode=='live':

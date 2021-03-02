@@ -132,7 +132,7 @@ def summary_list_ticks(tks,flags):
     cname = rdf.columns
     # cname[3]='price'
     # rdf.rename(cname,inplace=True)
-    if 'fullname' in flags:
+    if 'fullname' not in flags:
         rdf['name'] = rdf['name'].str.slice(0,4,2)
     else:
         rdf['name'] = rdf['name'].str.slice(0,10,1)
@@ -353,6 +353,12 @@ def wscn_loop():
                     if len(flags)>0:
                         sflag = flags[-1]
                         wscn.mode_run(choosed,stocks=sflag[-1].split('#'))
+                if choosed in ('info_flow','hot_article'):
+                    df = wscn.mode_run(choosed)                 
+                    df['code'] = df['uri'].str.replace('https://wallstreetcn.com','')
+                    _chooseds,_flags = cli_select_menu(dict(zip(df['code'],df['code'])) )
+                    # pdb.set_trace()
+                    wscn.mode_run('article',stocks=_chooseds)
                 else:
                     wscn.mode_run(choosed)   
             except:
