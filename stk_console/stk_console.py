@@ -356,8 +356,7 @@ def wscn_loop():
                 if choosed in ('info_flow','hot_article'):
                     df = wscn.mode_run(choosed)                 
                     df['code'] = df['uri'].str.replace('https://wallstreetcn.com','')
-                    _chooseds,_flags = cli_select_menu(dict(zip(df['code'],df['code'])) )
-                    # pdb.set_trace()
+                    _chooseds,_flags = cli_select_menu(OrderedDict(zip(df['code'],df['code'])) )
                     wscn.mode_run('article',stocks=_chooseds)
                 else:
                     wscn.mode_run(choosed)   
