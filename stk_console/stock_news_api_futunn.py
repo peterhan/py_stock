@@ -61,12 +61,15 @@ class StockNewsFUTUNN():
             return self.stock_code_cache[stock_code]
         try:
             resp = requests.get(url,headers=self.headers)
+            jsline = ''
             for line in resp.text.splitlines():
-                if line.startswith(' <script>window._langParams'):
+                if line.find('<script>window._langParams')!=-1:
                     jsline = line
             if self.debug:
                 print url
                 pdb.set_trace()
+            if len(jsline)==0:
+                raise Exception('Not Found window._langParams @ %s'%url)
             start_seg = 'window.__INITIAL_STATE__='
             start = jsline.find(start_seg)
             end = jsline.find(',window._params')
