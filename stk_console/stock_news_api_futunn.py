@@ -223,7 +223,7 @@ if __name__ =='__main__':
     pd.options.display.float_format = '{:.2f}'.format
     ftnn = StockNewsFUTUNN()
     ftnn.get_news()
-    for stk in ['STWD-US','300012-SZ']:
+    for stk in ['TSLA-US', '300015-SZ']:
     # for stk in ['CCIV-US','TSLA-US','03690-HK']:
         ftnn.debug=True
         # ftnn.get_sec_id(stk)
