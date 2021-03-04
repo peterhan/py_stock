@@ -30,6 +30,7 @@ import logging
 ## https://www.futunn.com/new-quote/news-list?page=0&page_size=10&_=1614060549335
 # https://finance.futunn.com/api/finance/company-info?code=01682&label=hk
 # https://finance.futunn.com/api/finance/dividend?code=01682&label=hk
+#https://www.futunn.com/search-stock/predict?keyword=TSLA&_=1614858445525
 
 class StockNewsFUTUNN():
     def __init__(self):
