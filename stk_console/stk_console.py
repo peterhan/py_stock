@@ -379,11 +379,11 @@ def cn_main_loop(mode):
     elif 'article' in flags:
         if isinstance(flags[-1],list):
             sflag = flags[-1]
-        print 'url:',sflag[-1],'tag:',sflag[-2]
-        texts,html = get_article_detail(sflag[-1],sflag[-2])
+        print 'url:',sflag[-1]
+        texts,html = get_article_detail(sflag[-1],'p')
         if 'pdb' in flags:
             pdb.set_trace()
-        print texts
+        print (u'\n'.join(texts[:-5])).encode(ENCODE,'ignore')
     elif 'news_wscn' in flags :
         wscn_loop()     
     elif 'top' in flags:

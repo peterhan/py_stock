@@ -42,7 +42,7 @@ def gen_random(n=16):
     
 def get_article_detail(url,tag='article'):
     url = url
-    html = get(url).text
+    html = get(url).content
     # pdb.set_trace()
     soup = BeautifulSoup(html,"lxml")
     # pdb.set_trace()

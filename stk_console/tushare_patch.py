@@ -35,6 +35,7 @@ pageid="153" s_id="2518">美股</a>
 '''
 
 
+    
 def get_latest_news(lid='2517'):
     url='https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=%s&k=2&num=50&page=1&r=%s&callback=jQuery111200%s_%s&_=%s'%(lid,gen_random(),gen_random(),int(time.time()),int(time.time()))
     #2516 fin,2517 stock,2518 US stock
@@ -61,11 +62,16 @@ def print_latest_news(df,encode='gbk'):
         # pdb.set_trace()        
         tags = '[%s]'%(','.join(df.iloc[idx]['keywords']).encode(encode))
         time = '[%s]'%df.iloc[idx]['time']
-        print time,'\n'.join(row.values[1:]).encode(encode,'ignore')
-        print tags,df.iloc[idx]['url']      
+        print time,'\n'.join(row.values[1:]).encode(encode,'ignore'),tags        
+        print df.iloc[idx]['url']      
         print ''
 
-
+def print_article(url,encode='gbk'):
+    resp = get(url)
+    soup = BeautifulSoup(resp.content,"lxml")
+    for i,p in enumerate(soup.find_all('p')[:-6]):
+        print p.text.encode(encode,'ignore')
+        
 def get_current_ticks_tx(stks):
     url = 'http://qt.gtimg.cn/q=%s'%stks
     r=Request(url)    
@@ -136,3 +142,5 @@ if __name__=='__main__':
     print get_today_ticks('600438')
     df = get_latest_news()
     print_latest_news(df)
+    # print_article('https://finance.sina.com.cn/stock/enterprise/plc/2021-03-08/doc-ikknscsh9290881.shtml')
+    print_article('https://finance.sina.com.cn/stock/jsy/2021-03-08/doc-ikkntiak6127095.shtml')
