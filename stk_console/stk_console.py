@@ -10,6 +10,7 @@ import ConfigParser
 import pdb
 import traceback
 import locale
+from random import randint
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 from tushare_patch import get_latest_news,get_today_ticks,print_latest_news
@@ -17,6 +18,8 @@ from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_s
 from tech_algo_analyse import cat_boost_factor_check
 from stk_util import get_article_detail,cli_select_menu
 
+from stock_news_api_wscn import StockNewsWSCN
+from stock_emd import emd_plot
 
 try:    
     import gevent
@@ -43,7 +46,7 @@ def get_mkt(tks):
         return '1'
 
 def _random(n=13):
-    from random import randint
+    
     start = 10**(n-1)
     end = (10**n)-1
     return str(randint(start, end))
@@ -111,7 +114,7 @@ def real_time_ticks(tick,info,flags,use_cache = False):
         plt.show()
         
     if 'emd' in flags:
-        from stock_emd import emd_plot
+        
         emd_res = emd_plot(df['price'])        
     return {'code':tick,'info':info[tick],'tech':{'price':'','data':{}}}
     
@@ -206,8 +209,7 @@ def get_one_ticker_k_data(tick,info,flags):
         cat_boost_factor_check(df)
     # cdl_info = None
     # df.to_csv(fname)
-    if 'emd' in flags:
-        from stock_emd import emd_plot
+    if 'emd' in flags:        
         emd_res = emd_plot(df['close'])  
     # pdb.set_trace()
     dic = df.to_dict()
@@ -281,7 +283,7 @@ def article_loop(func_article_list,func_view_list, func_article_detail,func_view
     func_view_article()
 
 def wscn_loop():
-    from stock_news_api_wscn import StockNewsWSCN
+    
     wscn = StockNewsWSCN()
     wscn.is_print = True
     # sflag = flags[-1]
