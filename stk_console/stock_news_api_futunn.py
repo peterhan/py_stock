@@ -10,11 +10,10 @@ import pdb,traceback
 import time
 import pandas as pd
 from collections import OrderedDict
-from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
 from matplotlib import pyplot as plt
-from bs4 import BeautifulSoup
 import logging
 
+from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
 # https://portal-api.coinmarketcap.com/v1/platform/alerts?limit=20
 # https://api.coinmarketcap.com/data-api/v3/map/all?listing_status=active,untracked
 # https://api.coinmarketcap.com/data-api/v3/topsearch/rank

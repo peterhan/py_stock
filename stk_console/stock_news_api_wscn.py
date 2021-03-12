@@ -1,6 +1,4 @@
-from requests import get,post
-from bs4 import BeautifulSoup
-from jsonpath_rw import jsonpath,parse
+from requests import get,post 
 import sys
 import pdb
 import time
