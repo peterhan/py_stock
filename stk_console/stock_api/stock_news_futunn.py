@@ -12,7 +12,8 @@ import pandas as pd
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 import logging
-
+if __name__ == '__main__':
+    sys.path.append('..')
 from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
 # https://portal-api.coinmarketcap.com/v1/platform/alerts?limit=20
 # https://api.coinmarketcap.com/data-api/v3/map/all?listing_status=active,untracked

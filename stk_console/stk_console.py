@@ -13,12 +13,14 @@ import locale
 from random import randint
 from collections import OrderedDict
 from matplotlib import pyplot as plt
+
 from tushare_patch import get_latest_news,get_today_ticks,print_latest_news
 from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_str
 from tech_algo_analyse import cat_boost_factor_check
+
 from stk_util import get_article_detail,cli_select_menu
 
-from stock_news_api_wscn import StockNewsWSCN
+from stock_api import StockNewsWSCN
 from stock_emd import emd_plot
 
 try:    

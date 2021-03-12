@@ -17,7 +17,7 @@ import talib
 from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str
 from tech_algo_analyse import cat_boost_factor_check
 from yfinance_cache import yfinance_cache
-from stock_news_api_futunn import StockNewsFUTUNN
+from stock_api import StockNewsFUTUNN
 
 try:    
     import gevent
@@ -211,6 +211,8 @@ def us_main_loop(mode):
     # pdb.set_trace()
     tail3res =  {}
     for i,result in enumerate(results):
+        if result is None:
+            continue
         ndf = result['df']
         info = result['info']
         tick = result['code']        

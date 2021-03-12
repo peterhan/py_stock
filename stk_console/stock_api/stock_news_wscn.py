@@ -6,6 +6,8 @@ import pandas as pd
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 from bs4 import BeautifulSoup
+if __name__ == '__main__':
+    sys.path.append('..')
 from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
 
 class StockNewsWSCN():
@@ -231,6 +233,7 @@ if __name__ =='__main__':
     pd.set_option('display.max_columns',80)
     pd.set_option('display.width',None)
     pd.options.display.float_format = '{:.2f}'.format
+    
     wscn = StockNewsWSCN()
     wscn.is_print = True
     stks = ['UMC.NYSE','600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX','PLTR.NASD']
