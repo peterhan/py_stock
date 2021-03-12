@@ -1,13 +1,13 @@
 from requests import get,post
 from bs4 import BeautifulSoup
-from jsonpath_rw import jsonpath,parse
 import sys
 import pdb
 import pandas as pd
 from collections import OrderedDict
+from matplotlib import pyplot as plt 
+if __name__ == '__main__':
+    sys.path.append('..')
 from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
-from matplotlib import pyplot as plt
-from bs4 import BeautifulSoup
 
 
 

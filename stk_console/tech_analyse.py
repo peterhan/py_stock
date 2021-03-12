@@ -417,6 +417,11 @@ def ma_analyse(ohlcv,period=10,target_col='close'):
     return res_info,df
 
 @time_count
+def td9_analyse(ohlcv):
+    close = ohlcv['close']
+    return ohlcv
+    
+@time_count
 def tech_analyse(df):  
     def round_float(lst):
         return map(lambda x:'%0.2f'%x,lst)   

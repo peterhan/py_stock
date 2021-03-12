@@ -12,13 +12,12 @@ import keyring
 from alpha_vantage.timeseries import TimeSeries
 from matplotlib import pyplot as plt
 import yfinance as yf
-from stk_console import cli_select_menu
-from stk_util import time_count
+from stk_util import time_count,cli_select_menu,get_article_detail
 import talib
 from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str
 from tech_algo_analyse import cat_boost_factor_check
 from yfinance_cache import yfinance_cache
-from stock_news_api_futunn import StockNewsFUTUNN
+from stock_api import StockNewsFUTUNN
 
 try:    
     import gevent
@@ -82,6 +81,7 @@ def stock_map():
     "https://finviz.com/api/map_perf.ashx?t=sec"
     return 
   
+_ftnn = StockNewsFUTUNN()
 @time_count
 def get_stock_kline(tick,flags,api_route='futu'):    
     start = (datetime.datetime.now()-datetime.timedelta(days=90)).strftime('%Y-%m-%d')
@@ -90,25 +90,26 @@ def get_stock_kline(tick,flags,api_route='futu'):
     for type in ['futu','yfinance','vantage']:
         if type in flags:
             api_route = type
-    print 'api_route:',api_route
+    cyc = 'day'
+    if 'month' in flags:
+        cyc='month'
+    if 'day' in flags:
+        cyc='day'
+    if 'week' in flags:
+        cyc='week'
+    if 'intraday' in flags:
+        cyc='intraday'
+    print 'api_route:',api_route,cyc
     if api_route == 'vantage':
         if '.' or '-' in tick:
-            tick = tick.replace('-','.').split('.')[0]
-        mode = 'day'
-        if 'month' in flags:
-            mode='month'
-        if 'day' in flags:
-            mode='day'
-        if 'intraday' in flags:
-            mode='intraday'
-        his_df = get_ticker_df_alpha_vantage(tick,mode)
+            tick = tick.replace('-','.').split('.')[0]        
+        his_df = get_ticker_df_alpha_vantage(tick,cyc)
     elif api_route=='yfinance':         
         his_df = yf.Ticker(tick).history(start=start)
         his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high'
         ,'Low':'low','Close':'close','Volume':'volume'
         ,'Dividends':'dividends','Stock Splits':'splits'})        
-    elif api_route=='futu':
-        _ftnn = StockNewsFUTUNN()
+    elif api_route=='futu':        
         tick=tick.upper().replace('.','-')
         if tick.find('-')==-1:
             if re.match('[A-z]+',tick):
@@ -118,7 +119,7 @@ def get_stock_kline(tick,flags,api_route='futu'):
         if tick.endswith('-HK') and len(tick)==7:
             tick='0'+tick
         print tick
-        his_df = _ftnn.get_kline(tick)     
+        his_df = _ftnn.get_kline(tick, cyc)     
     return his_df
  
 @time_count 
@@ -176,11 +177,11 @@ def us_main_loop(mode):
         'q':'quit','d':'detail','i':'pdb'
         ,'s':'onestock','n':'news','r':'realtime'
         ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'f':'futu','vt':"vantage"
-        ,'g':"graph",'ia':'intraday','id':'day','im':'month','u':'us','z':'zh'
+        ,'g':"graph",'ia':'intraday','id':'day','iw':'week','im':'month','u':'us','z':'zh'
         ,'e':'emd','c':'catboost','o':'option_chain'
     }
     menu_dict = conf_tks
-    groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
+    groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_columns=7,control_flag_map=opt_map) 
     s_ticks = []
     for group in groups:
         s_ticks.extend(conf_tks.get(group,group).replace('`','').replace('  ',' ').split(' ')) 
@@ -210,6 +211,8 @@ def us_main_loop(mode):
     # pdb.set_trace()
     tail3res =  {}
     for i,result in enumerate(results):
+        if result is None:
+            continue
         ndf = result['df']
         info = result['info']
         tick = result['code']        
@@ -237,6 +240,15 @@ def us_main_loop(mode):
            print json.dumps(result['option_chain']  ,indent=2)
     if len(tail3res)>0:
         print pd.concat(tail3res,axis=0)
+    if 'news' in flags:
+        df= _ftnn.get_news()
+        df.index=pd.RangeIndex(df.shape[0])
+        idxs,nflags = cli_select_menu(df['content'], menu_columns=1)
+        for rowid in idxs:
+            url = df.iloc[rowid]['detail_url']
+            texts,html = get_article_detail(url,'div')
+            pdb.set_trace()
+            print (u'\n'.join(texts[:-5])).encode('gbk','ignore')
     if 'graph' in flags:
         plt.show()    
     return flags

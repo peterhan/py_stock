@@ -10,11 +10,11 @@ import pdb,traceback
 import time
 import pandas as pd
 from collections import OrderedDict
-from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
 from matplotlib import pyplot as plt
-from bs4 import BeautifulSoup
 import logging
-
+if __name__ == '__main__':
+    sys.path.append('..')
+from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
 # https://portal-api.coinmarketcap.com/v1/platform/alerts?limit=20
 # https://api.coinmarketcap.com/data-api/v3/map/all?listing_status=active,untracked
 # https://api.coinmarketcap.com/data-api/v3/topsearch/rank
@@ -30,6 +30,7 @@ import logging
 ## https://www.futunn.com/new-quote/news-list?page=0&page_size=10&_=1614060549335
 # https://finance.futunn.com/api/finance/company-info?code=01682&label=hk
 # https://finance.futunn.com/api/finance/dividend?code=01682&label=hk
+# https://www.futunn.com/search-stock/predict?keyword=TSLA&_=1614858445525
 
 class StockNewsFUTUNN():
     def __init__(self):
@@ -61,12 +62,15 @@ class StockNewsFUTUNN():
             return self.stock_code_cache[stock_code]
         try:
             resp = requests.get(url,headers=self.headers)
+            jsline = ''
+            for line in resp.text.splitlines():
+                if line.find('<script>window._langParams')!=-1:
+                    jsline = line
             if self.debug:
                 print url
                 pdb.set_trace()
-            for line in resp.text.splitlines():
-                if line.startswith(' <script>window._langParams'):
-                    jsline = line
+            if len(jsline)==0:
+                raise Exception('Not Found window._langParams @ %s'%url)
             start_seg = 'window.__INITIAL_STATE__='
             start = jsline.find(start_seg)
             end = jsline.find(',window._params')
@@ -191,7 +195,7 @@ class StockNewsFUTUNN():
         resp = requests.get(url,headers=self.headers)
         soup = BeautifulSoup(resp.text,'lxml')
         pdb.set_trace()
-    
+        return
     
     def get_news(self,start=0,cnt=20):
         url='https://www.futunn.com/new-quote/'\
@@ -220,14 +224,14 @@ if __name__ =='__main__':
     pd.options.display.float_format = '{:.2f}'.format
     ftnn = StockNewsFUTUNN()
     ftnn.get_news()
-    for stk in ['STWD-US','300012-SZ']:
+    for stk in ['TSLA-US', '300015-SZ']:
     # for stk in ['CCIV-US','TSLA-US','03690-HK']:
         ftnn.debug=True
         # ftnn.get_sec_id(stk)
         # ftnn.get_company_info(stk)
         # ftnn.get_dividend(stk)
-        df = ftnn.get_stock_news(stk)
-        df = ftnn.get_kline(stk,'day')
+        dfn = ftnn.get_stock_news(stk)
+        df1 = ftnn.get_kline(stk,'day')
         df2 = ftnn.get_stock_minute(stk)
         pdb.set_trace()
     

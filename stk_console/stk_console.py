@@ -10,13 +10,18 @@ import ConfigParser
 import pdb
 import traceback
 import locale
+from random import randint
 from collections import OrderedDict
 from matplotlib import pyplot as plt
+
 from tushare_patch import get_latest_news,get_today_ticks,print_latest_news
 from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_str
 from tech_algo_analyse import cat_boost_factor_check
-from stk_util import get_article_detail
 
+from stk_util import get_article_detail,cli_select_menu
+
+from stock_api import StockNewsWSCN
+from stock_emd import emd_plot
 
 try:    
     import gevent
@@ -43,7 +48,7 @@ def get_mkt(tks):
         return '1'
 
 def _random(n=13):
-    from random import randint
+    
     start = 10**(n-1)
     end = (10**n)-1
     return str(randint(start, end))
@@ -111,7 +116,7 @@ def real_time_ticks(tick,info,flags,use_cache = False):
         plt.show()
         
     if 'emd' in flags:
-        from stock_emd import emd_plot
+        
         emd_res = emd_plot(df['price'])        
     return {'code':tick,'info':info[tick],'tech':{'price':'','data':{}}}
     
@@ -132,7 +137,7 @@ def summary_list_ticks(tks,flags):
     cname = rdf.columns
     # cname[3]='price'
     # rdf.rename(cname,inplace=True)
-    if 'fullname' in flags:
+    if 'fullname' not in flags:
         rdf['name'] = rdf['name'].str.slice(0,4,2)
     else:
         rdf['name'] = rdf['name'].str.slice(0,10,1)
@@ -171,7 +176,6 @@ def summary_list_ticks(tks,flags):
     # print ttdf[ttdf.volume>=100].groupby(ttdf.type).sum()
     return info
 
-    
 def split_stocks(tks):
     ntks = OrderedDict()
     for k,v in tks.items():        
@@ -183,21 +187,7 @@ def to_num(s):
         return int(s)
     except ValueError:
         return s
-
-def line_cross(line1,line2):
-    diff = line1 - line2
-
-def add_delta_n(df):
-    for i in [1,3,5,10,20,30,60,90]:
-        df['delta_b_%02d'%i] = df['close'] - df.shift(i)['close']    
-    for i in [1,3,5,10,20,30,60,90]:
-        df['vol_delta_b_%02d'%i] = df['volume'] - df.shift(i)['volume']
-    for i in [1,3,5,10,20,30,60,90]:
-        df['delta_f_%02d'%i] = df.shift(-i)['close']  - df['close']
-    for i in [1,3,5,10,20,30,60,90]:
-        df['vol_delta_f_%02d'%i] = df.shift(-i)['volume'] - df['volume']
-    return df
-    
+   
 def get_one_ticker_k_data(tick,info,flags):    
     df = ts.get_k_data(tick)
     # df = ts.get_hist_data(tick)
@@ -221,61 +211,12 @@ def get_one_ticker_k_data(tick,info,flags):
         cat_boost_factor_check(df)
     # cdl_info = None
     # df.to_csv(fname)
-    if 'emd' in flags:
-        from stock_emd import emd_plot
+    if 'emd' in flags:        
         emd_res = emd_plot(df['close'])  
     # pdb.set_trace()
     dic = df.to_dict()
     return {'code':tick,'info':info[tick]
            ,'tech':tech_info,'cdl':cdl_info,'df':dic}
- 
-
-def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=22, opt_map = None):    
-    select_map = {}
-    flags = []
-    for i,key in enumerate(select_dic):
-        select_map[i+1] = key
-        print ('(%s) %s'%(i+1,key)).ljust(column_width),
-        if (i+1)%menu_width == 0:
-            print ''
-    print ''
-    if default_input is None:
-        this_input = raw_input('SEL>')
-    else:
-        this_input = default_input
-    words = this_input.strip().replace(',',' ').replace('  ',' ').split(' ')    
-    default_opt = {
-        'q':'quit','d':'detail','i':'pdb','s':'onestock','top':'top','inst':'inst'
-        ,'r':'realtime','f':'fullname','g':'graph','u':'us','z':'zh','e':'emd','c':'catboost'
-        ,'n':'news_sina'
-    }
-    if opt_map is None:
-        opt_map = default_opt
-    if '>' in words:
-        idx = words.index('>') 
-        wd = words[idx:]
-        words = words[:idx]
-        flags.append( wd )
-
-    for key,vlu in opt_map.items():
-        for word in words:
-            if key == word:
-                flags.insert(0,vlu)
-                words.remove(key)
-    try:
-        selected_keys = []
-        for word in words:
-            if len(word)==0:
-                continue
-            if len(word)<=3 and word.isdigit():
-                selected_keys.append(select_map[int(word)]) 
-            else:
-                selected_keys.append(word)
-        return selected_keys, flags
-    except Exception as e:
-        print(e)
-        return [], flags   
-
         
 def interact_choose_ticks(mode):
     # fname = 'stk_console.v01.json'
@@ -295,26 +236,26 @@ def interact_choose_ticks(mode):
         ,'s':'onestock','top':'top','inst':'inst'
         ,'r':'realtime','f':'fullname','g':'graph'
         ,'u':'us','z':'zh','e':'emd','c':'catboost'
-        ,'nw':'news_wscn','wscn':'news_wscn'
+        ,'nw':'news_wscn','hw':'hot_wscn','ws':'wscn_loop'
         ,'ns':'news_sina','n':'news_sina'
         ,'p':'pause' ,'a':'article'
     }
     
     if '-d' in mode:
         input = '3'
-        ticks,flags = cli_select_menu(conf_tks,input,opt_map=opt_map)        
+        groups,flags = cli_select_menu(conf_tks,input,control_flag_map=opt_map)        
     else:
-        ticks,flags = cli_select_menu(conf_tks,opt_map=opt_map)
-    #### selected ticks
+        groups,flags = cli_select_menu(conf_tks,control_flag_map=opt_map)
+    #### selected groups
     sel_tks=set()
-    for id in ticks:
-        if id in conf_tks:
-            sel_tks.update( conf_tks[id])
+    for group in groups:
+        if group in conf_tks:
+            sel_tks.update( conf_tks[group])
         else:
-            sel_tks.add( id)
+            sel_tks.add( group)
     sel_tks = list(sel_tks)
     #####
-    print 'Input: %s, Ticks: %s, Flags: %s'%(ticks,','.join(sel_tks),flags) 
+    print 'Input: %s, Ticks: %s, Flags: %s'%(groups,','.join(sel_tks),flags) 
     info = summary_list_ticks(sel_tks,flags)
     time.sleep(3)
     if '-d' in mode or 'detail' in flags or 'graph' in flags:
@@ -326,20 +267,27 @@ def interact_choose_ticks(mode):
         input = ''
     #####
     if input == 'y':
-        the_ticks = sel_tks
+        ret_ticks = sel_tks
     elif to_num(input) < len(sel_tks): 
         # pdb.set_trace()
-        the_ticks = [ filter(lambda entry:entry[1]['id']==input, info.items())[0][1]['code'] ]
+        ret_ticks = [ filter(lambda entry:entry[1]['id']==input, info.items())[0][1]['code'] ]
     elif unicode(input) in sel_tks: 
-        the_ticks = [unicode(input)]   
+        ret_ticks = [unicode(input)]   
     else:
-        the_ticks = []
+        ret_ticks = []
     #####
-    return the_ticks, info, flags
+    return ret_ticks, info, flags
+
+def article_loop(func_article_list,func_view_list, func_article_detail,func_view_article):
+    func_article_list()
+    func_view_list()
+    func_article_detail()
+    func_view_article()
 
 def wscn_loop():
-    from stock_news_api_wscn import StockNewsWSCN
-    wscn = StockNewsWSCN()        
+    
+    wscn = StockNewsWSCN()
+    wscn.is_print = True
     # sflag = flags[-1]
     mode='live,info_flow,hot_article,macro,market_rank,market_real,article,trend,kline,quit'.split(',')
     select_entry = OrderedDict(zip(mode,mode))
@@ -353,11 +301,18 @@ def wscn_loop():
                     if len(flags)>0:
                         sflag = flags[-1]
                         wscn.mode_run(choosed,stocks=sflag[-1].split('#'))
+                if choosed in ('info_flow','hot_article'):
+                    df = wscn.mode_run(choosed)
+                    df['code'] = df['uri'].str.replace('https://wallstreetcn.com','')
+                    codes = sorted(df['code'])
+                    _chooseds,_flags = cli_select_menu(OrderedDict(zip(codes, codes)) )
+                    wscn.mode_run('article',stocks=_chooseds)
                 else:
                     wscn.mode_run(choosed)   
             except:
                 traceback.print_exc()
-    
+ 
+ 
 def cn_main_loop(mode):
     the_ticks, info, flags = interact_choose_ticks(mode)       
     # print the_ticks
@@ -369,16 +324,25 @@ def cn_main_loop(mode):
         exec_func = real_time_ticks
     elif 'news_sina' in flags :
         df = get_latest_news()
-        print_latest_news(df)
-    elif 'article' in flags:
-        if isinstance(flags[-1],list):
-            sflag = flags[-1]
-        print 'url:',sflag[-1],'tag:',sflag[-2]
-        texts,html = get_article_detail(sflag[-1],sflag[-2])
-        if 'pdb' in flags:
-            pdb.set_trace()
-        print texts
-    elif 'news_wscn' in flags :
+        idxs,nflags = cli_select_menu(df['title'], menu_columns=1)
+        for rowid in idxs:
+            url = df.iloc[rowid]['url']
+            texts,html = get_article_detail(url, 'p')
+            print (u'\n'.join(texts[:-5])).encode(ENCODE,'ignore')
+    elif 'news_wscn' in flags or 'hot_wscn' in flags  :
+        wscn = StockNewsWSCN()
+        if 'hot_wscn' in flags:            
+            df = wscn.mode_run('hot_article')
+        else:
+            df = wscn.mode_run('info_flow')
+        idxs,nflags = cli_select_menu(df['title'], menu_columns=1)
+        # pdb.set_trace()
+        for rowid in idxs:
+            url = df.iloc[rowid]['uri']
+            res = wscn.mode_run('article',stocks=[url])
+            print res[0].encode(ENCODE,'ignore')
+            print ''
+    elif 'wscn_loop' in flags :
         wscn_loop()     
     elif 'top' in flags:
         df = ts.top_list()       
@@ -440,7 +404,7 @@ def cn_main_loop(mode):
         raw_input('pause')
     return flags
     
- 
+   
 def test():
     ts.get_sz50s()
     ts.get_hs300s()

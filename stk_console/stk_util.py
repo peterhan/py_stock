@@ -2,9 +2,12 @@ import datetime
 import time
 import json
 import pdb
+from collections import OrderedDict
 from requests import get,post
 from bs4 import BeautifulSoup
-
+import pandas as pd
+import locale
+ENCODE = locale.getpreferredencoding()
 def to_timestamp(ts):
     return datetime.datetime.fromtimestamp(float(ts))
 
@@ -34,6 +37,7 @@ def get_date(fmt=DATE_FORMAT,base= datetime.datetime.now(), isobj=False, **kwarg
 def js_dumps(obj,encode='gbk'):    
     return json.dumps(obj,indent=2,ensure_ascii=False).encode(encode,'ignore')
     
+    
 def gen_random(n=16):
     from random import randint
     start = 10 ** (n - 1)
@@ -42,7 +46,7 @@ def gen_random(n=16):
     
 def get_article_detail(url,tag='article'):
     url = url
-    html = get(url).text
+    html = get(url).content
     # pdb.set_trace()
     soup = BeautifulSoup(html,"lxml")
     # pdb.set_trace()
@@ -134,3 +138,79 @@ def time_count(func):
             print '#[%s] take %0.2f ms'%(func.__name__, tcnt)
         return res
     return wrapper
+    
+def cli_select_menu(select_dic, default_input=None, menu_columns=5, column_width=22, control_flag_map = None):
+    '''
+    cli menu
+    return select_keys,control_flags
+    '''
+    default_control_flag_map = {
+        'q':'quit','d':'detail','i':'pdb','s':'onestock','top':'top','inst':'inst'
+        ,'r':'realtime','f':'fullname','g':'graph','u':'us','z':'zh','e':'emd','c':'catboost'
+        ,'n':'news_sina'
+    }
+    select_map = {}
+    control_flags = []
+    ## generate menu
+    stype = 'list'
+    if isinstance(select_dic,pd.Series):
+        stype='series'        
+        for i, key in select_dic.iteritems():            
+            select_map[i] = key
+    else:
+        if isinstance(select_dic,OrderedDict):
+            stype='list'
+        elif isinstance(select_dic,dict):
+            stype='dict'
+        for i, key in enumerate(select_dic):
+            idx = i+1
+            select_map[idx] = key
+    for idx,key in select_map.items():
+        print ('(%s) %s'%(idx,key.encode(ENCODE,'ignore'))).ljust(column_width),
+        if (idx)%menu_columns == 0:
+            print ''
+    print ''
+    if default_input is None:
+        this_input = raw_input('SEL>')
+    else:
+        this_input = default_input
+    input_words = this_input.strip().replace(',',' ').replace('  ',' ').split(' ')    
+    
+    if control_flag_map is None:
+        control_flag_map = default_control_flag_map
+    ## extract sub select list
+    if '>' in input_words:
+        idx = input_words.index('>') 
+        wd = input_words[idx:]
+        input_words = input_words[:idx]
+        control_flags.append( wd )
+    ## extract control flag
+    for key,vlu in control_flag_map.items():
+        for word in input_words:
+            if key == word:
+                control_flags.insert(0,vlu)
+                input_words.remove(key)
+    ## extract select_keys
+    try:
+        selected_keys = []
+        for word in input_words:
+            if len(word)==0:
+                continue
+            if len(word)<=3 and word.isdigit():
+                if stype=='dict':
+                    selected_keys.append(select_dic[ select_map[int(word)] ]) 
+                elif stype=='series':
+                    selected_keys.append(int(word)) 
+                else:
+                    selected_keys.append(select_map[int(word)]) 
+            else:
+                selected_keys.append(word)
+        return selected_keys, control_flags
+    except Exception as e:
+        print(e)
+        return [], control_flags
+        
+if __name__=='__main__':
+    print cli_select_menu(pd.Series('a b c d'.split(' ')))
+    print cli_select_menu({'a':['b','c'],'c':['d','e']})
+    print cli_select_menu(['a','b','c'])

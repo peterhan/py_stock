@@ -1,13 +1,14 @@
-from requests import get,post
-from bs4 import BeautifulSoup
-from jsonpath_rw import jsonpath,parse
+from requests import get,post 
 import sys
 import pdb
+import time
 import pandas as pd
 from collections import OrderedDict
-from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
 from matplotlib import pyplot as plt
 from bs4 import BeautifulSoup
+if __name__ == '__main__':
+    sys.path.append('..')
+from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
 
 class StockNewsWSCN():
     def __init__(self):
@@ -20,7 +21,8 @@ class StockNewsWSCN():
         
         self.LIVE_CHANNEL = 'global,a-stock,us-stock,hk-stock,forex,commodity'.split(',')
         self.INFO_CHANNEL = 'global,shares,bonds,commodities,enterprise,economy,charts'.split(',')
-        self.MKTSTK_TYPE = 'forexdata#index,US#china,US#star,US#stock,HK#stock,mdc#stock'.split(',')       
+        self.MKTSTK_TYPE = 'forexdata#index,US#china,US#star,US#stock,HK#stock,mdc#stock'.split(',')     
+        self.is_print=False
         pass
         
     def get_json(self,url):
@@ -50,7 +52,7 @@ class StockNewsWSCN():
         df2['type']='week'
         df = pd.concat([df1,df2],axis=0,sort=True)
         df['display_time'] = df['display_time'].apply(to_timestamp)
-        print df[['type','title','uri']]
+        # print df[['type','title','uri']]
         # pdb.set_trace()
         return df
         
@@ -61,12 +63,19 @@ class StockNewsWSCN():
         items = [elm['resource'] for elm in jo['data']['items']]
         df = pd.DataFrame.from_dict(items,orient='columns')
         df['display_time'] = df['display_time'].apply(to_timestamp)
-        print df[['title','display_time','uri']]
+        if self.is_print:
+            print df[['title','display_time','uri']]
         # pdb.set_trace()
         return df
         
     def article_detail(self,id):
-        url = 'https://wallstreetcn.com/articles/{}'.format(id)
+        if id.startswith('http'):
+            url=id
+        elif id.startswith('/'):
+            url='https://wallstreetcn.com'+id
+        else:
+            url = 'https://wallstreetcn.com/articles/{}'.format(id)
+        print url
         html = get(url).text
         # pdb.set_trace()
         soup = BeautifulSoup(html,"lxml")
@@ -84,8 +93,9 @@ class StockNewsWSCN():
         jo = self.get_json(url)    
         items = jo['data']['items']
         df = pd.DataFrame.from_dict(items,orient='columns')
-        df['c_time'] = df['display_time'].apply(to_timestamp)    
-        print df[['content_text','c_time']]
+        df['c_time'] = df['display_time'].apply(to_timestamp)  
+        if self.is_print:
+            print df[['content_text','c_time']]
         # pdb.set_trace()
         return df
     
@@ -106,7 +116,8 @@ class StockNewsWSCN():
         df.sort_values(['public_date'],ascending=False,inplace=True)
         df['short_title']='['+df['country']+'] '+df['title'].str[:20]
         cols = ['public_date','short_title','importance','previous','forecast','actual','unit']
-        print df[cols]
+        if self.is_print:
+            print df[cols]
         return df
         
     def trend(self,stocks):    
@@ -122,8 +133,9 @@ class StockNewsWSCN():
             df['tick_ts'] = df['tick_at'].apply(to_timestamp)
             df.set_index(df['tick_at'],inplace=True)
             df =  self.unify_column(df)
-            print '\n[%s]'%tick
-            print df.tail()
+            if self.is_print:
+                print '\n[%s]'%tick
+                print df.tail()
             result_dic[tick] = df
             # pdb.set_trace()
         return result_dic
@@ -145,8 +157,9 @@ class StockNewsWSCN():
             df['tick_ts'] = df['tick_at'].apply(to_timestamp)
             df.set_index(df['tick_at'],inplace=True)
             df =  self.unify_column(df)
-            print '\n[%s]'%tick
-            print df.tail()
+            if self.is_print:
+                print '\n[%s]'%tick
+                print df.tail()
             result_dic[tick] = df
             # pdb.set_trace()
         return result_dic
@@ -163,7 +176,8 @@ class StockNewsWSCN():
         fields = jo['data']['fields']
         df = pd.DataFrame.from_dict(snapshot,orient='index',columns=fields)
         # pdb.set_trace()
-        print df
+        if self.is_print:
+            print df
         return df 
         
     def market_rank(self,mkt_type,stk_type,cursor=0,limit=20,sort_by='px_change_rate',order_by='desc'):
@@ -178,7 +192,8 @@ class StockNewsWSCN():
         df = pd.DataFrame(candle,columns = fields)
         df['update_time'] = df['update_time'].apply(to_timestamp)
         # pdb.set_trace()
-        print df
+        if self.is_print:
+            print df
         return df
         
     def mode_run(self,mode='',**argv):
@@ -186,21 +201,26 @@ class StockNewsWSCN():
             print 'NoModeFound'
             pass
         elif mode=='macro':
-            self.macrodatas(1,2)
+            return self.macrodatas(1,2)
         elif mode=='info_flow':
-            self.info_flow()
+            return self.info_flow()
+        elif mode=='hot_article':
+            return self.hot_article()
         elif mode=='trend':
-            self.trend(**argv)
+            return self.trend(**argv)
         elif mode=='kline':
-            self.kline(**argv)
+            return self.kline(**argv)
+        elif mode=='market_real':
+            return self.market_real()
         elif mode=='article':
+            # pdb.set_trace()
+            texts=[]
             for id in argv.get("stocks",[]):
                 text = self.article_detail(id)
-                print text.encode('gbk','ignore')
-        elif mode=='hot_article':
-            self.hot_article()
-        elif mode=='market_real':
-            self.market_real()        
+                if self.is_print:
+                    print text.encode('gbk','ignore')
+                texts.append(text)
+            return texts                
         elif mode=='live':
             for channel in reversed(self.LIVE_CHANNEL):
                 self.lives(channel)
@@ -212,18 +232,20 @@ class StockNewsWSCN():
             print 'NotValidMode:',mode
 
 
-
 if __name__ =='__main__':
     pd.set_option('display.max_rows',None)
     pd.set_option('display.max_columns',80)
     pd.set_option('display.width',None)
     pd.options.display.float_format = '{:.2f}'.format
+    
     wscn = StockNewsWSCN()
+    wscn.is_print = True
     stks = ['UMC.NYSE','600438.SS','AMD.NASD','STWD.NYSE','TSLA.NASD','01818.HKEX','PLTR.NASD']
     
-    wscn.article()
-    sys.exit()
+    # sys.exit()
     wscn.mode_run('hot_article')
+    # wscn.article_detail('3623418')
+    wscn.mode_run('article',stocks=['https://wallstreetcn.com/articles/3623418'])
     wscn.mode_run('macro')
     wscn.mode_run('info_flow')
     wscn.mode_run('market_rank')
