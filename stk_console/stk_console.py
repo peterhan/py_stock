@@ -171,7 +171,6 @@ def summary_list_ticks(tks,flags):
     # print ttdf[ttdf.volume>=100].groupby(ttdf.type).sum()
     return info
 
-    
 def split_stocks(tks):
     ntks = OrderedDict()
     for k,v in tks.items():        
@@ -183,7 +182,6 @@ def to_num(s):
         return int(s)
     except ValueError:
         return s
-
    
 def get_one_ticker_k_data(tick,info,flags):    
     df = ts.get_k_data(tick)
@@ -215,7 +213,6 @@ def get_one_ticker_k_data(tick,info,flags):
     dic = df.to_dict()
     return {'code':tick,'info':info[tick]
            ,'tech':tech_info,'cdl':cdl_info,'df':dic}
- 
         
 def interact_choose_ticks(mode):
     # fname = 'stk_console.v01.json'
