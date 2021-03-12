@@ -236,26 +236,26 @@ def interact_choose_ticks(mode):
         ,'s':'onestock','top':'top','inst':'inst'
         ,'r':'realtime','f':'fullname','g':'graph'
         ,'u':'us','z':'zh','e':'emd','c':'catboost'
-        ,'nw':'news_wscn','wscn':'news_wscn'
+        ,'nw':'news_wscn','hw':'hot_wscn','ws':'wscn_loop'
         ,'ns':'news_sina','n':'news_sina'
         ,'p':'pause' ,'a':'article'
     }
     
     if '-d' in mode:
         input = '3'
-        ticks,flags = cli_select_menu(conf_tks,input,control_flag_map=opt_map)        
+        groups,flags = cli_select_menu(conf_tks,input,control_flag_map=opt_map)        
     else:
-        ticks,flags = cli_select_menu(conf_tks,control_flag_map=opt_map)
-    #### selected ticks
+        groups,flags = cli_select_menu(conf_tks,control_flag_map=opt_map)
+    #### selected groups
     sel_tks=set()
-    for id in ticks:
-        if id in conf_tks:
-            sel_tks.update( conf_tks[id])
+    for group in groups:
+        if group in conf_tks:
+            sel_tks.update( conf_tks[group])
         else:
-            sel_tks.add( id)
+            sel_tks.add( group)
     sel_tks = list(sel_tks)
     #####
-    print 'Input: %s, Ticks: %s, Flags: %s'%(ticks,','.join(sel_tks),flags) 
+    print 'Input: %s, Ticks: %s, Flags: %s'%(groups,','.join(sel_tks),flags) 
     info = summary_list_ticks(sel_tks,flags)
     time.sleep(3)
     if '-d' in mode or 'detail' in flags or 'graph' in flags:
@@ -267,16 +267,16 @@ def interact_choose_ticks(mode):
         input = ''
     #####
     if input == 'y':
-        the_ticks = sel_tks
+        ret_ticks = sel_tks
     elif to_num(input) < len(sel_tks): 
         # pdb.set_trace()
-        the_ticks = [ filter(lambda entry:entry[1]['id']==input, info.items())[0][1]['code'] ]
+        ret_ticks = [ filter(lambda entry:entry[1]['id']==input, info.items())[0][1]['code'] ]
     elif unicode(input) in sel_tks: 
-        the_ticks = [unicode(input)]   
+        ret_ticks = [unicode(input)]   
     else:
-        the_ticks = []
+        ret_ticks = []
     #####
-    return the_ticks, info, flags
+    return ret_ticks, info, flags
 
 def article_loop(func_article_list,func_view_list, func_article_detail,func_view_article):
     func_article_list()
@@ -311,7 +311,8 @@ def wscn_loop():
                     wscn.mode_run(choosed)   
             except:
                 traceback.print_exc()
-    
+ 
+ 
 def cn_main_loop(mode):
     the_ticks, info, flags = interact_choose_ticks(mode)       
     # print the_ticks
@@ -323,16 +324,25 @@ def cn_main_loop(mode):
         exec_func = real_time_ticks
     elif 'news_sina' in flags :
         df = get_latest_news()
-        print_latest_news(df)
-    elif 'article' in flags:
-        if isinstance(flags[-1],list):
-            sflag = flags[-1]
-        print 'url:',sflag[-1]
-        texts,html = get_article_detail(sflag[-1],'p')
-        if 'pdb' in flags:
-            pdb.set_trace()
-        print (u'\n'.join(texts[:-5])).encode(ENCODE,'ignore')
-    elif 'news_wscn' in flags :
+        idxs,nflags = cli_select_menu(df['title'], menu_columns=1)
+        for rowid in idxs:
+            url = df.iloc[rowid]['url']
+            texts,html = get_article_detail(url, 'p')
+            print (u'\n'.join(texts[:-5])).encode(ENCODE,'ignore')
+    elif 'news_wscn' in flags or 'hot_wscn' in flags  :
+        wscn = StockNewsWSCN()
+        if 'hot_wscn' in flags:            
+            df = wscn.mode_run('hot_article')
+        else:
+            df = wscn.mode_run('info_flow')
+        idxs,nflags = cli_select_menu(df['title'], menu_columns=1)
+        # pdb.set_trace()
+        for rowid in idxs:
+            url = df.iloc[rowid]['uri']
+            res = wscn.mode_run('article',stocks=[url])
+            print res[0].encode(ENCODE,'ignore')
+            print ''
+    elif 'wscn_loop' in flags :
         wscn_loop()     
     elif 'top' in flags:
         df = ts.top_list()       
@@ -394,7 +404,7 @@ def cn_main_loop(mode):
         raw_input('pause')
     return flags
     
- 
+   
 def test():
     ts.get_sz50s()
     ts.get_hs300s()

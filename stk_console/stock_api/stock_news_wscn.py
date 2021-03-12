@@ -71,10 +71,11 @@ class StockNewsWSCN():
     def article_detail(self,id):
         if id.startswith('http'):
             url=id
-        if id.startswith('/'):
+        elif id.startswith('/'):
             url='https://wallstreetcn.com'+id
         else:
             url = 'https://wallstreetcn.com/articles/{}'.format(id)
+        print url
         html = get(url).text
         # pdb.set_trace()
         soup = BeautifulSoup(html,"lxml")
@@ -212,11 +213,14 @@ class StockNewsWSCN():
         elif mode=='market_real':
             return self.market_real()
         elif mode=='article':
+            # pdb.set_trace()
+            texts=[]
             for id in argv.get("stocks",[]):
                 text = self.article_detail(id)
                 if self.is_print:
                     print text.encode('gbk','ignore')
-                # return text
+                texts.append(text)
+            return texts                
         elif mode=='live':
             for channel in reversed(self.LIVE_CHANNEL):
                 self.lives(channel)
@@ -240,7 +244,8 @@ if __name__ =='__main__':
     
     # sys.exit()
     wscn.mode_run('hot_article')
-    # wscn.article_detail('')
+    # wscn.article_detail('3623418')
+    wscn.mode_run('article',stocks=['https://wallstreetcn.com/articles/3623418'])
     wscn.mode_run('macro')
     wscn.mode_run('info_flow')
     wscn.mode_run('market_rank')

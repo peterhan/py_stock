@@ -12,7 +12,7 @@ import keyring
 from alpha_vantage.timeseries import TimeSeries
 from matplotlib import pyplot as plt
 import yfinance as yf
-from stk_util import time_count,cli_select_menu
+from stk_util import time_count,cli_select_menu,get_article_detail
 import talib
 from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str
 from tech_algo_analyse import cat_boost_factor_check
@@ -241,7 +241,14 @@ def us_main_loop(mode):
     if len(tail3res)>0:
         print pd.concat(tail3res,axis=0)
     if 'news' in flags:
-        print _ftnn.get_news()
+        df= _ftnn.get_news()
+        df.index=pd.RangeIndex(df.shape[0])
+        idxs,nflags = cli_select_menu(df['content'], menu_columns=1)
+        for rowid in idxs:
+            url = df.iloc[rowid]['detail_url']
+            texts,html = get_article_detail(url,'div')
+            pdb.set_trace()
+            print (u'\n'.join(texts[:-5])).encode('gbk','ignore')
     if 'graph' in flags:
         plt.show()    
     return flags

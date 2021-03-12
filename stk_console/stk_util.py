@@ -2,9 +2,12 @@ import datetime
 import time
 import json
 import pdb
+from collections import OrderedDict
 from requests import get,post
 from bs4 import BeautifulSoup
-
+import pandas as pd
+import locale
+ENCODE = locale.getpreferredencoding()
 def to_timestamp(ts):
     return datetime.datetime.fromtimestamp(float(ts))
 
@@ -149,10 +152,21 @@ def cli_select_menu(select_dic, default_input=None, menu_columns=5, column_width
     select_map = {}
     control_flags = []
     ## generate menu
-    for i, key in enumerate(select_dic):
-        idx = i+1
-        select_map[idx] = key
-        print ('(%s) %s'%(idx,key)).ljust(column_width),
+    stype = 'list'
+    if isinstance(select_dic,pd.Series):
+        stype='series'        
+        for i, key in select_dic.iteritems():            
+            select_map[i] = key
+    else:
+        if isinstance(select_dic,OrderedDict):
+            stype='list'
+        elif isinstance(select_dic,dict):
+            stype='dict'
+        for i, key in enumerate(select_dic):
+            idx = i+1
+            select_map[idx] = key
+    for idx,key in select_map.items():
+        print ('(%s) %s'%(idx,key.encode(ENCODE,'ignore'))).ljust(column_width),
         if (idx)%menu_columns == 0:
             print ''
     print ''
@@ -183,7 +197,12 @@ def cli_select_menu(select_dic, default_input=None, menu_columns=5, column_width
             if len(word)==0:
                 continue
             if len(word)<=3 and word.isdigit():
-                selected_keys.append(select_map[int(word)]) 
+                if stype=='dict':
+                    selected_keys.append(select_dic[ select_map[int(word)] ]) 
+                elif stype=='series':
+                    selected_keys.append(int(word)) 
+                else:
+                    selected_keys.append(select_map[int(word)]) 
             else:
                 selected_keys.append(word)
         return selected_keys, control_flags
@@ -192,5 +211,6 @@ def cli_select_menu(select_dic, default_input=None, menu_columns=5, column_width
         return [], control_flags
         
 if __name__=='__main__':
-    print cli_select_menu({'a':['b','c']})
+    print cli_select_menu(pd.Series('a b c d'.split(' ')))
+    print cli_select_menu({'a':['b','c'],'c':['d','e']})
     print cli_select_menu(['a','b','c'])

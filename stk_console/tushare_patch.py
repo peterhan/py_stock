@@ -136,6 +136,13 @@ def get_today_ticks(code=None, mkt='1', retry_count=3, pause=0.001):
     
 if __name__=='__main__':
     import pdb
+    from stk_util import cli_select_menu
+    df = get_latest_news()
+    skeys,nflags = cli_select_menu(df['title'], menu_columns=2,column_width=50)
+    for skey in skeys:
+        url = df.iloc[skey]['url']
+    pdb.set_trace()
+    print_latest_news(df)
     # print js_dumps(xgb_headmark())
     #print xgb_fastsubject()
     # print js_dumps(xgb_top_info())
