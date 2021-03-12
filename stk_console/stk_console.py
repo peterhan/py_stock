@@ -15,7 +15,7 @@ from matplotlib import pyplot as plt
 from tushare_patch import get_latest_news,get_today_ticks,print_latest_news
 from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_str
 from tech_algo_analyse import cat_boost_factor_check
-from stk_util import get_article_detail
+from stk_util import get_article_detail,cli_select_menu
 
 
 try:    
@@ -184,20 +184,7 @@ def to_num(s):
     except ValueError:
         return s
 
-def line_cross(line1,line2):
-    diff = line1 - line2
-
-def add_delta_n(df):
-    for i in [1,3,5,10,20,30,60,90]:
-        df['delta_b_%02d'%i] = df['close'] - df.shift(i)['close']    
-    for i in [1,3,5,10,20,30,60,90]:
-        df['vol_delta_b_%02d'%i] = df['volume'] - df.shift(i)['volume']
-    for i in [1,3,5,10,20,30,60,90]:
-        df['delta_f_%02d'%i] = df.shift(-i)['close']  - df['close']
-    for i in [1,3,5,10,20,30,60,90]:
-        df['vol_delta_f_%02d'%i] = df.shift(-i)['volume'] - df['volume']
-    return df
-    
+   
 def get_one_ticker_k_data(tick,info,flags):    
     df = ts.get_k_data(tick)
     # df = ts.get_hist_data(tick)
@@ -229,53 +216,6 @@ def get_one_ticker_k_data(tick,info,flags):
     return {'code':tick,'info':info[tick]
            ,'tech':tech_info,'cdl':cdl_info,'df':dic}
  
-
-def cli_select_menu(select_dic, default_input=None, menu_width=5, column_width=22, opt_map = None):    
-    select_map = {}
-    flags = []
-    for i,key in enumerate(select_dic):
-        select_map[i+1] = key
-        print ('(%s) %s'%(i+1,key)).ljust(column_width),
-        if (i+1)%menu_width == 0:
-            print ''
-    print ''
-    if default_input is None:
-        this_input = raw_input('SEL>')
-    else:
-        this_input = default_input
-    words = this_input.strip().replace(',',' ').replace('  ',' ').split(' ')    
-    default_opt = {
-        'q':'quit','d':'detail','i':'pdb','s':'onestock','top':'top','inst':'inst'
-        ,'r':'realtime','f':'fullname','g':'graph','u':'us','z':'zh','e':'emd','c':'catboost'
-        ,'n':'news_sina'
-    }
-    if opt_map is None:
-        opt_map = default_opt
-    if '>' in words:
-        idx = words.index('>') 
-        wd = words[idx:]
-        words = words[:idx]
-        flags.append( wd )
-
-    for key,vlu in opt_map.items():
-        for word in words:
-            if key == word:
-                flags.insert(0,vlu)
-                words.remove(key)
-    try:
-        selected_keys = []
-        for word in words:
-            if len(word)==0:
-                continue
-            if len(word)<=3 and word.isdigit():
-                selected_keys.append(select_map[int(word)]) 
-            else:
-                selected_keys.append(word)
-        return selected_keys, flags
-    except Exception as e:
-        print(e)
-        return [], flags   
-
         
 def interact_choose_ticks(mode):
     # fname = 'stk_console.v01.json'
@@ -302,9 +242,9 @@ def interact_choose_ticks(mode):
     
     if '-d' in mode:
         input = '3'
-        ticks,flags = cli_select_menu(conf_tks,input,opt_map=opt_map)        
+        ticks,flags = cli_select_menu(conf_tks,input,control_flag_map=opt_map)        
     else:
-        ticks,flags = cli_select_menu(conf_tks,opt_map=opt_map)
+        ticks,flags = cli_select_menu(conf_tks,control_flag_map=opt_map)
     #### selected ticks
     sel_tks=set()
     for id in ticks:
@@ -337,9 +277,16 @@ def interact_choose_ticks(mode):
     #####
     return the_ticks, info, flags
 
+def article_loop(func_article_list,func_view_list, func_article_detail,func_view_article):
+    func_article_list()
+    func_view_list()
+    func_article_detail()
+    func_view_article()
+
 def wscn_loop():
     from stock_news_api_wscn import StockNewsWSCN
-    wscn = StockNewsWSCN()        
+    wscn = StockNewsWSCN()
+    wscn.is_print = True
     # sflag = flags[-1]
     mode='live,info_flow,hot_article,macro,market_rank,market_real,article,trend,kline,quit'.split(',')
     select_entry = OrderedDict(zip(mode,mode))
@@ -354,7 +301,7 @@ def wscn_loop():
                         sflag = flags[-1]
                         wscn.mode_run(choosed,stocks=sflag[-1].split('#'))
                 if choosed in ('info_flow','hot_article'):
-                    df = wscn.mode_run(choosed)                 
+                    df = wscn.mode_run(choosed)
                     df['code'] = df['uri'].str.replace('https://wallstreetcn.com','')
                     codes = sorted(df['code'])
                     _chooseds,_flags = cli_select_menu(OrderedDict(zip(codes, codes)) )

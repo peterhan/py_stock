@@ -34,6 +34,7 @@ def get_date(fmt=DATE_FORMAT,base= datetime.datetime.now(), isobj=False, **kwarg
 def js_dumps(obj,encode='gbk'):    
     return json.dumps(obj,indent=2,ensure_ascii=False).encode(encode,'ignore')
     
+    
 def gen_random(n=16):
     from random import randint
     start = 10 ** (n - 1)
@@ -134,3 +135,62 @@ def time_count(func):
             print '#[%s] take %0.2f ms'%(func.__name__, tcnt)
         return res
     return wrapper
+    
+def cli_select_menu(select_dic, default_input=None, menu_columns=5, column_width=22, control_flag_map = None):
+    '''
+    cli menu
+    return select_keys,control_flags
+    '''
+    default_control_flag_map = {
+        'q':'quit','d':'detail','i':'pdb','s':'onestock','top':'top','inst':'inst'
+        ,'r':'realtime','f':'fullname','g':'graph','u':'us','z':'zh','e':'emd','c':'catboost'
+        ,'n':'news_sina'
+    }
+    select_map = {}
+    control_flags = []
+    ## generate menu
+    for i, key in enumerate(select_dic):
+        idx = i+1
+        select_map[idx] = key
+        print ('(%s) %s'%(idx,key)).ljust(column_width),
+        if (idx)%menu_columns == 0:
+            print ''
+    print ''
+    if default_input is None:
+        this_input = raw_input('SEL>')
+    else:
+        this_input = default_input
+    input_words = this_input.strip().replace(',',' ').replace('  ',' ').split(' ')    
+    
+    if control_flag_map is None:
+        control_flag_map = default_control_flag_map
+    ## extract sub select list
+    if '>' in input_words:
+        idx = input_words.index('>') 
+        wd = input_words[idx:]
+        input_words = input_words[:idx]
+        control_flags.append( wd )
+    ## extract control flag
+    for key,vlu in control_flag_map.items():
+        for word in input_words:
+            if key == word:
+                control_flags.insert(0,vlu)
+                input_words.remove(key)
+    ## extract select_keys
+    try:
+        selected_keys = []
+        for word in input_words:
+            if len(word)==0:
+                continue
+            if len(word)<=3 and word.isdigit():
+                selected_keys.append(select_map[int(word)]) 
+            else:
+                selected_keys.append(word)
+        return selected_keys, control_flags
+    except Exception as e:
+        print(e)
+        return [], control_flags
+        
+if __name__=='__main__':
+    print cli_select_menu({'a':['b','c']})
+    print cli_select_menu(['a','b','c'])

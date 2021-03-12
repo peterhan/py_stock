@@ -12,8 +12,7 @@ import keyring
 from alpha_vantage.timeseries import TimeSeries
 from matplotlib import pyplot as plt
 import yfinance as yf
-from stk_console import cli_select_menu
-from stk_util import time_count
+from stk_util import time_count,cli_select_menu
 import talib
 from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str
 from tech_algo_analyse import cat_boost_factor_check
@@ -182,7 +181,7 @@ def us_main_loop(mode):
         ,'e':'emd','c':'catboost','o':'option_chain'
     }
     menu_dict = conf_tks
-    groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_width=7,opt_map=opt_map) 
+    groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_columns=7,control_flag_map=opt_map) 
     s_ticks = []
     for group in groups:
         s_ticks.extend(conf_tks.get(group,group).replace('`','').replace('  ',' ').split(' ')) 
