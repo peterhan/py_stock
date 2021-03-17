@@ -247,7 +247,7 @@ def us_main_loop(mode):
         for rowid in idxs:
             url = df.iloc[rowid]['detail_url']
             texts,html = get_article_detail(url,'div')
-            pdb.set_trace()
+            # pdb.set_trace()
             print (u'\n'.join(texts[:-5])).encode('gbk','ignore')
     if 'graph' in flags:
         plt.show()    
