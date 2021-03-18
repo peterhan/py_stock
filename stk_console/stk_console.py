@@ -350,9 +350,12 @@ def cn_main_loop(mode):
         idxs,nflags = cli_select_menu(df['content'], menu_columns=1)
         for rowid in idxs:
             url = df.iloc[rowid]['detail_url']
-            texts,html = get_article_detail(url,'div')
+            texts,tags = get_article_detail(url,'div')
             # pdb.set_trace()
-            print (u'\n'.join(texts[:-5])).encode('gbk','ignore')
+            for tag in tags:
+                if 'content' in tag.attrs.get('id',''):
+                    print tag.text.encode('gbk','ignore')
+            # print (u'\n'.join(texts[:-5])).encode('gbk','ignore')
     elif 'wscn_loop' in flags :
         wscn_loop()     
     elif 'top' in flags:

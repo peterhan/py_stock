@@ -45,13 +45,15 @@ def gen_random(n=16):
     return str(randint(start, end))
     
 def get_article_detail(url,tag='article'):
+    print url
     url = url
     html = get(url).content
     # pdb.set_trace()
     soup = BeautifulSoup(html,"lxml")
+    tags = soup.find_all(tag)
     # pdb.set_trace()
-    texts =  map(lambda x:x.text ,soup.find_all(tag))
-    return texts,html
+    texts =  filter(lambda x:len(x)>0,map(lambda x:x.text.strip().replace('\n','') ,tags))
+    return texts,tags
 
 def json_extract(obj, key):
     """Recursively fetch values from nested JSON."""
@@ -211,6 +213,9 @@ def cli_select_menu(select_dic, default_input=None, menu_columns=5, column_width
         return [], control_flags
         
 if __name__=='__main__':
-    print cli_select_menu(pd.Series('a b c d'.split(' ')))
-    print cli_select_menu({'a':['b','c'],'c':['d','e']})
-    print cli_select_menu(['a','b','c'])
+    # print cli_select_menu(pd.Series('a b c d'.split(' ')))
+    # print cli_select_menu({'a':['b','c'],'c':['d','e']})
+    # print cli_select_menu(['a','b','c'])
+    text,tags= get_article_detail('https://news.futunn.com/flash/12271149','div')
+    pdb.set_trace()
+    # print get_article_detail('https://news.futunn.com/flash/12271149','div')
