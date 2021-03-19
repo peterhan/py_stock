@@ -246,11 +246,8 @@ def us_main_loop(mode):
         idxs,nflags = cli_select_menu(df['content'], menu_columns=1)
         for rowid in idxs:
             url = df.iloc[rowid]['detail_url']
-            texts,tags = get_article_detail(url,'div')
-            # pdb.set_trace()
-            for tag in tags:
-                if 'content' in tag.attrs.get('id',''):
-                    print tag.text.encode('gbk','ignore')
+            texts,tags = get_article_detail(url,'div','#content')
+            print texts
     if 'graph' in flags:
         plt.show()    
     return flags

@@ -328,8 +328,8 @@ def cn_main_loop(mode):
         idxs,nflags = cli_select_menu(df['title'], menu_columns=1)
         for rowid in idxs:
             url = df.iloc[rowid]['url']
-            texts,html = get_article_detail(url, 'p')
-            print (u'\n'.join(texts[:-5])).encode(ENCODE,'ignore')
+            texts,html = get_article_detail(url, 'p')            
+            print texts.encode(ENCODE,'ignore')
     elif 'news_wscn' in flags or 'hot_wscn' in flags  :
         wscn = StockNewsWSCN()
         if 'hot_wscn' in flags:            
@@ -349,12 +349,9 @@ def cn_main_loop(mode):
         df.index=pd.RangeIndex(df.shape[0])
         idxs,nflags = cli_select_menu(df['content'], menu_columns=1)
         for rowid in idxs:
-            url = df.iloc[rowid]['detail_url']
-            texts,tags = get_article_detail(url,'div')
-            # pdb.set_trace()
-            for tag in tags:
-                if 'content' in tag.attrs.get('id',''):
-                    print tag.text.encode('gbk','ignore')
+            url = df.iloc[rowid]['detail_url']            
+            texts,tags = get_article_detail(url,'div','#content')
+            print texts
             # print (u'\n'.join(texts[:-5])).encode('gbk','ignore')
     elif 'wscn_loop' in flags :
         wscn_loop()     

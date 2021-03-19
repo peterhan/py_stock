@@ -44,16 +44,30 @@ def gen_random(n=16):
     end = (10 ** n) - 1
     return str(randint(start, end))
     
-def get_article_detail(url,tag='article'):
+def get_article_detail(url,tag='article',attr_mask=''):
     print url
     url = url
     html = get(url).content
     # pdb.set_trace()
     soup = BeautifulSoup(html,"lxml")
     tags = soup.find_all(tag)
+    attr_key = ''
+    if attr_mask.startswith('#'):
+        attr_key='id'
+    elif attr_mask.startswith('.'):
+        attr_key='class'
+    ftags = [] 
+    attr_target = attr_mask.strip('.#')
+    for tag in tags:    
+        if attr_key=='class' and attr_target in tag.attrs.get('class',[]):
+            ftags.append(tag)
+        elif attr_key=='id' and attr_target == tag.attrs.get('id',''):
+            ftags.append(tag)
+        elif attr_key =='':
+            ftags.append(tag)
     # pdb.set_trace()
-    texts =  filter(lambda x:len(x)>0,map(lambda x:x.text.strip().replace('\n','') ,tags))
-    return texts,tags
+    texts =  map(lambda x:x.text.strip().replace('\n','') ,ftags)
+    return '\n'.join(texts),ftags
 
 def json_extract(obj, key):
     """Recursively fetch values from nested JSON."""
@@ -216,6 +230,6 @@ if __name__=='__main__':
     # print cli_select_menu(pd.Series('a b c d'.split(' ')))
     # print cli_select_menu({'a':['b','c'],'c':['d','e']})
     # print cli_select_menu(['a','b','c'])
-    text,tags= get_article_detail('https://news.futunn.com/flash/12271149','div')
+    text,tags= get_article_detail('https://news.futunn.com/flash/12271149','div','#content')
     pdb.set_trace()
     # print get_article_detail('https://news.futunn.com/flash/12271149','div')
