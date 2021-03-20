@@ -20,7 +20,7 @@ from tech_algo_analyse import cat_boost_factor_check
 
 from stk_util import get_article_detail,cli_select_menu
 
-from stock_api import StockNewsWSCN
+from stock_api import StockNewsWSCN,StockNewsFUTUNN
 from stock_emd import emd_plot
 
 try:    
@@ -238,6 +238,7 @@ def interact_choose_ticks(mode):
         ,'u':'us','z':'zh','e':'emd','c':'catboost'
         ,'nw':'news_wscn','hw':'hot_wscn','ws':'wscn_loop'
         ,'ns':'news_sina','n':'news_sina'
+        ,'nf':'futu_news'
         ,'p':'pause' ,'a':'article'
     }
     
@@ -327,8 +328,8 @@ def cn_main_loop(mode):
         idxs,nflags = cli_select_menu(df['title'], menu_columns=1)
         for rowid in idxs:
             url = df.iloc[rowid]['url']
-            texts,html = get_article_detail(url, 'p')
-            print (u'\n'.join(texts[:-5])).encode(ENCODE,'ignore')
+            texts,html = get_article_detail(url, 'p')            
+            print texts.encode(ENCODE,'ignore')
     elif 'news_wscn' in flags or 'hot_wscn' in flags  :
         wscn = StockNewsWSCN()
         if 'hot_wscn' in flags:            
@@ -342,6 +343,16 @@ def cn_main_loop(mode):
             res = wscn.mode_run('article',stocks=[url])
             print res[0].encode(ENCODE,'ignore')
             print ''
+    elif 'futu_news' in flags:
+        _ftnn = StockNewsFUTUNN()
+        df= _ftnn.get_news()
+        df.index=pd.RangeIndex(df.shape[0])
+        idxs,nflags = cli_select_menu(df['content'], menu_columns=1)
+        for rowid in idxs:
+            url = df.iloc[rowid]['detail_url']            
+            texts,tags = get_article_detail(url,'div','#content')
+            print texts
+            # print (u'\n'.join(texts[:-5])).encode('gbk','ignore')
     elif 'wscn_loop' in flags :
         wscn_loop()     
     elif 'top' in flags:
