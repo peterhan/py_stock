@@ -109,21 +109,12 @@ def get_stock_kline(tick,flags,api_route='futu'):
         his_df = his_df.rename(columns={'Date':'date','Open':'open','High':'high'
         ,'Low':'low','Close':'close','Volume':'volume'
         ,'Dividends':'dividends','Stock Splits':'splits'})        
-    elif api_route=='futu':        
-        tick=tick.upper().replace('.','-')
-        if tick.find('-')==-1:
-            if re.match('[A-z]+',tick):
-                tick+='-US'
-            elif re.match('\d+',tick):
-                tick+='-SH'
-        if tick.endswith('-HK') and len(tick)==7:
-            tick='0'+tick
-        print tick
+    elif api_route=='futu':
         his_df = _ftnn.get_kline(tick, cyc)     
     return his_df
  
 @time_count 
-def get_one_tick_data(tick,infos,flags,api_route = 'futu'):
+def get_one_tick_data(tick,stk_infos,flags,api_route = 'futu'):
     
     his_df = get_stock_kline(tick,flags,api_route) 
     his_df = his_df[-365:]
@@ -141,7 +132,7 @@ def get_one_tick_data(tick,infos,flags,api_route = 'futu'):
     df = ndf
     df['vol']= pd.to_numeric(df['volume'])
     
-    res_info = {'code':tick,'info':infos.get(tick,{}),'df':df}
+    res_info = {'code':tick, 'info':stk_infos.get(tick,{}), 'df':df}
     res_info['info'].update({'price':df['close'].values[-1],'name':''})
     # pdb.set_trace()
     if 'detail' in flags:
@@ -192,24 +183,24 @@ def us_main_loop(mode):
     if 'graph' in flags:
         fig, ax = plt.subplots(nrows=2, ncols=2*len(s_ticks), sharex=False)
     ### get infos
-    yinfos = yfinance_cache(s_ticks)
+    stk_infos = yfinance_cache(s_ticks)
     # yinfos = {}
     
     ### get data
     if not Pool:
         for tk in s_ticks:
-            results = get_one_tick_data(tk,yinfos,flags)
+            results = get_one_tick_data(tk,stk_infos,flags)
     else:
         pool = Pool(8)
         jobs = []
         for tk in s_ticks:
-            job = pool.spawn(get_one_tick_data,tk,yinfos,flags)
+            job = pool.spawn(get_one_tick_data,tk,stk_infos,flags)
             jobs.append(job)
         pool.join()
         results = [job.value for job in jobs]
       
     # pdb.set_trace()
-    tail3res =  {}
+    tail_n_res =  {}
     for i,result in enumerate(results):
         if result is None:
             continue
@@ -219,7 +210,7 @@ def us_main_loop(mode):
         if 'detail' in flags:
             print analyse_res_to_str([result])
         pinfo = '[%s],[%s]'%( info.get('shortName','').replace(', ',''),info.get('sector','') )
-        tail3res[tick+pinfo]= ndf[['close','volume','pchange','vchange']].tail(3)
+        tail_n_res[tick+pinfo]= ndf[['close','volume','pchange','vchange']].tail(5)
         print ''
         if 'graph' in flags:
             ndf[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tick,ax= ax[0,0+i*2])
@@ -238,8 +229,8 @@ def us_main_loop(mode):
             pdb.set_trace()
         if  'option_chain' in flags:
            print json.dumps(result['option_chain']  ,indent=2)
-    if len(tail3res)>0:
-        print pd.concat(tail3res,axis=0)
+    if len(tail_n_res)>0:
+        print pd.concat(tail_n_res,axis=0)
     if 'news' in flags:
         df= _ftnn.get_news()
         df.index=pd.RangeIndex(df.shape[0])

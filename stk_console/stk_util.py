@@ -44,12 +44,15 @@ def gen_random(n=16):
     end = (10 ** n) - 1
     return str(randint(start, end))
     
-def get_article_detail(url,tag='article',attr_mask=''):
-    print url
-    url = url
-    html = get(url).content
+def get_article_detail(url,tag='article',attr_mask=''):    
+    if isinstance(url,BeautifulSoup):
+        print type(url)
+        soup = url
+    else:
+        print url
+        html = get(url).content
+        soup = BeautifulSoup(html,"lxml")
     # pdb.set_trace()
-    soup = BeautifulSoup(html,"lxml")
     tags = soup.find_all(tag)
     attr_key = ''
     if attr_mask.startswith('#'):

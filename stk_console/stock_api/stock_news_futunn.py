@@ -1,8 +1,7 @@
 import requests
 import pdb
+import re
 
-from requests import get,post
-from bs4 import BeautifulSoup
 import json
 # from jsonpath_rw import jsonpath,parse
 import sys
@@ -10,11 +9,16 @@ import pdb,traceback
 import time
 import pandas as pd
 from collections import OrderedDict
+
+from requests import get,post
+from bs4 import BeautifulSoup
 from matplotlib import pyplot as plt
 import logging
+
 if __name__ == '__main__':
     sys.path.append('..')
-from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
+from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json,get_article_detail
+
 # https://portal-api.coinmarketcap.com/v1/platform/alerts?limit=20
 # https://api.coinmarketcap.com/data-api/v3/map/all?listing_status=active,untracked
 # https://api.coinmarketcap.com/data-api/v3/topsearch/rank
@@ -49,14 +53,28 @@ class StockNewsFUTUNN():
             ,'5min':'6','15min':'7','30min':'8','hour':'9','3min':'10'
             ,'season':'11','season':'12','pre':'12','minute':'13'}
         self.stock_code_cache={}
+        self.stock_info_cache={}
         
     def get_ts(self):
         return '%0.0f'%(time.time()*1000)
         
+    def stock_code_adaptor(self,stock_code):
+        tick = stock_code.upper().replace('.','-')
+        if tick.find('-')==-1:
+            if re.match('[A-z]+',tick):
+                tick+='-US'
+            elif re.match('\d+',tick):
+                tick+='-SH'            
+        if tick.endswith('-SS'):
+            tick = tick.replace('-SS','-SH')
+        if tick.endswith('-HK') and len(tick)==7:
+            tick='0'+tick
+        return tick
+        
     def get_sec_id(self,stock_code):
         if isinstance(stock_code, dict):
             return stock_code
-        stock_code = stock_code.upper()
+        stock_code = self.stock_code_adaptor(stock_code)
         url = "https://www.futunn.com/stock/%s" %stock_code
         if stock_code in self.stock_code_cache:
             return self.stock_code_cache[stock_code]
@@ -66,16 +84,13 @@ class StockNewsFUTUNN():
             for line in resp.text.splitlines():
                 if line.find('<script>window._langParams')!=-1:
                     jsline = line
-            if self.debug:
-                print url
-                pdb.set_trace()
             if len(jsline)==0:
                 raise Exception('Not Found window._langParams @ %s'%url)
             start_seg = 'window.__INITIAL_STATE__='
             start = jsline.find(start_seg)
             end = jsline.find(',window._params')
-            jss = jsline[start+len(start_seg):end]
-            jo = json.loads(jss)
+            js_st = jsline[start+len(start_seg):end]
+            jo = json.loads(js_st)
             # pdb.set_trace()
             sinfo = jo['prefetch']['stockInfo']
             sec_id = sinfo['stock_id'] 
@@ -83,13 +98,16 @@ class StockNewsFUTUNN():
             sec_code = sinfo['stock_code']
             mkt_type = sinfo['market_type']
             ret_dic = {'id':sec_id,'label':sec_label,'code':sec_code,'mkt_type':mkt_type,'input_code':stock_code}
+            self.stock_info_cache[stock_code] = jo['prefetch']
             self.stock_code_cache[stock_code] = ret_dic
             return ret_dic
         except Exception as e:            
             traceback.print_exc()
             return {'input_code':stock_code}
+            
+
         
-    def o_get_sec_id(self,stock_code):
+    def deprecated_get_sec_id(self,stock_code):
         if isinstance(stock_code, dict):
             return stock_code
         stock_code = stock_code.upper()
@@ -191,11 +209,19 @@ class StockNewsFUTUNN():
         
     def get_stock_news(self,sec_id):
         sec_id = self.get_sec_id(sec_id)    
-        url = 'https://www.futunn.com/stock/%s/news'%(sec_id['input_code'])
+        url = 'https://www.futunn.com/stock/%s/news'%(sec_id['input_code'])  
         resp = requests.get(url,headers=self.headers)
         soup = BeautifulSoup(resp.text,'lxml')
-        pdb.set_trace()
-        return
+        text,tags = get_article_detail(soup,'li','.news-item')
+        rows = []
+        for tag in tags:
+            try:
+                rows.append([tag.text,tag.find_all('a')[0].attrs['href']])
+            except:
+                rows.append([tag.text,None])
+                pass
+        df = pd.DataFrame(rows, columns=['title','url'])
+        return df
     
     def get_news(self,start=0,cnt=20):
         url='https://www.futunn.com/new-quote/'\
@@ -223,7 +249,7 @@ if __name__ =='__main__':
     pd.set_option('display.width',None)
     pd.options.display.float_format = '{:.2f}'.format
     ftnn = StockNewsFUTUNN()
-    ftnn.get_news()
+    # ftnn.get_news()
     for stk in ['TSLA-US', '300015-SZ']:
     # for stk in ['CCIV-US','TSLA-US','03690-HK']:
         ftnn.debug=True
