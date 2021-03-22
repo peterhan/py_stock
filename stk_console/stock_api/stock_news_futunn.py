@@ -52,12 +52,8 @@ class StockNewsFUTUNN():
         self.cyc_mode = {'day':'2','week':'3','month':'4','year':'5'
             ,'5min':'6','15min':'7','30min':'8','hour':'9','3min':'10'
             ,'season':'11','season':'12','pre':'12','minute':'13'}
-<<<<<<< HEAD
         self.stock_code_cache={}
         self.stock_info_cache={}
-=======
-        self.stock_code_cache = {}
->>>>>>> 12b71d0f7ccff5c9a86a0a9557c05654b8c68d8c
         
     def get_ts(self):
         return '%0.0f'%(time.time()*1000)
