@@ -55,6 +55,7 @@ class StockNewsFUTUNN():
         self.stock_code_cache={}
         self.stock_info_cache={}
         
+        
     def get_ts(self):
         return '%0.0f'%(time.time()*1000)
         
@@ -103,45 +104,12 @@ class StockNewsFUTUNN():
             return ret_dic
         except Exception as e:            
             traceback.print_exc()
-            return {'input_code':stock_code}
-            
+            return {'input_code':stock_code}           
 
-        
-    def deprecated_get_sec_id(self,stock_code):
-        if isinstance(stock_code, dict):
-            return stock_code
-        stock_code = stock_code.upper()
-        url = "https://www.futunn.com/stock/%s/company-profile#company" % stock_code
-        if stock_code in self.stock_code_cache:
-            return self.stock_code_cache[stock_code]
-        try:
-            resp = requests.get(url,headers=self.headers)
-            if self.debug:
-                print url
-                pdb.set_trace()
-            result = [] 
-            if resp.text.find('_params.security')==-1:
-                raise Exception("Not found sec_id javascript snippet")
-            for l in resp.text.splitlines():
-                if l.find('_params.security')!=-1:
-                    result.append(l)            
-            sec_id = result[0].split("'")[1]
-            sec_label = result[1].split("'")[1]
-            sec_code = result[2].split("'")[1]
-            if sec_label=='HK':
-                mkt_type='1'
-            elif sec_label=='US':
-                mkt_type='2'
-            elif sec_label in ('SH','SZ'):
-                mkt_type='3'
-            else:
-                mkt_type='0'            
-            ret_dic = {'id':sec_id,'label':sec_label,'code':sec_code,'mkt_type':mkt_type,'input_code':stock_code}
-            self.stock_code_cache[stock_code] = ret_dic
-            return ret_dic
-        except Exception, e:
-            traceback.print_exc()
-            return {'input_code':stock_code}
+    def get_cache_company_info(self,sec_id):
+        sec_id = self.get_sec_id(sec_id)
+        input_code = sec_id['input_code']
+        return self.stock_info_cache.get(input_code,None)
             
     def get_kline(self,sec_id,cyc='day'):        
         sec_id = self.get_sec_id(sec_id)

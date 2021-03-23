@@ -8,6 +8,7 @@ from collections import OrderedDict
 import ConfigParser
 import sys
 import re
+import math
 import keyring
 from alpha_vantage.timeseries import TimeSeries
 from matplotlib import pyplot as plt
@@ -27,8 +28,6 @@ try:
     # print '[gevent ok]'
 except:
     print '[Not Found gevent]'
-
-pd.set_option('display.max_columns',80)
 
 def get_ticker_df_alpha_vantage(ticker,mode='day'):
     API_KEY=str(keyring.get_password('av','u1'))
@@ -172,7 +171,8 @@ def us_main_loop(mode):
         ,'e':'emd','c':'catboost','o':'option_chain'
     }
     menu_dict = conf_tks
-    groups,flags = cli_select_menu(menu_dict,default_input= None,column_width=15,menu_columns=7,control_flag_map=opt_map) 
+    groups,flags = cli_select_menu(menu_dict,default_input= None,\
+        column_width=15,menu_columns=7,control_flag_map=opt_map) 
     s_ticks = []
     for group in groups:
         s_ticks.extend(conf_tks.get(group,group).replace('`','').replace('  ',' ').split(' ')) 
@@ -201,6 +201,7 @@ def us_main_loop(mode):
       
     # pdb.set_trace()
     tail_n_res =  {}
+    tail_n = int(math.ceil(10*1.0/len(results)))
     for i,result in enumerate(results):
         if result is None:
             continue
@@ -209,8 +210,16 @@ def us_main_loop(mode):
         tick = result['code']        
         if 'detail' in flags:
             print analyse_res_to_str([result])
-        pinfo = '[%s],[%s]'%( info.get('shortName','').replace(', ',''),info.get('sector','') )
-        tail_n_res[tick+pinfo]= ndf[['close','volume','pchange','vchange']].tail(5)
+        if 'shortName' in info:
+            shortname = info.get('shortName','').replace(', ','')
+            sector = info.get('sector','')
+        else:
+            info = _ftnn.get_cache_company_info(tick)
+            # pdb.set_trace()
+            shortname = info['stockInfo']['name'].split(' ')[0]
+            sector = info['stockInfo']['stock_market']
+        pinfo = '[%s],[%s]'%(shortname ,sector )
+        tail_n_res[tick+pinfo]= ndf[['close','volume','pchange','vchange']].tail(tail_n)
         print ''
         if 'graph' in flags:
             ndf[['close','sma10','ema10' ,'sma30','ema30']].plot(title=tick,ax= ax[0,0+i*2])
@@ -245,6 +254,7 @@ def us_main_loop(mode):
 
     
 if __name__ == '__main__':
+    pd.set_option('display.max_columns',80)
     while 1:
         try:
             us_main_loop('')

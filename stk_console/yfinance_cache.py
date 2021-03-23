@@ -41,6 +41,7 @@ def yfinance_cache(ticks,use_cache=True):
             info_dic[tick] = YFINFO_CACHE[tick]
         else:
             info_dic[tick]={}
+            ## stop remote
             #need_update.add(tick)
     ## check proxy
     proxy=None
