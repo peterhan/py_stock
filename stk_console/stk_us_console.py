@@ -201,7 +201,7 @@ def us_main_loop(mode):
       
     # pdb.set_trace()
     tail_n_res =  {}
-    tail_n = int(math.ceil(10*1.0/len(results)))
+    tail_n = 5
     for i,result in enumerate(results):
         if result is None:
             continue
