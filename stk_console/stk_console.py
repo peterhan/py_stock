@@ -232,7 +232,7 @@ def interact_choose_ticks(mode):
     all.remove("")
     conf_tks['All'] = list(all)
     opt_map = {
-         'q':'quit', 'd':'detail', 'i':'pdb'
+         'q':'quit', 'd':'detail', 'i':'pdb','ix':'index'
         ,'s':'onestock','top':'top','inst':'inst'
         ,'r':'realtime','f':'fullname','g':'graph'
         ,'u':'us','z':'zh','e':'emd','c':'catboost'
@@ -343,6 +343,9 @@ def cn_main_loop(mode):
             res = wscn.mode_run('article',stocks=[url])
             print res[0].encode(ENCODE,'ignore')
             print ''
+    elif 'index' in flags:
+        df = ts.get_index()
+        print df
     elif 'futu_news' in flags:
         _ftnn = StockNewsFUTUNN()
         df= _ftnn.get_news()
