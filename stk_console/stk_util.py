@@ -44,7 +44,12 @@ def gen_random(n=16):
     end = (10 ** n) - 1
     return str(randint(start, end))
     
-def get_article_detail(url,tag='article',attr_mask=''):    
+def get_article_detail(url,tag='article',attr_mask=''):   
+    ftags = get_tags(url,tag ,attr_mask)
+    texts =  map(lambda x:x.text.strip().replace('\n','') ,ftags)
+    return '\n'.join(texts),ftags
+ 
+def get_tags(url,tag='article',attr_mask=''):    
     if isinstance(url,BeautifulSoup):
         print type(url)
         soup = url
@@ -69,8 +74,9 @@ def get_article_detail(url,tag='article',attr_mask=''):
         elif attr_key =='':
             ftags.append(tag)
     # pdb.set_trace()
-    texts =  map(lambda x:x.text.strip().replace('\n','') ,ftags)
-    return '\n'.join(texts),ftags
+    return ftags
+
+
 
 def json_extract(obj, key):
     """Recursively fetch values from nested JSON."""
