@@ -9,11 +9,15 @@ from bs4 import BeautifulSoup
 if __name__ == '__main__':
     sys.path.append('..')
 from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
-from stk_util import get_tags
+from stk_util import get_tags,list_to_dict
 
 class StockNewsFinViz():
     def __init__(self):
         self.urls='''https://finviz.com/api/futures_all.ashx?timeframe=NO
+        
+        https://finviz.com/api/statement.ashx?t=TSLA&s=IA
+        https://finviz.com/api/statement.ashx?t=TSLA&s=BA
+        https://finviz.com/api/statement.ashx?t=TSLA&s=CA
         '''
         self.base_url = 'https://finviz.com'
         self.debug = False
@@ -32,6 +36,7 @@ class StockNewsFinViz():
     def get_soup(self,url):
         resp = get(url,headers=self.headers)
         soup = BeautifulSoup(resp.text,"lxml")
+        # pdb.set_trace()
         return soup
     
     def tags_to_tables(self,tags):
@@ -63,32 +68,58 @@ class StockNewsFinViz():
     def get_forex_all(self,timeframe='NO'):
         return self.get_market_all('forex',timeframe)
       
-    def get_quote(self,code):
+        
+    def get_quote(self,code):        
         url = self.base_url+'/quote.ashx?t=%s&b=2'%code
         soup = self.get_soup(url)
-        ##
+        ## concept category
         tags = get_tags(soup, 'td','.fullview-links')
         rows1 = []
         for tag in tags[1].find_all('a'):
             rows1.append([tag.text,tag.attrs['href']])
-        ##
+        ## overview
         tags = get_tags(soup, 'tr','.table-dark-row')
         rows2 = self.tags_to_tables(tags)
-        ##
-        tags = get_tags(soup, 'tr','.body-table-rating-neutral')
+        for i,row in enumerate(rows2):
+            rows2[i] = list_to_dict(row)
+        ## rating         
+        tags = get_tags(soup, 'td','.fullview-ratings-inner')
         rows3 = self.tags_to_tables(tags)
-        pdb.set_trace()
-        
-    def get_income_stat(self,code):
-        url = self.base_url+'/api/statement.ashx?t=%s&s=IA'%code
-        soup = self.get_soup(url)
-        # tags = get_tags(soup,'td','.fullview-links')
-        pdb.set_trace()
+        ## news
+        ssoup4 = get_tags(soup,'table','#news-table')[0]
+        tags = ssoup4.find_all('tr')
+        rows4 = self.tags_to_tables(tags)
+        suff = ''
+        for i,row in enumerate(rows4):
+            if len(row[0])>15:
+                suff = row[0].split(' ')[0]
+            else:
+                rows4[i][0] = suff+' '+row[0]
+        ## profile
+        ssoup5 = get_tags(soup,'td','.fullview-profile')[0]
+        rows5  = ssoup5.text
+        ## insider
+        ssoup6 = get_tags(soup,'table','.body-table')[0]
+        tags = get_tags(ssoup6,'tr')
+        rows6 = self.tags_to_tables(tags)
+        ##
+        res = {'concept':rows1,'overview':rows2,'rating':rows3,'news':rows4,'profile':rows5,'insider':rows6}
+        # pdb.set_trace()
+        return res
         
     def get_screener(self,code):
         url = self.base_url+'/screener.ashx?v=111&amp;f=%s'%code
         soup = self.get_soup(url)
+        pdb.set_trace()        
+        
+    def get_statement(self,code,stat_type='IA'):
+        '''IA,BA,CA'''
+        url = self.base_url+'/api/statement.ashx?t=%s&s=%s'%(code,stat_type)
+        json = self.get_json(url)
+        # tags = get_tags(soup,'td','.fullview-links')
+        df = pd.DataFrame(json['data'])
         pdb.set_trace()
+        return df
         
     def get_insider_trading(self):
         ['or=-10&tv=100000&tc=7&o=-transactionValue',  'tc=7']
@@ -113,5 +144,8 @@ if __name__ =='__main__':
     # df2 = snfv.get_forex_all('h1')
     # df3 = snfv.get_crypto_all('d1')
     # df4 = snfv.get_insider_trading()
-    snfv.get_quote('TSLA')
+    # df5 = snfv.get_quote('PLTR')
+    # snfv.get_statement('TSLA','IA')
+    snfv.get_statement('TSLA','BA')
+    snfv.get_statement('TSLA','CA')
     pdb.set_trace()

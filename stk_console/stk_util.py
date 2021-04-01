@@ -49,14 +49,11 @@ def get_article_detail(url,tag='article',attr_mask=''):
     texts =  map(lambda x:x.text.strip().replace('\n','') ,ftags)
     return '\n'.join(texts),ftags
  
-def get_tags(url,tag='article',attr_mask=''):    
-    if isinstance(url,BeautifulSoup):
-        print type(url)
-        soup = url
-    else:
-        print url
-        html = get(url).content
-        soup = BeautifulSoup(html,"lxml")
+def get_tags(soup, tag='article',attr_mask=''):    
+    if isinstance(soup,basestring) and soup.startswith('http'):
+        # print url
+        html = get(soup).content
+        soup = BeautifulSoup(html,"lxml")    
     # pdb.set_trace()
     tags = soup.find_all(tag)
     attr_key = ''
@@ -76,7 +73,11 @@ def get_tags(url,tag='article',attr_mask=''):
     # pdb.set_trace()
     return ftags
 
-
+def list_to_dict(lst):
+    dc = {}
+    for i in range(len(lst)/2):
+        dc[ lst[i*2]]=lst[i*2+1]
+    return dc
 
 def json_extract(obj, key):
     """Recursively fetch values from nested JSON."""
