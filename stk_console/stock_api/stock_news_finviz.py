@@ -11,9 +11,6 @@ if __name__ == '__main__':
 from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatten_json
 from stk_util import get_tags
 
-
-
-
 class StockNewsFinViz():
     def __init__(self):
         self.urls='''https://finviz.com/api/futures_all.ashx?timeframe=NO
@@ -42,7 +39,7 @@ class StockNewsFinViz():
         for tr in tags:
             row = []
             for td in tr.find_all('td'):
-                row.append(td.text)
+                row.append(td.text.replace('\n',' '))
                 for atag in td.find_all('a'):
                     row.append(atag.attrs['href'])
             rows.append(row)
@@ -69,12 +66,17 @@ class StockNewsFinViz():
     def get_quote(self,code):
         url = self.base_url+'/quote.ashx?t=%s&b=2'%code
         soup = self.get_soup(url)
+        ##
         tags = get_tags(soup, 'td','.fullview-links')
-        rows = []
+        rows1 = []
         for tag in tags[1].find_all('a'):
-            rows.append([tag.text,tag.attrs['href']])
+            rows1.append([tag.text,tag.attrs['href']])
+        ##
         tags = get_tags(soup, 'tr','.table-dark-row')
-        rows = self.tags_to_tables(tags)
+        rows2 = self.tags_to_tables(tags)
+        ##
+        tags = get_tags(soup, 'tr','.body-table-rating-neutral')
+        rows3 = self.tags_to_tables(tags)
         pdb.set_trace()
         
     def get_income_stat(self,code):
