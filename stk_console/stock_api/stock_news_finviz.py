@@ -108,9 +108,28 @@ class StockNewsFinViz():
         res = {'concept':rows1,'overview':rows2,'rating':rows3,'news':rows4,'profile':rows5,'insider':rows6}
         # pdb.set_trace()
         return res
+       
+    def format_query(self,query):
+        qst = '&'.join(['%s=%s'%(k,v) for k,v in query.items()])
+        return qst
+    
+    def get_screener_onepage(self,query,startrow=None,soup=None):
+        if startrow is not None:
+            query['r'] = startrow
+        if soup is None:
+            url = self.base_url+'/screener.ashx?%s'%self.format_query(query)
+            soup = self.get_soup(url)
+        ssoup = get_tags(soup,'div','#screener-content')[0]
+        ss_soup = get_tags(ssoup,'table')[3]
+        tags = get_tags(ss_soup,'tr')
+        table = self.tags_to_tables(tags)
+        for i in range(1,len(table)):
+            table[i]  = table[i][::2]
+        df=pd.DataFrame(table[1:],columns=table[0])
+        return df
         
-    def get_screener(self):
-        url = self.base_url+'/screener.ashx?v=111&f=ind_broadcasting'
+    def get_screener(self, query = OrderedDict([['v','111'],['f','ind_broadcasting']]) ):
+        url = self.base_url+'/screener.ashx?%s'%self.format_query(query)
         soup = self.get_soup(url)
         ## sector
         if len(self.opt_groups)==0:
@@ -130,10 +149,12 @@ class StockNewsFinViz():
         page_info = [(tag.attrs['href'],tag.text) for tag in tags]
         ## table
         ssoup = get_tags(soup,'div','#screener-content')[0]
-        tags = get_tags(ssoup,'tr')
+        ss_soup = get_tags(ssoup,'table')[3]
+        tags = get_tags(ss_soup,'tr')
         table = self.tags_to_tables(tags)
-        header = table[6]
-        table[7:]
+        for i in range(1,len(table)):
+            table[i]  = table[i][::2]
+        df=pd.DataFrame(table[1:],columns=table[0])
         ##
         ipdb.set_trace()
         
