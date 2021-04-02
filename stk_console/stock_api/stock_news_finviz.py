@@ -1,6 +1,7 @@
 from requests import get,post 
 import sys
 import pdb
+import ipdb
 import time
 import pandas as pd
 from collections import OrderedDict
@@ -107,10 +108,22 @@ class StockNewsFinViz():
         # pdb.set_trace()
         return res
         
-    def get_screener(self,code):
-        url = self.base_url+'/screener.ashx?v=111&amp;f=%s'%code
+    def get_screener(self):
+        url = self.base_url+'/screener.ashx?v=111&f=ind_broadcasting,o100'
         soup = self.get_soup(url)
-        pdb.set_trace()        
+        ## sector
+        tags = get_tags(soup,'select')
+        select_tags = [tag for tag in tags if tag.attrs['id'].startswith('fs_sh')]
+        opt_groups = {}
+        for tag in select_tags:
+            gid = tag.attrs['id']
+            sdic = {}
+            for opt in tag.find_all('option'):
+                sdic[opt.attrs['value']]=opt.text
+            opt_groups[gid] = sdic        
+        
+        ## page
+        ipdb.set_trace()
         
     def get_statement(self,code,stat_type='IA'):
         '''IA,BA,CA'''
@@ -118,7 +131,7 @@ class StockNewsFinViz():
         json = self.get_json(url)
         # tags = get_tags(soup,'td','.fullview-links')
         df = pd.DataFrame(json['data'])
-        pdb.set_trace()
+        # pdb.set_trace()
         return df
         
     def get_insider_trading(self):
@@ -138,14 +151,15 @@ if __name__ =='__main__':
     pd.set_option('display.width',None)
     pd.options.display.float_format = '{:.2f}'.format
     
-    snfv = StockNewsFinViz()
-    # df0 = snfv.get_futures_all()
-    # df1 = snfv.get_futures_all('m5')
-    # df2 = snfv.get_forex_all('h1')
-    # df3 = snfv.get_crypto_all('d1')
-    # df4 = snfv.get_insider_trading()
-    # df5 = snfv.get_quote('PLTR')
-    # snfv.get_statement('TSLA','IA')
-    snfv.get_statement('TSLA','BA')
-    snfv.get_statement('TSLA','CA')
+    fv = StockNewsFinViz()
+    # df0 = fv.get_futures_all()
+    # df1 = fv.get_futures_all('m5')
+    # df2 = fv.get_forex_all('h1')
+    # df3 = fv.get_crypto_all('d1')
+    # df4 = fv.get_insider_trading()
+    # df5 = fv.get_quote('PLTR')
+    # fv.get_statement('TSLA','IA')
+    # fv.get_statement('TSLA','BA')
+    # fv.get_statement('TSLA','CA')
+    fv.get_screener()
     pdb.set_trace()
