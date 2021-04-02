@@ -10,6 +10,7 @@ import sys
 import re
 import math
 import keyring
+from stock_emd import emd_plot
 from alpha_vantage.timeseries import TimeSeries
 from matplotlib import pyplot as plt
 import yfinance as yf
@@ -168,7 +169,7 @@ def us_main_loop(mode):
         ,'s':'onestock','n':'news','r':'realtime'
         ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'f':'futu','vt':"vantage"
         ,'g':"graph",'ia':'intraday','id':'day','iw':'week','im':'month','u':'us','z':'zh'
-        ,'e':'emd','c':'catboost','o':'option_chain'
+        ,'e':'emd','ve':'vemd','c':'catboost','o':'option_chain'
     }
     menu_dict = conf_tks
     groups,flags = cli_select_menu(menu_dict,default_input= None,\
@@ -231,9 +232,10 @@ def us_main_loop(mode):
                 ndf[['volume']].plot(title=tick,ax = ax[1,1+i*2])
             except:
                 pass
-        if 'emd' in flags:
-            from stock_emd import emd_plot
+        if 'emd' in flags:                        
             emd_plot(ndf['close'])
+        if 'vemd' in flags:
+            emd_plot(ndf['volume'])
         if 'pdb' in flags:
             pdb.set_trace()
         if  'option_chain' in flags:

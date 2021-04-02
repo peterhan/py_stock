@@ -2,14 +2,15 @@ from pyhht.emd import EMD
 from pyhht.visualization import plot_imfs
 import tushare as ts
 import matplotlib.pyplot as plt
-import pdb
+import ipdb
 
 
 def emd_plot(data):
     emd = EMD(data)
     imfs = emd.decompose()
-    # pdb.set_trace()
+    # ipdb.set_trace()
     plot_imfs(data,imfs)
+    plt.legend('EMD')
     return imfs
 
 

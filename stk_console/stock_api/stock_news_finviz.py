@@ -26,6 +26,7 @@ class StockNewsFinViz():
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0"
         }
         self.query_types=['m5','h1','d1','w1','m1']        
+        self.opt_groups = {}
         
     def get_json(self,url):
         print url
@@ -109,20 +110,31 @@ class StockNewsFinViz():
         return res
         
     def get_screener(self):
-        url = self.base_url+'/screener.ashx?v=111&f=ind_broadcasting,o100'
+        url = self.base_url+'/screener.ashx?v=111&f=ind_broadcasting'
         soup = self.get_soup(url)
         ## sector
-        tags = get_tags(soup,'select')
-        select_tags = [tag for tag in tags if tag.attrs['id'].startswith('fs_sh')]
-        opt_groups = {}
-        for tag in select_tags:
-            gid = tag.attrs['id']
-            sdic = {}
-            for opt in tag.find_all('option'):
-                sdic[opt.attrs['value']]=opt.text
-            opt_groups[gid] = sdic        
-        
+        if len(self.opt_groups)==0:
+            tags = get_tags(soup,'select')
+            select_tags = [tag for tag in tags if tag.attrs['id'].startswith('fs_sh')]
+            opt_groups = {}
+            for tag in select_tags:
+                gid = tag.attrs['id']
+                sdic = {}
+                for opt in tag.find_all('option'):
+                    sdic[opt.attrs['value']]=opt.text
+                opt_groups[gid] = sdic        
+            self.opt_groups = opt_groups
         ## page
+        ssoup = get_tags(soup,'td','.screener_pagination')[0]
+        tags = get_tags(ssoup,'a')
+        page_info = [(tag.attrs['href'],tag.text) for tag in tags]
+        ## table
+        ssoup = get_tags(soup,'div','#screener-content')[0]
+        tags = get_tags(ssoup,'tr')
+        table = self.tags_to_tables(tags)
+        header = table[6]
+        table[7:]
+        ##
         ipdb.set_trace()
         
     def get_statement(self,code,stat_type='IA'):

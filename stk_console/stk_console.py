@@ -115,9 +115,11 @@ def real_time_ticks(tick,info,flags,use_cache = False):
         df.plot(subplots=True,title=tick)
         plt.show()
         
-    if 'emd' in flags:
-        
-        emd_res = emd_plot(df['price'])        
+    if 'emd' in flags:        
+        emd_res = emd_plot(df['price'])
+    if 'vemd' in flags:        
+        emd_res = emd_plot(df['vol'])
+         
     return {'code':tick,'info':info[tick],'tech':{'price':'','data':{}}}
     
 def summary_list_ticks(tks,flags):
@@ -213,6 +215,8 @@ def get_one_ticker_k_data(tick,info,flags):
     # df.to_csv(fname)
     if 'emd' in flags:        
         emd_res = emd_plot(df['close'])  
+    if 'vemd' in flags:        
+        emd_res = emd_plot(df['volume'])  
     # pdb.set_trace()
     dic = df.to_dict()
     return {'code':tick,'info':info[tick]
@@ -235,7 +239,7 @@ def interact_choose_ticks(mode):
          'q':'quit', 'd':'detail', 'i':'pdb','ix':'index'
         ,'s':'onestock','top':'top','inst':'inst'
         ,'r':'realtime','f':'fullname','g':'graph'
-        ,'u':'us','z':'zh','e':'emd','c':'catboost'
+        ,'u':'us','z':'zh','e':'emd','ve':'vemd','c':'catboost'
         ,'nw':'news_wscn','hw':'hot_wscn','ws':'wscn_loop'
         ,'ns':'news_sina','n':'news_sina'
         ,'nf':'futu_news'
