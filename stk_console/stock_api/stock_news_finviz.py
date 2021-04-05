@@ -113,9 +113,17 @@ class StockNewsFinViz():
         qst = '&'.join(['%s=%s'%(k,v) for k,v in query.items()])
         return qst
     
-    def get_screener_onepage(self,query,startrow=None,soup=None):
-        if startrow is not None:
-            query['r'] = startrow
+    def parse_query(self,qst):
+        rdic = OrderedDict()
+        qst = qst.split('?')[-1]
+        for part in qst.split('&'):
+            p1,p2 = part.split('=',1)
+            rdic[p1] = p2
+        return rdic
+    
+    def get_scrn_page(self,query,soup=None,start_row=None):
+        if start_row is not None:
+            query['r'] = start_row
         if soup is None:
             url = self.base_url+'/screener.ashx?%s'%self.format_query(query)
             soup = self.get_soup(url)
@@ -128,7 +136,7 @@ class StockNewsFinViz():
         df=pd.DataFrame(table[1:],columns=table[0])
         return df
         
-    def get_screener(self, query = OrderedDict([['v','111'],['f','ind_broadcasting']]) ):
+    def get_screener(self, query = OrderedDict([['v','111'],['f','ind_broadcasting']]),page_limit=None ):
         url = self.base_url+'/screener.ashx?%s'%self.format_query(query)
         soup = self.get_soup(url)
         ## sector
@@ -148,13 +156,20 @@ class StockNewsFinViz():
         tags = get_tags(ssoup,'a')
         page_info = [(tag.attrs['href'],tag.text) for tag in tags]
         ## table
-        ssoup = get_tags(soup,'div','#screener-content')[0]
-        ss_soup = get_tags(ssoup,'table')[3]
-        tags = get_tags(ss_soup,'tr')
-        table = self.tags_to_tables(tags)
-        for i in range(1,len(table)):
-            table[i]  = table[i][::2]
-        df=pd.DataFrame(table[1:],columns=table[0])
+        remain_r = []
+        
+        for info in page_info:
+            if info[1] in ('1','next'):
+                continue
+            odc = self.parse_query(info[0])
+            remain_r.append(odc['r'])
+        if page_limit:
+            remain_r = remain_r[:page_limit]
+        
+        df=self.get_scrn_page(query,soup=soup)
+        for r in remain_r:
+            ndf=self.get_scrn_page(query,start_row=r)
+            # ipdb.set_trace()
         ##
         ipdb.set_trace()
         
@@ -195,4 +210,4 @@ if __name__ =='__main__':
     # fv.get_statement('TSLA','BA')
     # fv.get_statement('TSLA','CA')
     fv.get_screener()
-    pdb.set_trace()
+    ipdb.set_trace()
