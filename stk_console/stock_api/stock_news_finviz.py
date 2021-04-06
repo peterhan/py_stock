@@ -26,7 +26,7 @@ class StockNewsFinViz():
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0"
         }
         self.query_types=['m5','h1','d1','w1','m1']        
-        self.opt_groups = {}
+        self.filter_select = {}
         
     def get_json(self,url):
         print url
@@ -126,6 +126,7 @@ class StockNewsFinViz():
             query['r'] = start_row
         if soup is None:
             url = self.base_url+'/screener.ashx?%s'%self.format_query(query)
+            print url
             soup = self.get_soup(url)
         ssoup = get_tags(soup,'div','#screener-content')[0]
         ss_soup = get_tags(ssoup,'table')[3]
@@ -140,17 +141,17 @@ class StockNewsFinViz():
         url = self.base_url+'/screener.ashx?%s'%self.format_query(query)
         soup = self.get_soup(url)
         ## sector
-        if len(self.opt_groups)==0:
+        if len(self.filter_select)==0:
             tags = get_tags(soup,'select')
-            select_tags = [tag for tag in tags if tag.attrs['id'].startswith('fs_sh')]
-            opt_groups = {}
+            select_tags = [tag for tag in tags if tag.attrs['id'].startswith('fs_')]
+            filter_select = {}
             for tag in select_tags:
                 gid = tag.attrs['id']
                 sdic = {}
                 for opt in tag.find_all('option'):
                     sdic[opt.attrs['value']]=opt.text
-                opt_groups[gid] = sdic        
-            self.opt_groups = opt_groups
+                filter_select[gid] = sdic        
+            self.filter_select = filter_select
         ## page
         ssoup = get_tags(soup,'td','.screener_pagination')[0]
         tags = get_tags(ssoup,'a')
@@ -167,11 +168,15 @@ class StockNewsFinViz():
             remain_r = remain_r[:page_limit]
         
         df=self.get_scrn_page(query,soup=soup)
+        print 'Extra-Screener-Page:',len(remain_r)
         for r in remain_r:
             ndf=self.get_scrn_page(query,start_row=r)
             # ipdb.set_trace()
+            df = df.append(ndf)
         ##
+        df=df.set_index(pd.RangeIndex(df.shape[0]))
         ipdb.set_trace()
+        return df
         
     def get_statement(self,code,stat_type='IA'):
         '''IA,BA,CA'''
@@ -200,7 +205,7 @@ if __name__ =='__main__':
     pd.options.display.float_format = '{:.2f}'.format
     
     fv = StockNewsFinViz()
-    # df0 = fv.get_futures_all()
+    df0 = fv.get_futures_all()
     # df1 = fv.get_futures_all('m5')
     # df2 = fv.get_forex_all('h1')
     # df3 = fv.get_crypto_all('d1')
@@ -209,5 +214,6 @@ if __name__ =='__main__':
     # fv.get_statement('TSLA','IA')
     # fv.get_statement('TSLA','BA')
     # fv.get_statement('TSLA','CA')
-    fv.get_screener()
+    query = OrderedDict([['v','111'],['f','ind_banksdiversified']])
+    fv.get_screener(query)
     ipdb.set_trace()
