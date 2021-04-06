@@ -1,7 +1,6 @@
 from requests import get,post 
 import sys
 import pdb
-import ipdb
 import time
 import pandas as pd
 from collections import OrderedDict
@@ -170,12 +169,11 @@ class StockNewsFinViz():
         df=self.get_scrn_page(query,soup=soup)
         print 'Extra-Screener-Page:',len(remain_r)
         for r in remain_r:
-            ndf=self.get_scrn_page(query,start_row=r)
-            # ipdb.set_trace()
+            ndf=self.get_scrn_page(query,start_row=r)            
             df = df.append(ndf)
         ##
         df=df.set_index(pd.RangeIndex(df.shape[0]))
-        ipdb.set_trace()
+        
         return df
         
     def get_statement(self,code,stat_type='IA'):
@@ -205,7 +203,12 @@ if __name__ =='__main__':
     pd.options.display.float_format = '{:.2f}'.format
     
     fv = StockNewsFinViz()
-    df0 = fv.get_futures_all()
+    df0 = fv.get_futures_all(timeframe='d1')
+    print df0[['ticker','label']]
+    df0[df0['ticker'].isin(['ZF','ZB','ZN'])]
+    df0[df0['ticker'].isin(['ES','EX','NQ','YM','NKD','ER2'])]
+    df0[df0['ticker'].isin(['6E','DX'])]
+    df0[df0['ticker'].isin(['ZS','CL','GC','HG'])]
     # df1 = fv.get_futures_all('m5')
     # df2 = fv.get_forex_all('h1')
     # df3 = fv.get_crypto_all('d1')
@@ -216,4 +219,4 @@ if __name__ =='__main__':
     # fv.get_statement('TSLA','CA')
     query = OrderedDict([['v','111'],['f','ind_banksdiversified']])
     fv.get_screener(query)
-    ipdb.set_trace()
+    pdb.set_trace()

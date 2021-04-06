@@ -2,7 +2,6 @@ from pyhht.emd import EMD
 from pyhht.visualization import plot_imfs
 import tushare as ts
 import matplotlib.pyplot as plt
-import ipdb
 
 
 def emd_plot(data):
