@@ -204,11 +204,11 @@ if __name__ =='__main__':
     
     fv = StockNewsFinViz()
     df0 = fv.get_futures_all(timeframe='d1')
-    print df0[['ticker','label']]
-    df0[df0['ticker'].isin(['ZF','ZB','ZN'])]
-    df0[df0['ticker'].isin(['ES','EX','NQ','YM','NKD','ER2'])]
-    df0[df0['ticker'].isin(['6E','DX'])]
-    df0[df0['ticker'].isin(['ZS','CL','GC','HG'])]
+    # print df0[['ticker','label']]
+    print df0[df0['ticker'].isin(['ZF','ZB','ZN'])]
+    print df0[df0['ticker'].isin(['ES','EX','NQ','YM','NKD','ER2'])]
+    print df0[df0['ticker'].isin(['6E','DX'])]
+    print df0[df0['ticker'].isin(['ZS','CL','GC','HG'])]
     # df1 = fv.get_futures_all('m5')
     # df2 = fv.get_forex_all('h1')
     # df3 = fv.get_crypto_all('d1')
