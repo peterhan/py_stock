@@ -248,7 +248,7 @@ def us_main_loop(mode):
         idic = fv.get_futures_brief(timeframe='d1')
         for key,df in idic.items():
             print key
-            print df
+            print df.iloc[:,0:6]
     if 'news' in flags:
         df= _ftnn.get_news()
         df.index=pd.RangeIndex(df.shape[0])

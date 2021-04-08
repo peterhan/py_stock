@@ -212,7 +212,7 @@ if __name__ =='__main__':
     pd.options.display.float_format = '{:.2f}'.format
     
     fv = StockNewsFinViz()
-    print fv.get_futures_brief('d1')
+    df= fv.get_futures_brief('d1')
     # df1 = fv.get_futures_all('m5')
     # df2 = fv.get_forex_all('h1')
     # df3 = fv.get_crypto_all('d1')
@@ -221,6 +221,6 @@ if __name__ =='__main__':
     # fv.get_statement('TSLA','IA')
     # fv.get_statement('TSLA','BA')
     # fv.get_statement('TSLA','CA')
-    query = OrderedDict([['v','111'],['f','ind_banksdiversified']])
-    fv.get_screener(query)
+    # query = OrderedDict([['v','111'],['f','ind_banksdiversified']])
+    # fv.get_screener(query)
     pdb.set_trace()
