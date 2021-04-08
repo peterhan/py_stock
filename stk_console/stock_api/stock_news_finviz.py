@@ -64,7 +64,7 @@ class StockNewsFinViz():
         return self.get_market_all('futures',timeframe)
         
     def get_futures_brief(self,timeframe):
-        df = fv.get_futures_all(timeframe)
+        df = self.get_futures_all(timeframe)
         return {
         'debt':df[df['ticker'].isin(['ZF','ZB','ZN'])]
         ,'stock':df[df['ticker'].isin(['ES','EX','NQ','YM','NKD','ER2'])]
