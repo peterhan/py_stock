@@ -63,6 +63,15 @@ class StockNewsFinViz():
     def get_futures_all(self,timeframe='NO'):
         return self.get_market_all('futures',timeframe)
         
+    def get_futures_brief(self,timeframe):
+        df = fv.get_futures_all(timeframe)
+        return {
+        'debt':df[df['ticker'].isin(['ZF','ZB','ZN'])]
+        ,'stock':df[df['ticker'].isin(['ES','EX','NQ','YM','NKD','ER2'])]
+        ,'currency':df[df['ticker'].isin(['6E','DX'])]
+        ,'metal':df[df['ticker'].isin(['ZS','CL','GC','HG'])]
+        }
+         
     def get_crypto_all(self,timeframe='NO'):
         return self.get_market_all('crypto',timeframe)
         
@@ -203,12 +212,7 @@ if __name__ =='__main__':
     pd.options.display.float_format = '{:.2f}'.format
     
     fv = StockNewsFinViz()
-    df0 = fv.get_futures_all(timeframe='d1')
-    # print df0[['ticker','label']]
-    print df0[df0['ticker'].isin(['ZF','ZB','ZN'])]
-    print df0[df0['ticker'].isin(['ES','EX','NQ','YM','NKD','ER2'])]
-    print df0[df0['ticker'].isin(['6E','DX'])]
-    print df0[df0['ticker'].isin(['ZS','CL','GC','HG'])]
+    print fv.get_futures_brief('d1')
     # df1 = fv.get_futures_all('m5')
     # df2 = fv.get_forex_all('h1')
     # df3 = fv.get_crypto_all('d1')
