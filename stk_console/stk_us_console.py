@@ -247,7 +247,7 @@ def us_main_loop(mode):
         fv = StockNewsFinViz()
         idic = fv.get_futures_brief(timeframe='d1')
         for key,df in idic.items():
-            print key
+            print '\n[%s]'%key
             print df.iloc[:,0:6]
     if 'news' in flags:
         df= _ftnn.get_news()
