@@ -122,7 +122,7 @@ def get_one_tick_data(tick,stk_infos,flags,api_route = 'futu'):
     his_df = get_stock_kline(tick,flags,api_route) 
     his_df = his_df[-365:]
     
-    if 'pdb' in flags:            
+    if 'pdb' in flags:
         pdb.set_trace()
     ### 
     try:
