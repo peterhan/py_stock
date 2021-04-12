@@ -111,6 +111,8 @@ def get_stock_kline(tick,flags,api_route='futu'):
         ,'Low':'low','Close':'close','Volume':'volume'
         ,'Dividends':'dividends','Stock Splits':'splits'})        
     elif api_route=='futu':
+        if cyc=='intraday':
+            cyc='15min'
         his_df = _ftnn.get_kline(tick, cyc)     
     return his_df
  

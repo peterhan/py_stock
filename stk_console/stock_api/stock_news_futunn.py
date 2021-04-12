@@ -118,7 +118,8 @@ class StockNewsFUTUNN():
         url ='https://www.futunn.com/new-quote'\
             +'/kline?security_id=%s&type=%s&from=&market_type=%s&_=%s'%(sec_id['id'],date_mode,sec_id['mkt_type'],ts)
         logging.info(url) 
-        resp = requests.get(url,headers=self.headers)        
+        resp = requests.get(url,headers=self.headers)
+        # pdb.set_trace()
         jo = resp.json()
         lst = jo['data'].pop('list')
         df = pd.DataFrame.from_dict(lst ,orient='columns')        
@@ -224,8 +225,8 @@ if __name__ =='__main__':
         # ftnn.get_sec_id(stk)
         # ftnn.get_company_info(stk)
         # ftnn.get_dividend(stk)
-        dfn = ftnn.get_stock_news(stk)
-        df1 = ftnn.get_kline(stk,'day')
+        df0 = ftnn.get_stock_news(stk)
+        df1 = ftnn.get_kline(stk,'15min')
         df2 = ftnn.get_stock_minute(stk)
         pdb.set_trace()
     
