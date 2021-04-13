@@ -172,7 +172,7 @@ def us_main_loop(mode):
         ,'s':'onestock','n':'news','r':'realtime'
         ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'f':'futu','vt':"vantage"
         ,'g':"graph",'ia':'intraday','id':'day','iw':'week','im':'month','u':'us','z':'zh'
-        ,'e':'emd','ve':'vemd','c':'catboost','o':'option_chain','ft':'futures'
+        ,'e':'emd','ve':'vemd','c':'catboost','o':'option_chain','ft':'futures','fe':'futures_etc'
     }
     menu_dict = conf_tks
     groups,flags = cli_select_menu(menu_dict,default_input= None,\
@@ -245,9 +245,12 @@ def us_main_loop(mode):
            print json.dumps(result['option_chain']  ,indent=2)
     if len(tail_n_res)>0:
         print pd.concat(tail_n_res,axis=0)
-    if 'futures' in flags:
+    if 'futures' in flags or 'futures_etc' in flags:
         fv = StockNewsFinViz()
-        idic = fv.get_futures_brief(timeframe='d1')
+        if 'futures_etc' in flags:        
+            idic = fv.get_etc_brief(timeframe='d1')
+        else:
+            idic = fv.get_futures_brief(timeframe='d1')
         for key,df in idic.items():
             print '\n[%s]'%key
             print df.iloc[:,0:6]

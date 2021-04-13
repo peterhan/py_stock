@@ -63,21 +63,26 @@ class StockNewsFinViz():
     def get_futures_all(self,timeframe='NO'):
         return self.get_market_all('futures',timeframe)
         
+    def get_forex_all(self,timeframe='NO'):
+        return self.get_market_all('forex',timeframe)
+        
+    def get_crypto_all(self,timeframe='NO'):
+        return self.get_market_all('crypto',timeframe)        
+
     def get_futures_brief(self,timeframe):
-        df = self.get_futures_all(timeframe)
+        df = self.get_futures_all(timeframe)        
         return {
         'debt':df[df['ticker'].isin(['ZF','ZB','ZN'])]
         ,'stock':df[df['ticker'].isin(['ES','EX','NQ','YM','NKD','ER2'])]
         ,'currency':df[df['ticker'].isin(['6E','DX'])]
-        ,'metal':df[df['ticker'].isin(['ZS','CL','GC','HG'])]
+        ,'metal':df[df['ticker'].isin(['ZS','CL','GC','HG'])]        
         }
-         
-    def get_crypto_all(self,timeframe='NO'):
-        return self.get_market_all('crypto',timeframe)
         
-    def get_forex_all(self,timeframe='NO'):
-        return self.get_market_all('forex',timeframe)
-      
+    def get_etc_brief(self,timeframe):
+        dff = self.get_forex_all(timeframe)
+        dfc = self.get_crypto_all(timeframe)
+        return {'forex':dff
+        ,'crypto':dfc}
         
     def get_quote(self,code):        
         url = self.base_url+'/quote.ashx?t=%s&b=2'%code
