@@ -114,9 +114,12 @@ class StockNewsFinViz():
         ssoup5 = get_tags(soup,'td','.fullview-profile')[0]
         rows5  = ssoup5.text
         ## insider
-        ssoup6 = get_tags(soup,'table','.body-table')[0]
-        tags = get_tags(ssoup6,'tr')
-        rows6 = self.tags_to_tables(tags)
+        try:
+            ssoup6 = get_tags(soup,'table','.body-table')[0]
+            tags = get_tags(ssoup6,'tr')
+            rows6 = self.tags_to_tables(tags)
+        except:
+            rows6 = None
         ##
         res = {'concept':rows1,'overview':rows2,'rating':rows3,'news':rows4,'profile':rows5,'insider':rows6}
         # pdb.set_trace()
@@ -217,15 +220,16 @@ if __name__ =='__main__':
     pd.options.display.float_format = '{:.2f}'.format
     
     fv = StockNewsFinViz()
-    df= fv.get_futures_brief('d1')
+    # df= fv.get_futures_brief('d1')
     # df1 = fv.get_futures_all('m5')
     # df2 = fv.get_forex_all('h1')
     # df3 = fv.get_crypto_all('d1')
     # df4 = fv.get_insider_trading()
-    # df5 = fv.get_quote('PLTR')
-    # fv.get_statement('TSLA','IA')
-    # fv.get_statement('TSLA','BA')
-    # fv.get_statement('TSLA','CA')
+    tick='iq'
+    df5 = fv.get_quote(tick)
+    df6 = fv.get_statement(tick,'IA')
+    df7 = fv.get_statement(tick,'BA')
+    df8 = fv.get_statement(tick,'CA')
     # query = OrderedDict([['v','111'],['f','ind_banksdiversified']])
     # fv.get_screener(query)
     pdb.set_trace()
