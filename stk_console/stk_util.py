@@ -192,7 +192,7 @@ def cli_select_menu(select_dic, default_input=None, menu_columns=5, column_width
             idx = i+1
             select_map[idx] = key
     for idx,key in select_map.items():
-        print ('(%s) %s'%(idx,key.encode(ENCODE,'ignore'))).ljust(column_width),
+        print ('[%s] %s'%(idx,key.encode(ENCODE,'ignore'))).ljust(column_width),
         if (idx)%menu_columns == 0:
             print ''
     print ''
