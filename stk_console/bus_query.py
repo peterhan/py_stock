@@ -35,7 +35,8 @@ hlg_zj_681='000000058203711'
 hdzj='110100015885040'
 sdqd='110100015885025'
     
-query_lineno('681')
-query_station(hlg_zj_681)
+# query_lineno('681')
+# query_station(hlg_zj_681)
+query_etatime(hlg_zj_681,sdqd)
 query_etatime(hlg_zj_681,hdzj)
 # query_etatime(hlg_zj_681,sdqd)
