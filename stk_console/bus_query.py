@@ -4,15 +4,29 @@ import bs4
 import pdb
 import pandas  as pd
 import traceback
+import sys
+import re
 
-token = 'eyJhbGciOiJIUzI1NiIsIlR5cGUiOiJKd3QiLCJ0eXAiOiJKV1QifQ.eyJwYXNzd29yZCI6IjY0ODU5MTQzNSIsInVzZXJOYW1lIjoiYmpidXMiLCJleHAiOjE2MjE3MjA4MDF9.fiP0eWDkEb8jZ4V9JIpwkt9vIJuhFsD7DuBaR8S1ers'
+token = ''
 
+def get_token():
+    url='http://www.bjbus.com/home/fun_rtbus.php'
+    fd  = urllib2.urlopen(url)
+    text = fd.read()
+    for ln in text.splitlines():
+        if ln.find('&token=')==-1:
+            continue
+        match = re.search('token\=([^\']*)',ln)
+        tok = match.group(1)
+        break
+    return tok
 
 def jdumps(jo):
     return json.dumps(jo,indent=2,ensure_ascii=False).encode('gbk')
     
 def get_json(url):
     fd  = urllib2.urlopen(url)
+    # print url
     text = fd.read()
     # pdb.set_trace()
     jo = json.loads(text)
@@ -74,7 +88,10 @@ if __name__ == '__main__':
     print ['93', '28', '32', '46', '76', '18', '77', '03', '88','81','14']
     print ['05 0 13']
     # menu_select('81',1,26),(1,41)    
-    # menu_select('14',0,9),(1,14)    
+    # menu_select('14',0,9),(1,14) 
+    global token
+    token = get_token()
+    # sys.exit()
     while True:
         try:
             arr =raw_input('[Line Direct Station]:').split(' ')
