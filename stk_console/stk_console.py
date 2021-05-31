@@ -239,7 +239,8 @@ def interact_choose_ticks(mode):
          'q':'quit', 'd':'detail', 'i':'pdb','ix':'index'
         ,'s':'onestock','top':'top','inst':'inst'
         ,'r':'realtime','f':'fullname','g':'graph'
-        ,'u':'us','z':'zh','e':'emd','ve':'vemd','c':'catboost'
+        ,'u':'us','z':'zh','b':'bus'
+        ,'e':'emd','ve':'vemd','c':'catboost'
         ,'nw':'news_wscn','hw':'hot_wscn','ws':'wscn_loop'
         ,'ns':'news_sina','n':'news_sina'
         ,'nf':'futu_news'
@@ -447,6 +448,7 @@ if __name__ == '__main__':
     mode = sys.argv
     main_loop = cn_main_loop
     from stk_us_console import us_main_loop   
+    from bus_query import bus_query_loop   
     flags = set()
     while 1:
         # print 'MENU_FLAG:',flags
@@ -454,7 +456,11 @@ if __name__ == '__main__':
             main_loop = us_main_loop
         if 'zh' in flags:        
             main_loop = cn_main_loop  
+        if 'bus' in flags:
+            main_loop = bus_query_loop
         try:
             flags = main_loop(mode)
+            if 'quit' in flags:
+                main_loop = cn_main_loop
         except Exception as e:
             traceback.print_exc()
