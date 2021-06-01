@@ -603,7 +603,8 @@ def get_model_filename(tick,type):
         return True,fname
     else:
         return False,fname
-        
+ 
+@time_count 
 def catboost_process(tick,df):
     cycles=['1d','3d','5d','10d','20d','30d','60d']
     cycles=['1d','5d','10d','30d']

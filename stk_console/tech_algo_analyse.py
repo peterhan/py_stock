@@ -8,10 +8,10 @@ from collections import OrderedDict
 
 ## algo_analyse
 @time_count
-def caculate_indicator(df, i_stages, target_col):
-    # i_stages = cdl_pat_names
-    # adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
-    adf = df[['rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+i_stages].copy()
+def caculate_indicator(df, factor_combo, target_col):
+    # factor_combo = cdl_pat_names
+    # adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+factor_combo].copy()
+    adf = df[['rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+factor_combo].copy()
     bencols = []
     bencols.append(target_col)
     i=int(target_col.split('_')[-1].strip('d'))
@@ -26,7 +26,7 @@ def caculate_indicator(df, i_stages, target_col):
     # adf['p_change_30d'] = df['p_change'].shift(-30)
     # print adf.corr()
     
-    adf.to_csv("veri/train_dump.csv")
+    # adf.to_csv("veri/train_dump.csv")
     def stat_gp(gp):
         return gp.agg([np.size, np.mean, np.std, np.max, np.min]) 
         # gp.agg({'text':'size', 'sent':'mean'}) \        
@@ -36,8 +36,8 @@ def caculate_indicator(df, i_stages, target_col):
     # df = stat_gp(adf.groupby(['macd_stage','sma_stage','rsi_stage'] )[bencols])
     # print df
     # df.to_csv('veri/comb.csv')
-    for stage in i_stages:
-        df = stat_gp(adf.groupby(stage )[bencols])
+    for factor in factor_combo:
+        df = stat_gp(adf.groupby(factor )[bencols])
         # print df
         # df.to_csv('veri/'+stage+".csv")       
     # pdb.set_trace()
