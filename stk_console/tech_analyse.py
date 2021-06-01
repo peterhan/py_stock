@@ -598,7 +598,7 @@ def get_model_filename(tick,type):
     folder = 'model_catboost.cache'
     if not os.path.exists(folder):
         os.mkdirs(folder)
-    fname=folder+'/'+tick+'.'+type+'.model'
+    fname=folder+'/'+tick.replace('.','_')+'.'+type+'.model'
     if os.path.exists(fname):
         return True,fname
     else:

@@ -108,18 +108,22 @@ def train_cat_boost(adf,factor_combo,target_col):
     return fit_model
     # pdb.set_trace()
 
+DEFAULT_COMBO_LIST = [ 
+        ['roc_stage'] 
+        ,['vwap_stage','ema_stage']
+        # ,['macd_stage','rsi_stage']
+        #,['week_stage','ema_stage']
+        # ,['week_stage'] ,['CDLScore']
+        ,['ema_stage']  ,['sma_stage']
+        # ,['volume_ema_stage'] ,['volume_sma_stage']  
+        ,['macd_stage'] ,['cci_stage'] 
+        ,['rsi_stage']  ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage']
+        ,['aroon_stage'],['vswap_stage'],['vwap_stage']
+]
 @time_count
 def catboost_factor_verify(df,target_days = ['5d'],factor_combo_list=None):   
     if factor_combo_list is None:
-        factor_combo_list = [ 
-        ['roc_stage'] 
-        # ,['macd_stage','rsi_stage']
-        ,['vwap_stage','ema_stage'],['week_stage','ema_stage']
-        # ,['week_stage'] ,['CDLScore']
-        ,['ema_stage']  ,['sma_stage'],['volume_ema_stage'] ,['volume_sma_stage']  ,['macd_stage'] ,['cci_stage'] 
-        ,['rsi_stage']  ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage']
-        ,['aroon_stage'],['vswap_stage'],['vwap_stage']
-        ]
+        factor_combo_list = DEFAULT_COMBO_LIST
     factor_results = {}
     o_factor_results = OrderedDict()
     for target_col in ['pchg_%s'%target_day for target_day in target_days]:    
