@@ -6,12 +6,15 @@ import pdb
 import datetime,time
 import locale
 import itertools
-
+import os
 import pandas as pd
 import numpy as np
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 from stk_util import time_count
+
+from tech_algo_analyse import catboost_factor_verify,append_factor_result_to_df,print_factor_judge_result,print_factor_result
+import cPickle as pickle
 
 def load_ta_pat_map():
     return json.load(open('talib_pattern_name.json'))
@@ -591,13 +594,36 @@ def yf_get_hist_data(tick):
     df['turnover'] = 0
     return df
 
-
-
+def get_model_filename(tick,type):
+    folder = 'model_catboost.cache'
+    if not os.path.exists(folder):
+        os.mkdirs(folder)
+    fname=folder+'/'+tick+'.'+type+'.model'
+    if os.path.exists(fname):
+        return True,fname
+    else:
+        return False,fname
+        
+def catboost_process(tick,df):
+    cycles=['1d','3d','5d','10d','20d','30d','60d']
+    cycles=['1d','5d','10d','30d']
+    flag,pfname = get_model_filename(tick,'factor')
+    # cycles=['5d']
+    if not flag:
+        factor_results  = catboost_factor_verify(df, target_days=cycles)        
+        pickle.dump(factor_results,open(pfname ,'w'))
+        print('  [dump_cache_finish]')
+    else:
+        factor_results = pickle.load(open(pfname ))
+        print('  [read_cache_finish]')
+    df = append_factor_result_to_df(df,factor_results)
+    print_factor_judge_result(df,top_n=20)
+    # print_factor_result(factor_results,top_n=3)
+    return df,factor_results
     
 def main():
     import tushare as ts
-    from tech_algo_analyse import cat_boost_factor_verify,print_factor_judge_result,print_factor_result,append_factor_result_to_df
-    import cPickle as pickle
+    
     pd.set_option('display.max_columns',80)
     def pprint(info, indent=None):
         print json.dumps(info, ensure_ascii=False, indent=2).encode(ENCODE)
@@ -634,19 +660,10 @@ def main():
     res = [{'code':tick,'info':{}
         ,'tech':tinfo,'cdl':cinfo }]
     print analyse_res_to_str(res)
+    catboost_process(tick,df)
     # pprint(cinfo)
     # print df.tail(1)
     ###
-    factor_results  = cat_boost_factor_verify(df, target_days=['1d','3d','5d','10d','60d'])    
-    # factor_results  = cat_boost_factor_verify(df, target_days=[ '5d'])    
-    pfname = 'factor_res'
-    pickle.dump(factor_results,open(pfname ,'w'))
-    print('dump_finish')
-    factor_results = pickle.load(open(pfname ))
-    df = append_factor_result_to_df(df,factor_results)
-    print_factor_result(factor_results)
-    print_factor_judge_result(df)
-    
     df.to_csv('veri/tech.csv')
     pdb.set_trace()
 

@@ -109,7 +109,7 @@ def train_cat_boost(adf,factor_combo,target_col):
     # pdb.set_trace()
 
 @time_count
-def cat_boost_factor_verify(df,target_days = ['5d'],factor_combo_list=None):   
+def catboost_factor_verify(df,target_days = ['5d'],factor_combo_list=None):   
     if factor_combo_list is None:
         factor_combo_list = [ 
         ['roc_stage'] 
@@ -152,19 +152,19 @@ def append_factor_result_to_df(df,factor_results):
         df = df.join(fdf,on=key_columns)
     return df
     
-def print_factor_result(o_factor_results,topn=5):    
+def print_factor_result(o_factor_results,top_n=5):    
     print ''
-    for key,check_result in o_factor_results.items()[:topn:1]:            
+    for key,check_result in o_factor_results.items()[:top_n:1]:            
         print '[%s]'%(key)
         print check_result['factor_df']
         print 'rmse: %0.2f'%check_result['rmsev']
         print 'correct_rate: %0.2f%%'%(check_result['correct_rate'])
         print ''
         
-def print_factor_judge_result(df,last_n=1,top_n=3):    
+def print_factor_judge_result(df,top_n=3,last_n_day=1):    
     last_type = ''
     tcnt = 0
-    for row in df.iloc[-1*last_n:].iterrows():
+    for row in df.iloc[-1*last_n_day:].iterrows():
         odict = row[1].to_dict(into=OrderedDict)
         for key,vlu in odict.items():
             if key.find('=>')==-1:

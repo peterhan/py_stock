@@ -15,8 +15,8 @@ from collections import OrderedDict
 from matplotlib import pyplot as plt
 
 from tushare_patch import get_latest_news,get_today_ticks,print_latest_news
-from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_str
-from tech_algo_analyse import cat_boost_factor_verify
+from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_str,catboost_process
+
 
 from stk_util import get_article_detail,cli_select_menu
 
@@ -209,8 +209,8 @@ def get_one_ticker_k_data(tick,info,flags):
     tdf.pop('date')
     cdf.pop('date')
     df = pd.concat([df,tdf,cdf],axis=1)
-    if 'catboost' in flags:
-        factor_results = cat_boost_factor_verify(df)
+    if 'catboost' in flags:        
+        df,factor_results = catboost_process(tick,df)
     if 'pdb' in flags:
         pdb.set_trace()
     # cdl_info = None
