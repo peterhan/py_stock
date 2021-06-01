@@ -554,6 +554,7 @@ def jsdump(info, indent=None):
     return json.dumps(info, ensure_ascii=False, indent=indent) 
     
 SYS_ENCODE = locale.getpreferredencoding()
+
 def analyse_res_to_str(stock_anly_res):
     intro = {}
     pstr = ''
@@ -577,7 +578,7 @@ def analyse_res_to_str(stock_anly_res):
             pstr+= "\n  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(SYS_ENCODE) )
     pstr += '\n'
     for name,intro in intro.items():
-        pstr+= u"\n  [EXPLAIN:{}]:{}".format(name,intro).encode(SYS_ENCODE)  
+        pstr+= u"\n  [EXPLAIN:{}]:{}".format(name,intro).encode(SYS_ENCODE)     
     return pstr
 
 def yf_get_hist_data(tick):
@@ -589,11 +590,14 @@ def yf_get_hist_data(tick):
     df = df.rename(columns={'Date':'date','Open':'open','High':'high','Low':'low','Close':'close','Volume':'volume','Dividends':'dividends' , 'Stock Splits':'splits'})
     df['turnover'] = 0
     return df
+
+
+
     
 def main():
     import tushare as ts
-    from tech_algo_analyse import cat_boost_factor_check
-    
+    from tech_algo_analyse import cat_boost_factor_verify,print_factor_judge_result,print_factor_result,append_factor_result_to_df
+    import cPickle as pickle
     pd.set_option('display.max_columns',80)
     def pprint(info, indent=None):
         print json.dumps(info, ensure_ascii=False, indent=2).encode(ENCODE)
@@ -624,20 +628,29 @@ def main():
     # df.to_csv('temp_res.csv')
     # pdb.set_trace()
     cinfo,cdf = candle_analyse(df)
-    res = [{'code':tick,'info':{}
-        ,'tech':tinfo,'cdl':cinfo}]
-    print analyse_res_to_str(res)
+    
     
     df = pd.concat([df,tdf,cdf],axis=1)
-    df.to_csv('veri/tech.csv')
-    # pdb.set_trace()
+    res = [{'code':tick,'info':{}
+        ,'tech':tinfo,'cdl':cinfo }]
+    print analyse_res_to_str(res)
     # pprint(cinfo)
     # print df.tail(1)
     ###
-    # factor_results  = cat_boost_factor_check(df, target_days=['1d','3d','5d','10d','60d'])
+    factor_results  = cat_boost_factor_verify(df, target_days=['1d','3d','5d','10d','60d'])    
+    # factor_results  = cat_boost_factor_verify(df, target_days=[ '5d'])    
+    pfname = 'factor_res'
+    pickle.dump(factor_results,open(pfname ,'w'))
+    print('dump_finish')
+    factor_results = pickle.load(open(pfname ))
+    df = append_factor_result_to_df(df,factor_results)
+    print_factor_result(factor_results)
+    print_factor_judge_result(df)
     
-    factor_results  = cat_boost_factor_check(df, target_days=['5d'])
-   
-        
+    df.to_csv('veri/tech.csv')
+    pdb.set_trace()
+
+
+
 if __name__ == '__main__':    
     main()

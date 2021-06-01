@@ -2,7 +2,9 @@
 import pandas as pd
 import numpy as np
 import traceback
+import pdb
 from stk_util import time_count
+from collections import OrderedDict
 
 ## algo_analyse
 @time_count
@@ -28,9 +30,9 @@ def caculate_indicator(df, i_stages, target_col):
     def stat_gp(gp):
         return gp.agg([np.size, np.mean, np.std, np.max, np.min]) 
         # gp.agg({'text':'size', 'sent':'mean'}) \        
-       #.rename(columns={'text':'count','sent':'mean_sent'}) \
-       #.reset_index()
-       #.iloc[:,offset:]
+        #.rename(columns={'text':'count','sent':'mean_sent'}) \
+        #.reset_index()
+        #.iloc[:,offset:]
     # df = stat_gp(adf.groupby(['macd_stage','sma_stage','rsi_stage'] )[bencols])
     # print df
     # df.to_csv('veri/comb.csv')
@@ -46,11 +48,11 @@ def rmse(targets,predictions):
     return np.sqrt(((predictions - targets) ** 2).mean())
 
 @time_count    
-def predict_cat_boost(fit_model, adf,i_stages,target_col):
+def predict_cat_boost(fit_model, adf,factor_combo,target_col,test_len=200):
     from catboost import CatBoostRegressor
     factor_results = {}
-    test_pool = adf[i_stages][-100:]
-    test_labels = adf[target_col].fillna(0)[-100:]
+    test_pool = adf[factor_combo][-1*test_len:]
+    test_labels = adf[target_col].fillna(0)[-1*test_len:]
     model = fit_model
     # model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=i_stages)
     # model.load_model('first.model')
@@ -60,29 +62,26 @@ def predict_cat_boost(fit_model, adf,i_stages,target_col):
     # pdb.set_trace()
     
     feat = [] 
-    for i in range(0,len(i_stages)):
-        srs = test_pool[i_stages[i]].unique()
+    test_pool['date']= test_pool.index
+    #
+    try:
+        df_gg = test_pool.groupby(factor_combo).count()
+        df_gg = df_gg.rename(columns={'date':'date_count'})
+        data_rows = df_gg.index.to_list()
+        if len(factor_combo)==1:
+            data_rows = map(lambda x:[x],data_rows)
+        score = model.predict(data_rows)
+        df_gg['score_cb']=score
+    except:
+        traceback.print_exc()
         # pdb.set_trace()
-        edf = pd.DataFrame(srs)
-        edf['key']=1
-        feat.append(edf)
-    if len(feat)==1:
-        cfeat=feat[0]
-    else:
-        cfeat = reduce(lambda x1,x2:pd.merge(x1,x2,on='key') ,feat)
-        # pdb.set_trace()
-    cfeat.pop('key')
-    cfeat = cfeat.to_records(index=False)
-    cfeat = [list(row) for row in cfeat]
+    pdf  = df_gg.sort_values('score_cb',ascending=False)
     
-    ps = model.predict(cfeat)
-    sts = [' & '.join(row) for row in cfeat]
-    pdf  = pd.DataFrame({'feature':sts,'weight':ps}).sort_values('weight',ascending=False)
+    res_key=':'.join (factor_combo)+'=>'+target_col
+    factor_results[res_key] = {}
     
-    key=':'.join (i_stages)+'=>'+target_col
-    factor_results[key] = {}
-    check_result=factor_results[key]
-    check_result['factor_detail']=pdf
+    check_result=factor_results[res_key]
+    check_result['factor_df']=pdf
     
     # print preds_raw_vals,test_labels
 
@@ -94,11 +93,11 @@ def predict_cat_boost(fit_model, adf,i_stages,target_col):
     return factor_results
 
 @time_count
-def train_cat_boost(adf,i_stages,target_col):
+def train_cat_boost(adf,factor_combo,target_col):
     from catboost import CatBoostRegressor
-    dataset = adf[i_stages][:]
+    dataset = adf[factor_combo][:]
     train_labels = adf[target_col].fillna(0)[:]
-    model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=i_stages)
+    model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=factor_combo)
     try:
         fit_model = model.fit(dataset, train_labels, verbose=0)
     except:
@@ -110,41 +109,77 @@ def train_cat_boost(adf,i_stages,target_col):
     # pdb.set_trace()
 
 @time_count
-def cat_boost_factor_check(df,target_days = ['5d'],print_res=True):
-    i_stages = [['cci_stage','ema_stage','volume_ema_stage','volume_sma_stage','sma_stage','ma_es_dif_stage','macd_stage','boll_stage','rsi_stage','kdj_stage','mom_stage','aroon_stage','vswap_stage','vwap_stage','week_stage'] ]    
-    i_stage_list = [  ['ema_stage']  ,['sma_stage'],['volume_ema_stage'] ,['volume_sma_stage']  ,['macd_stage'] ,['cci_stage'] ,['roc_stage'] 
-        ,['rsi_stage'] ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage'], ['aroon_stage'],['vswap_stage'],['vwap_stage']
-        ,['vwap_stage','ema_stage'],['week_stage','ema_stage'],['macd_stage','rsi_stage']]
+def cat_boost_factor_verify(df,target_days = ['5d'],factor_combo_list=None):   
+    if factor_combo_list is None:
+        factor_combo_list = [ 
+        ['roc_stage'] 
+        # ,['macd_stage','rsi_stage']
+        ,['vwap_stage','ema_stage'],['week_stage','ema_stage'],['week_stage']
+        ,['CDLScore']
+        ,['ema_stage']  ,['sma_stage'],['volume_ema_stage'] ,['volume_sma_stage']  ,['macd_stage'] ,['cci_stage'] 
+        ,['rsi_stage']  ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage']
+        ,['aroon_stage'],['vswap_stage'],['vwap_stage']
+        ]
     factor_results = {}
-    for target_col in ['p_change_%s'%target_day for target_day in target_days]:    
-        for i_stages in i_stage_list:
+    o_factor_results = OrderedDict()
+    for target_col in ['pchg_%s'%target_day for target_day in target_days]:    
+        for factor_combo in factor_combo_list:
             try:
-                if len(target_days)>2:
-                    print '[Training]:',i_stages,target_col
-                adf = caculate_indicator(df, i_stages, target_col)
-                fit_model = train_cat_boost(adf,i_stages,target_col)
-                cres = predict_cat_boost(fit_model ,adf,i_stages,target_col)
-                factor_results.update(cres)
+                if len(target_days)>=2:
+                    print '[Training]:',factor_combo,target_col
+                adf = caculate_indicator(df, factor_combo, target_col)
+                fit_model = train_cat_boost(adf,factor_combo,target_col)
+                pred_res = predict_cat_boost(fit_model ,adf,factor_combo,target_col)
+                factor_results.update(pred_res)
             except:
                 traceback.print_exc()
-    if print_res:
+    for key,check_result in sorted(factor_results.items(),key=lambda v:v[1]['correct_rate'],reverse=True):
+        o_factor_results[key] =  check_result
+    
+    return o_factor_results
+
+
+def append_factor_result_to_df(df,factor_results):
+    for algo_key,factor_info in factor_results.items():
+        # pdb.set_trace()
+        fdf = factor_info['factor_df']
+        est_measure = 'cr:%0.2f%%,rms:%0.2f'%(factor_info['correct_rate'],factor_info['rmsev'])
+        fdf['est_accu'] = est_measure
+        fdf['est_accu'] = fdf['est_accu']+',cnt:'+fdf['date_count'].astype(str)
+        fdf.drop('date_count',axis=1)
+        fdf = fdf.add_prefix(algo_key+'.')
+        key_columns = algo_key.split('=>')[0].split(':')
+        df = df.join(fdf,on=key_columns)
+    return df
+    
+def print_factor_result(o_factor_results,topn=5):    
+    print ''
+    for key,check_result in o_factor_results.items()[:topn:1]:            
+        print '[%s]'%(key)
+        print check_result['factor_df']
+        print 'rmse: %0.2f'%check_result['rmsev']
+        print 'correct_rate: %0.2f%%'%(check_result['correct_rate'])
         print ''
-        for key,check_result in sorted(factor_results.items(),key=lambda v:v[1]['correct_rate'],reverse=False):
-            print '[%s]'%(key)
-            print check_result['factor_detail']
-            print 'rmse: %0.2f'%check_result['rmsev']
-            print 'correct_rate: %0.2f%%'%(check_result['correct_rate'])
-            print ''
-    # from matplotlib import pyplot as plt
-    # plt.title('%s %s'%(i_stages,target_col))
-    # plt.plot(preds_raw_vals[:],'--')
-    # plt.plot(test_labels.values[:])
-    # plt.plot(pos_neg.values[:],':')
-    # plt.show()
-    # return preds_class,preds_proba,preds_raw_vals
-    return factor_results
-
-
+        
+def print_factor_judge_result(df,last_n=1,top_n=3):    
+    last_type = ''
+    tcnt = 0
+    for row in df.iloc[-1*last_n:].iterrows():
+        odict = row[1].to_dict(into=OrderedDict)
+        for key,vlu in odict.items():
+            if key.find('=>')==-1:
+                continue
+            if key.find('.date_count')!=-1:
+                continue
+            t_type=key.split('.')[0]
+            if t_type!=last_type:
+                tcnt+=1
+                last_type=t_type
+                print ''
+            if tcnt>top_n:
+                break
+            print '[%s]: '%key,vlu
+        
 def main():
     pass
         

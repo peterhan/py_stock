@@ -17,7 +17,7 @@ import yfinance as yf
 from stk_util import time_count,cli_select_menu,get_article_detail
 import talib
 from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str
-from tech_algo_analyse import cat_boost_factor_check
+from tech_algo_analyse import cat_boost_factor_verify
 from yfinance_cache import yfinance_cache
 from stock_api import StockNewsFUTUNN
 from stock_api import StockNewsFinViz
