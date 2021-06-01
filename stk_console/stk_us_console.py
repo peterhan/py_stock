@@ -137,18 +137,19 @@ def get_one_tick_data(tick,stk_infos,flags,api_route = 'futu'):
     res_info = {'code':tick, 'info':stk_infos.get(tick,{}), 'df':df}
     res_info['info'].update({'price':df['close'].values[-1],'name':''})
     # pdb.set_trace()
-    if 'detail' in flags:
+    if 'detail' in flags or 'catboost' in flags:
         tinfo,tdf = tech_analyse(df)
         cinfo,cdf = candle_analyse(df)
         df = pd.concat([df,tdf,cdf],axis=1)        
         
         res_info['info'].update({'price':df['close'].values[-1],'name':''})
         res_info.update({'tech':tinfo,'cdl':cinfo})
+    if 'catboost' in flags:
+        catboost_process(tick,df)
+        
     if 'option_chain' in flags:
         res_info['option_chain'] = ytk.option_chain()
         
-    if 'cat' in flags:
-        catboost_process(tick,df)     
     return res_info
 
         

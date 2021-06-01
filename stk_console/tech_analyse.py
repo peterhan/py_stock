@@ -605,7 +605,7 @@ def get_model_filename(tick,type):
         return False,fname
  
 @time_count 
-def catboost_process(tick,df):
+def catboost_process(tick,df,top_n=5):
     cycles=['1d','3d','5d','10d','20d','30d','60d']
     cycles=['1d','5d','10d','30d']
     flag,pfname = get_model_filename(tick,'factor')
@@ -618,7 +618,7 @@ def catboost_process(tick,df):
         factor_results = pickle.load(open(pfname ))
         print('  [read_cache_finish]')
     df = append_factor_result_to_df(df,factor_results)
-    print_factor_judge_result(df,top_n=20)
+    print_factor_judge_result(df,top_n=top_n)
     # print_factor_result(factor_results,top_n=3)
     return df,factor_results
     
