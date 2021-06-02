@@ -631,7 +631,7 @@ def catboost_process(tick,df,top_n=10):
     jdf = get_factor_judge_result(df.iloc[-1])
     ldf = get_factor_judge_result(df.iloc[-10])
     pstr = '\n'+str(jdf[:10])
-    pdb.set_trace()
+    # pdb.set_trace()
     return df,factor_results,pstr
     
 def main():
