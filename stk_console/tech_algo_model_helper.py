@@ -33,7 +33,7 @@ def stat_model():
         cnt['top'].update(top)
         cnt['last'].update(last)
         #,fr.values()[:5]
-        # print fr['boll_stage=>pchg_10d']['factor_df']
+        print fr
         # print fr['vswap_stage=>pchg_1d']['factor_df']
         # break
     # pdb.set_trace()
@@ -48,11 +48,11 @@ def run_tick_model(tick):
     from tech_analyse import tech_analyse,candle_analyse,catboost_process
     print tick
     ##
-    # df = ts.get_k_data(tick)
+    df = ts.get_k_data(tick)
     
-    df = ts.get_hist_data(tick)
-    df['date'] = df.index
-    df = df.sort_index()
+    # df = ts.get_hist_data(tick)
+    # df['date'] = df.index
+    # df = df.sort_index()
     ##
     tinfo,tdf = tech_analyse(df)    
     cinfo,cdf = candle_analyse(df)
@@ -60,7 +60,7 @@ def run_tick_model(tick):
     res = [{'code':tick,'info':{}
         ,'tech':tinfo,'cdl':cinfo }]
     fc_list=[['boll_stage']]
-    tdays=['10d']
+    tdays=['1d','3d','5d','7d','10d']
     df,factor_results,pstr = catboost_process(tick,df,factor_combo_list=fc_list,target_days=tdays)
     print factor_results
     print pstr
@@ -73,7 +73,7 @@ def batch_run_model():
     conf_tks  = OrderedDict(conf.items('cn-ticks'))
     
     ticks = conf_tks['mao50'].split(' ')
-    # ticks = ['600004']
+    ticks = ['600004']
     use_pool =False
     if use_pool:
         from multiprocessing import Pool
