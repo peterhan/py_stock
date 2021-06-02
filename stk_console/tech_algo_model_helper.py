@@ -64,7 +64,7 @@ def batch_run_model():
     conf.readfp(open(fname))
     conf_tks  = OrderedDict(conf.items('cn-ticks'))
     
-    ticks = conf_tks['holding'].split(' ')
+    ticks = conf_tks['mao50'].split(' ')
     use_pool =False
     if use_pool:
         from multiprocessing import Pool
@@ -78,5 +78,9 @@ def batch_run_model():
 
     
 if __name__ == '__main__':
-    batch_run_model()
-    # stat_model()
+    flag = raw_input('flag:')
+    if flag.startswith('b'):
+        batch_run_model()
+    if flag.startswith('s'):
+        stat_model()
+    raw_input()
