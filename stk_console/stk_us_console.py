@@ -21,6 +21,11 @@ from yfinance_cache import yfinance_cache
 from stock_api import StockNewsFUTUNN
 from stock_api import StockNewsFinViz
 
+pd.set_option('display.max_rows',None)
+pd.set_option('display.max_columns',80)
+pd.set_option('display.width',None)
+pd.options.display.float_format = '{:.2f}'.format
+
 try:    
     import gevent
     from gevent import monkey

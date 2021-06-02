@@ -56,6 +56,7 @@ def run_tick_model(tick):
     res = [{'code':tick,'info':{}
         ,'tech':tinfo,'cdl':cinfo }]
     df,factor_results,pstr = catboost_process(tick,df)
+    print pstr
  
 def batch_run_model():    
     import ConfigParser
@@ -65,6 +66,7 @@ def batch_run_model():
     conf_tks  = OrderedDict(conf.items('cn-ticks'))
     
     ticks = conf_tks['mao50'].split(' ')
+    # ticks = ['600004']
     use_pool =False
     if use_pool:
         from multiprocessing import Pool
@@ -78,9 +80,12 @@ def batch_run_model():
 
     
 if __name__ == '__main__':
+    pd.set_option('display.width',None)
+    pd.set_option('display.max_rows',None)
+    pd.set_option('display.max_columns',80)
     flag = raw_input('flag:')
     if flag.startswith('b'):
         batch_run_model()
     if flag.startswith('s'):
         stat_model()
-    raw_input()
+    # raw_input('finish:')
