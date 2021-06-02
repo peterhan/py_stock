@@ -11,9 +11,9 @@ import pandas as pd
 import numpy as np
 from collections import OrderedDict
 from matplotlib import pyplot as plt
-from stk_util import time_count
+from stk_util import time_count,add_indent
 
-from tech_algo_analyse import catboost_factor_verify,append_factor_result_to_df,print_factor_judge_result,print_factor_result
+from tech_algo_analyse import catboost_factor_verify,join_factor_result_to_df,get_factor_judge_result,print_factor_result
 import cPickle as pickle
 
 def load_ta_pat_map():
@@ -446,11 +446,23 @@ def tech_analyse(df):
     
     df = df[['date']].copy()
 
-    ## MACD
+    ## BOLL
+    boll_anly_res,bdf = boll_analyse(ohlcv)
+    df= pd_concat(df,bdf)
+    ana_res['BOLL'] =  boll_anly_res
+    
+    
+    ## VWAP VSWAP
+    vwap_res,vdf = vwap_analyse(ohlcv)
+    df= pd_concat(df,vdf)
+    ana_res['VWAP'] = vwap_res
+    
+        
+    ## ROC
     try:
-        macd_anly_res,mdf = macd_analyse(ohlcv)
-        df= pd_concat(df,mdf)
-        ana_res['MACD'] = macd_anly_res
+        roc_anly_res,rdf = roc_analyse(ohlcv)
+        df = pd_concat(df,rdf)
+        ana_res['ROC'] = roc_anly_res
     except:
         traceback.print_exc()
     
@@ -459,10 +471,14 @@ def tech_analyse(df):
     df= pd_concat(df, mdf)
     ana_res['MTM'] = mtm_res
     
-    ## VWAP VSWAP
-    vwap_res,vdf = vwap_analyse(ohlcv)
-    df= pd_concat(df,vdf)
-    ana_res['VWAP'] = vwap_res
+    
+    ## MACD
+    try:
+        macd_anly_res,mdf = macd_analyse(ohlcv)
+        df= pd_concat(df,mdf)
+        ana_res['MACD'] = macd_anly_res
+    except:
+        traceback.print_exc()
     
     ## MA
     ma_anly_res,mdf = ma_analyse(ohlcv)
@@ -485,10 +501,7 @@ def tech_analyse(df):
     wdf = weekday_analyse(df)
     df= pd_concat(df,wdf)
     ana_res['WeekDay'] = wdf.iloc[-1]['week_stage']
-    ## BOLL
-    boll_anly_res,bdf = boll_analyse(ohlcv)
-    df= pd_concat(df,bdf)
-    ana_res['BOLL'] =  boll_anly_res
+
     
     ## RSI
     rsi_anly_res,rdf = rsi_analyse(ohlcv)
@@ -511,14 +524,7 @@ def tech_analyse(df):
     aroon_ana_res,adf = aroon_analyse(ohlcv)
     df= pd_concat(df,adf)
     ana_res['AROON'] = aroon_ana_res
-    
-    ## ROC
-    try:
-        roc_anly_res,rdf = roc_analyse(ohlcv)
-        df = pd_concat(df,rdf)
-        ana_res['ROC'] = roc_anly_res
-    except:
-        traceback.print_exc()
+
     
     ## Forcast
     tsf_res =  'Forcast: %0.2f'%list(talib.TSF(ohlcv['close']))[-1]
@@ -551,6 +557,7 @@ def tech_analyse(df):
     ### put into output 
     analyse_info['data']= ana_res
     # pdb.set_trace()
+    df = df.loc[:,~df.columns.duplicated()]
     return analyse_info,df
     
 def jsdump(info, indent=None):
@@ -567,24 +574,24 @@ def analyse_res_to_str(stock_anly_res):
         code = stock.get('code','no-code')
         name = stock.get('info',{}).get('name','')
         price = stock.get('info',{}).get('price','')
-        pstr+= "\n[{0}:{1}] Price:{2}".format(code,name.encode(SYS_ENCODE),price)
+        pstr+= "\n#[{0}:{1}] Price:{2}".format(code,name.encode(SYS_ENCODE),price)
         if 'algo_cb' in stock :
             pstr+= stock['algo_cb']            
         if 'tech' in stock and stock['tech'] != None:
             tech = stock['tech']
             for key,vlu in tech['data'].items():
-                pstr+= '\n  [%s] %s'%(key,jsdump(vlu))
+                pstr+= '\n[%s] %s'%(key,jsdump(vlu))
             
         if 'cdl' in stock and stock['cdl'] != None:
             cdl = stock['cdl']
             cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
             for name,info in cdl['data'].items():
                 intro[info['en_name']+info['cn_name']] = info['intro']
-            pstr+= "\n  [CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(SYS_ENCODE) )
+            pstr+= "\n[CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(SYS_ENCODE) )
     pstr += '\n'
     for name,intro in intro.items():
-        pstr+= u"\n  [EXPLAIN:{}]:{}".format(name,intro).encode(SYS_ENCODE)     
-    return pstr
+        pstr+= u"\n[EXPLAIN:{}]:{}".format(name,intro).encode(SYS_ENCODE)     
+    return add_indent(pstr,'  ')
 
 def yf_get_hist_data(tick):
     import yfinance as yf    
@@ -611,6 +618,7 @@ def catboost_process(tick,df,top_n=10):
     cycles=['1d','3d','5d','10d','20d','30d','60d']
     cycles=['1d','5d','10d','30d']
     flag,pfname = get_model_filename(tick,'factor')
+    df = df.loc[:,~df.columns.duplicated()]
     # cycles=['5d']
     if not flag:
         factor_results  = catboost_factor_verify(df, target_days=cycles)        
@@ -618,15 +626,18 @@ def catboost_process(tick,df,top_n=10):
         print('  [dump_cb_cache_finish]')
     else:
         factor_results = pickle.load(open(pfname ))
-        print('  [read_cb_cache_finish]')
-    df = append_factor_result_to_df(df,factor_results)
-    pstr =print_factor_judge_result(df,top_n=top_n)
-    # print_factor_result(factor_results,top_n=3)
+        print('  [read_cb_cache_finish]')    
+    df = join_factor_result_to_df(df,factor_results)
+    jdf = get_factor_judge_result(df.iloc[-1])
+    ldf = get_factor_judge_result(df.iloc[-10])
+    pstr = '\n'+str(jdf[:10])
+    pdb.set_trace()
     return df,factor_results,pstr
     
 def main():
     import tushare as ts
-    
+    pd.set_option('display.width',None)
+    pd.set_option('display.max_rows',None)
     pd.set_option('display.max_columns',80)
     def pprint(info, indent=None):
         print json.dumps(info, ensure_ascii=False, indent=2).encode(ENCODE)
@@ -637,9 +648,10 @@ def main():
     tick='600438'
     tick='600031'
     if remote_call:
-        # df = yf_get_hist_data(tick)
+        # df = yf_get_hist_data(tick) 
         
-        df = ts.get_k_data(tick)
+        # df = ts.get_k_data(tick)  #df从旧到新
+        df = ts.get_hist_data(tick)  # 从新到旧
                 
         df = df.sort_index()
         
@@ -670,7 +682,7 @@ def main():
     # print df.tail(1)
     ###
     df.to_csv('veri/tech.csv')
-    pdb.set_trace()
+    # pdb.set_trace()
 
 if __name__ == '__main__':    
     main()

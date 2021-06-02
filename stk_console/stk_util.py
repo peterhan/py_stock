@@ -141,10 +141,13 @@ def dict_selector(dic,keys=None,mode='keys'):
             res[key] = sel
     return res
     
-def add_indenet(st,ind):
+def add_indent(st,ind):
     rst =[]
     for l in st.splitlines():
-        rst.append(ind+l)
+        if l.startswith('#'):
+            rst.append(l)
+        else:
+            rst.append(ind+l)
     return '\n'.join(rst)
     
     
@@ -251,5 +254,5 @@ if __name__=='__main__':
     # pdb.set_trace()
     s='''123
     123'''
-    print add_indenet(s,'  ')
+    print add_indent(s,'  ')
     # print get_article_detail('https://news.futunn.com/flash/12271149','div')

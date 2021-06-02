@@ -1,6 +1,7 @@
 #!coding:utf8
 import pandas as pd
 import numpy as np
+
 import traceback
 import pdb
 from stk_util import time_count
@@ -8,14 +9,21 @@ from collections import OrderedDict
 
 ## algo_analyse
 @time_count
-def caculate_indicator(df, factor_combo, target_col):
+def add_target_out_col(df, factor_combo, target_col):
+    '''df按顺序递增!
+    '''
     # factor_combo = cdl_pat_names
     # adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+factor_combo].copy()
+    
     adf = df[['rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+factor_combo].copy()
     bencols = []
     bencols.append(target_col)
-    i=int(target_col.split('_')[-1].strip('d'))
-    adf[target_col] =  (df['close'] / df['close'].shift(i) -1)*100
+    i = int(target_col.split('_')[-1].strip('d'))
+    direct = -1
+    # pdb.set_trace()
+    if df['date'].iloc[-1]<df['date'].iloc[-2]:
+        direct = 1
+    adf[target_col] =  (df['close'].shift(direct*i) / df['close'] -1)*100
     #for i in (1,3,5,7,10,15):
     ## for i in (1,3,5,7):
     #    bname = 'p_change_%sd'%i
@@ -48,7 +56,7 @@ def rmse(targets,predictions):
     return np.sqrt(((predictions - targets) ** 2).mean())
 
 @time_count    
-def predict_cat_boost(fit_model, adf,factor_combo,target_col,test_len=200):
+def predict_cat_boost(fit_model, adf,factor_combo,target_col,test_len=200,round_digit=4):
     from catboost import CatBoostRegressor
     factor_results = {}
     test_pool = adf[factor_combo][-1*test_len:]
@@ -71,7 +79,7 @@ def predict_cat_boost(fit_model, adf,factor_combo,target_col,test_len=200):
         if len(factor_combo)==1:
             data_rows = map(lambda x:[x],data_rows)
         score = model.predict(data_rows)
-        df_gg['score_cb']=score
+        df_gg['score_cb']= round(score,round_digit)
     except:
         traceback.print_exc()
         # pdb.set_trace()
@@ -111,12 +119,12 @@ def train_cat_boost(adf,factor_combo,target_col):
 DEFAULT_COMBO_LIST = [ 
         ['roc_stage'] 
         ,['vwap_stage','ema_stage']
-        # ,['macd_stage','rsi_stage']
-        #,['week_stage','ema_stage']
-        # ,['week_stage'] ,['CDLScore']
+        ,['macd_stage','rsi_stage']
+        ,['week_stage','ema_stage']
+        ,['week_stage'] ,['CDLScore']
         ,['ema_stage']  ,['sma_stage']
-        # ,['volume_ema_stage'] ,['volume_sma_stage']  
-        # ,['aroon_stage']
+        ,['volume_ema_stage'] ,['volume_sma_stage']  
+        ,['aroon_stage']
         ,['macd_stage'] ,['cci_stage'] 
         ,['rsi_stage']  ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage']
         ,['vswap_stage'],['vwap_stage']
@@ -132,7 +140,7 @@ def catboost_factor_verify(df,target_days = ['5d'],factor_combo_list=None):
             try:
                 if len(target_days)>=2:
                     print '[Training]:',factor_combo,target_col
-                adf = caculate_indicator(df, factor_combo, target_col)
+                adf = add_target_out_col(df, factor_combo, target_col)
                 fit_model = train_cat_boost(adf,factor_combo,target_col)
                 pred_res = predict_cat_boost(fit_model ,adf,factor_combo,target_col)
                 factor_results.update(pred_res)
@@ -144,7 +152,7 @@ def catboost_factor_verify(df,target_days = ['5d'],factor_combo_list=None):
     return o_factor_results
 
 
-def append_factor_result_to_df(df,factor_results):
+def join_factor_result_to_df(df,factor_results):
     for algo_key,factor_info in factor_results.items():
         # pdb.set_trace()
         fdf = factor_info['factor_df']
@@ -156,7 +164,39 @@ def append_factor_result_to_df(df,factor_results):
         key_columns = algo_key.split('=>')[0].split(':')
         df = df.join(fdf,on=key_columns)
     return df
+
+@time_count     
+def get_factor_judge_result(row):
+    pstr = ''
+    res_dic = {}
+    row_dic = row.to_dict()
+    for lkey,vlu in row_dic.items():
+        if lkey.find('=>')==-1:
+            continue
+        akey,atype = lkey.split('.',1)
+        if atype=='score_cb' and not np.isnan(vlu):
+            res_dic.setdefault(akey,['','',0,0,0,0])
+            res_dic[akey][0] = '&'.join([str(row_dic[key]) for key in akey.split('=>')[0].split(':')])
+            res_dic[akey][1] = vlu
+        if atype=='est_accu' and type(vlu)==str:
+            res_dic.setdefault(akey,['','',0,0,0,0])
+            arr=vlu.split(',') 
+            res_dic[akey][2:] = [float(e.split(':')[1].replace('%','')) for e in arr]
+    nrows = []
+    for k,v in res_dic.items():   
+        row = k.split('=>')
+        row[1] = row[1].replace('pchg_','')        
+        row.extend(v)
+        nrows.append(row)
+    jdf = pd.DataFrame(nrows,columns=['factor','out','stage','score_cb','accu_rate','rmsev','s_cnt'])
+    jdf = jdf.sort_values(['accu_rate','s_cnt'],ascending=False)
+    jdf = jdf.reset_index()
+    jdf = jdf[['factor','out','score_cb','accu_rate','s_cnt','rmsev','stage']]
+    # pdb.set_trace()
+    return jdf
     
+  
+@time_count       
 def print_factor_result(o_factor_results,top_n=5):    
     pstr =''
     for key,check_result in o_factor_results.items()[:top_n:1]:            
@@ -166,32 +206,7 @@ def print_factor_result(o_factor_results,top_n=5):
         pstr+= '\n'+ 'correct_rate: %0.2f%%'%(check_result['correct_rate'])
         pstr+= '\n'+ ''
     return pstr
-        
-def print_factor_judge_result(df,top_n=3,last_n_day=1):    
-    last_type = ''
-    tcnt = 0
-    pstr=''
-    for row in df.iloc[-1*last_n_day:].iterrows():
-        odict = row[1].to_dict(into=OrderedDict)
-        for key,vlu in odict.items():
-            if key.find('=>')==-1:
-                continue
-            if key.find('.date_count')!=-1:
-                continue
-            t_type=key.split('.')[0]
-            if t_type!=last_type:
-                tcnt+=1
-                last_type=t_type
-                pstr+= '\n'
-            if tcnt>top_n:
-                break
-            if key.find('score_cb')!=-1:
-                pstr+=  ('[%s]: %0.2f'%(key.replace('.score_cb',''),vlu)).ljust(40)
-            else:
-                pstr+=  '   %s'%(vlu)
-    return pstr
-    
-        
+             
 def main():
     pass
         
