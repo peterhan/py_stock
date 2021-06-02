@@ -208,9 +208,12 @@ def get_one_ticker_k_data(tick,info,flags):
     cdl_info,cdf = candle_analyse(df)
     tdf.pop('date')
     cdf.pop('date')
+    res_info={'code':tick,'info':info[tick]
+           ,'tech':tech_info,'cdl':cdl_info}
     df = pd.concat([df,tdf,cdf],axis=1)
     if 'catboost' in flags:        
-        df,factor_results = catboost_process(tick,df)
+        df,factor_results,pstr = catboost_process(tick,df)
+        res_info['algo_cb'] = pstr
     if 'pdb' in flags:
         pdb.set_trace()
     # cdl_info = None
@@ -220,9 +223,9 @@ def get_one_ticker_k_data(tick,info,flags):
     if 'vemd' in flags:        
         emd_res = emd_plot(df['volume'])  
     # pdb.set_trace()
-    dic = df.to_dict()
-    return {'code':tick,'info':info[tick]
-           ,'tech':tech_info,'cdl':cdl_info,'df':dic}
+    df_dic = df.to_dict()
+    res_info['df']=df_dic
+    return res_info
         
 def interact_choose_ticks(mode):
     # fname = 'stk_console.v01.json'
@@ -390,18 +393,19 @@ def cn_main_loop(mode):
         pool.join()
         # jobs = [gevent.spawn(get_one_ticker_k_data,tk,info,flags) for tk in the_tks]
         # gevent.joinall(jobs)
-        result = [job.value for job in jobs]
+        results = [job.value for job in jobs]
     
     ## 读取分析结果
-    # fname = 'result.%s.json'%exec_func.func_name
+    # fname = 'results.%s.json'%exec_func.func_name
     # print fname
-    # json.dump(result,open(fname,'w'),indent=2)
-    print '\n\n'+analyse_res_to_str(result)+'\n'
+    # json.dump(results,open(fname,'w'),indent=2)
+    ########### 打印技术分析
+    print '\n\n'+analyse_res_to_str(results)+'\n'
     
     if 'graph' in flags and exec_func.func_name=='get_one_ticker_k_data':
-        cols = len(result)        
+        cols = len(results)        
         fig, ax = plt.subplots(nrows=3, ncols=cols, sharex=False)
-        for i,onestk in enumerate(result):
+        for i,onestk in enumerate(results):
             tick = onestk['code']
             name = onestk['info'].get('name')
             # fname = FNAME_PAT_HIST%tick

@@ -145,8 +145,8 @@ def get_one_tick_data(tick,stk_infos,flags,api_route = 'futu'):
         res_info['info'].update({'price':df['close'].values[-1],'name':''})
         res_info.update({'tech':tinfo,'cdl':cinfo})
     if 'catboost' in flags:
-        catboost_process(tick,df)
-        
+        df,factor_results,pstr = catboost_process(tick,df)
+        res_info['algo_cb'] = pstr
     if 'option_chain' in flags:
         res_info['option_chain'] = ytk.option_chain()
         

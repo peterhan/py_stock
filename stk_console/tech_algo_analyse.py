@@ -116,9 +116,10 @@ DEFAULT_COMBO_LIST = [
         # ,['week_stage'] ,['CDLScore']
         ,['ema_stage']  ,['sma_stage']
         # ,['volume_ema_stage'] ,['volume_sma_stage']  
+        # ,['aroon_stage']
         ,['macd_stage'] ,['cci_stage'] 
         ,['rsi_stage']  ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage']
-        ,['aroon_stage'],['vswap_stage'],['vwap_stage']
+        ,['vswap_stage'],['vwap_stage']
 ]
 @time_count
 def catboost_factor_verify(df,target_days = ['5d'],factor_combo_list=None):   
@@ -157,17 +158,19 @@ def append_factor_result_to_df(df,factor_results):
     return df
     
 def print_factor_result(o_factor_results,top_n=5):    
-    print ''
+    pstr =''
     for key,check_result in o_factor_results.items()[:top_n:1]:            
-        print '[%s]'%(key)
-        print check_result['factor_df']
-        print 'rmse: %0.2f'%check_result['rmsev']
-        print 'correct_rate: %0.2f%%'%(check_result['correct_rate'])
-        print ''
+        pstr+= '\n'+ '[%s]'%(key)
+        pstr+= '\n'+ check_result['factor_df']
+        pstr+= '\n'+ 'rmse: %0.2f'%check_result['rmsev']
+        pstr+= '\n'+ 'correct_rate: %0.2f%%'%(check_result['correct_rate'])
+        pstr+= '\n'+ ''
+    return pstr
         
 def print_factor_judge_result(df,top_n=3,last_n_day=1):    
     last_type = ''
     tcnt = 0
+    pstr=''
     for row in df.iloc[-1*last_n_day:].iterrows():
         odict = row[1].to_dict(into=OrderedDict)
         for key,vlu in odict.items():
@@ -179,10 +182,15 @@ def print_factor_judge_result(df,top_n=3,last_n_day=1):
             if t_type!=last_type:
                 tcnt+=1
                 last_type=t_type
-                print ''
+                pstr+= '\n'
             if tcnt>top_n:
                 break
-            print '[%s]: '%key,vlu
+            if key.find('score_cb')!=-1:
+                pstr+=  ('[%s]: %0.2f'%(key.replace('.score_cb',''),vlu)).ljust(40)
+            else:
+                pstr+=  '   %s'%(vlu)
+    return pstr
+    
         
 def main():
     pass

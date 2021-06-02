@@ -568,6 +568,8 @@ def analyse_res_to_str(stock_anly_res):
         name = stock.get('info',{}).get('name','')
         price = stock.get('info',{}).get('price','')
         pstr+= "\n[{0}:{1}] Price:{2}".format(code,name.encode(SYS_ENCODE),price)
+        if 'algo_cb' in stock :
+            pstr+= stock['algo_cb']            
         if 'tech' in stock and stock['tech'] != None:
             tech = stock['tech']
             for key,vlu in tech['data'].items():
@@ -605,7 +607,7 @@ def get_model_filename(tick,type,dt='210601'):
         return False,fname
  
 @time_count 
-def catboost_process(tick,df,top_n=5):
+def catboost_process(tick,df,top_n=10):
     cycles=['1d','3d','5d','10d','20d','30d','60d']
     cycles=['1d','5d','10d','30d']
     flag,pfname = get_model_filename(tick,'factor')
@@ -613,14 +615,14 @@ def catboost_process(tick,df,top_n=5):
     if not flag:
         factor_results  = catboost_factor_verify(df, target_days=cycles)        
         pickle.dump(factor_results,open(pfname ,'w'))
-        print('  [dump_cache_finish]')
+        print('  [dump_cb_cache_finish]')
     else:
         factor_results = pickle.load(open(pfname ))
-        print('  [read_cache_finish]')
+        print('  [read_cb_cache_finish]')
     df = append_factor_result_to_df(df,factor_results)
-    print_factor_judge_result(df,top_n=top_n)
+    pstr =print_factor_judge_result(df,top_n=top_n)
     # print_factor_result(factor_results,top_n=3)
-    return df,factor_results
+    return df,factor_results,pstr
     
 def main():
     import tushare as ts
@@ -631,16 +633,17 @@ def main():
     
     remote_call = False
     remote_call = True
-    tick='tsla'
-    # tick='601601'
+    # tick='tsla'
+    tick='600438'
+    tick='600031'
     if remote_call:
-        df = yf_get_hist_data(tick)
+        # df = yf_get_hist_data(tick)
         
-        # df = ts.get_hist_data(tick)
+        df = ts.get_k_data(tick)
                 
         df = df.sort_index()
         
-        df.index.name='date'
+        # df.index.name='date'
         # pdb.set_trace()
         df.to_csv('veri/origin.csv')
     
@@ -660,15 +663,14 @@ def main():
     df = pd.concat([df,tdf,cdf],axis=1)
     res = [{'code':tick,'info':{}
         ,'tech':tinfo,'cdl':cinfo }]
+    df,factor_results,pstr = catboost_process(tick,df)
+    res[0]['algo_cb']=pstr
     print analyse_res_to_str(res)
-    catboost_process(tick,df)
     # pprint(cinfo)
     # print df.tail(1)
     ###
     df.to_csv('veri/tech.csv')
     pdb.set_trace()
-
-
 
 if __name__ == '__main__':    
     main()

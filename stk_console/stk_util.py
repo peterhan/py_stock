@@ -141,6 +141,13 @@ def dict_selector(dic,keys=None,mode='keys'):
             res[key] = sel
     return res
     
+def add_indenet(st,ind):
+    rst =[]
+    for l in st.splitlines():
+        rst.append(ind+l)
+    return '\n'.join(rst)
+    
+    
 def nest_selector(obj,path):
     patharr=path.split('.')    
     sel = obj
@@ -240,6 +247,9 @@ if __name__=='__main__':
     # print cli_select_menu(pd.Series('a b c d'.split(' ')))
     # print cli_select_menu({'a':['b','c'],'c':['d','e']})
     # print cli_select_menu(['a','b','c'])
-    text,tags= get_article_detail('https://news.futunn.com/flash/12271149','div','#content')
-    pdb.set_trace()
+    # text,tags= get_article_detail('https://news.futunn.com/flash/12271149','div','#content')
+    # pdb.set_trace()
+    s='''123
+    123'''
+    print add_indenet(s,'  ')
     # print get_article_detail('https://news.futunn.com/flash/12271149','div')
