@@ -35,6 +35,7 @@ def stat_model():
         #,fr.values()[:5]
         # print fr['boll_stage=>pchg_10d']['factor_df']
         # print fr['vswap_stage=>pchg_1d']['factor_df']
+        # break
     # pdb.set_trace()
     print '\n\nstat_top\n'
     print cnt['top']
@@ -47,15 +48,21 @@ def run_tick_model(tick):
     from tech_analyse import tech_analyse,candle_analyse,catboost_process
     print tick
     ##
+    # df = ts.get_k_data(tick)
+    
     df = ts.get_hist_data(tick)
     df['date'] = df.index
+    df = df.sort_index()
     ##
     tinfo,tdf = tech_analyse(df)    
     cinfo,cdf = candle_analyse(df)
     df = pd.concat([df,tdf,cdf],axis=1)
     res = [{'code':tick,'info':{}
         ,'tech':tinfo,'cdl':cinfo }]
-    df,factor_results,pstr = catboost_process(tick,df)
+    fc_list=[['boll_stage']]
+    tdays=['10d']
+    df,factor_results,pstr = catboost_process(tick,df,factor_combo_list=fc_list,target_days=tdays)
+    print factor_results
     print pstr
  
 def batch_run_model():    
@@ -77,13 +84,14 @@ def batch_run_model():
     else:
         for tick in ticks:
             run_tick_model(tick)
+            break
 
     
 if __name__ == '__main__':
     pd.set_option('display.width',None)
     pd.set_option('display.max_rows',None)
     pd.set_option('display.max_columns',80)
-    flag = raw_input('flag:')
+    flag = raw_input('run_mode[b:batch_run_model,s:stat_model]:')
     if flag.startswith('b'):
         batch_run_model()
     if flag.startswith('s'):

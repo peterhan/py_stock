@@ -614,14 +614,16 @@ def get_model_filename(tick,type,dt='210601'):
         return False,fname
  
 @time_count 
-def catboost_process(tick,df,top_n=10):
-    cycles=['1d','3d','5d','10d','20d','30d','60d']
-    cycles=['1d','5d','10d','30d']
+def catboost_process(tick,df,top_n=10,factor_combo_list=None,target_days=None):
+    if target_days is None:
+        target_days=['1d','3d','5d','10d','20d','30d','60d']
+        target_days=['1d','5d','10d','30d']
     flag,pfname = get_model_filename(tick,'factor')
     df = df.loc[:,~df.columns.duplicated()]
     # cycles=['5d']
     if not flag:
-        factor_results  = catboost_factor_verify(df, target_days=cycles)        
+        print('  [train_cb_model]')
+        factor_results  = catboost_factor_verify(df, target_days=target_days,factor_combo_list=factor_combo_list)        
         pickle.dump(factor_results,open(pfname ,'w'))
         print('  [dump_cb_cache_finish]')
     else:
@@ -650,19 +652,19 @@ def main():
     if remote_call:
         # df = yf_get_hist_data(tick) 
         
-        # df = ts.get_k_data(tick)  #df从旧到新
-        df = ts.get_hist_data(tick)  # 从新到旧
+        df = ts.get_k_data(tick)  #df从旧到新
+        # df = ts.get_hist_data(tick)  # 从新到旧
                 
         df = df.sort_index()
         
         # df.index.name='date'
         # pdb.set_trace()
         df.to_csv('veri/origin.csv')
+        df['date'] = df.index
     
     # pdb.set_trace()
     
     df=pd.read_csv('veri/origin.csv',index_col='date')
-    df['date'] = df.index
     
     # df = df.sort_values('date')
     tinfo,tdf = tech_analyse(df)

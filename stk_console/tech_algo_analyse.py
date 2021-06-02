@@ -23,6 +23,9 @@ def add_target_out_col(df, factor_combo, target_col):
     # pdb.set_trace()
     if df['date'].iloc[-1]<df['date'].iloc[-2]:
         direct = 1
+        print 'date is decending'
+    else:
+        print 'date is ascending'
     adf[target_col] =  (df['close'].shift(direct*i) / df['close'] -1)*100
     #for i in (1,3,5,7,10,15):
     ## for i in (1,3,5,7):
@@ -133,6 +136,7 @@ DEFAULT_COMBO_LIST = [
 def catboost_factor_verify(df,target_days = ['5d'],factor_combo_list=None):   
     if factor_combo_list is None:
         factor_combo_list = DEFAULT_COMBO_LIST
+    print '[factor_combo_list]:',factor_combo_list
     factor_results = {}
     o_factor_results = OrderedDict()
     for target_col in ['pchg_%s'%target_day for target_day in target_days]:    
