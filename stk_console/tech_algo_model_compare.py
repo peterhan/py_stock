@@ -17,7 +17,7 @@ def filter_fr(factor_result,parts):
     return od
     
 path='model_catboost.cache'
-for fname in glob.glob(path+'/*.factor.model'):
+for fname in glob.glob(path+'/*.factor.*.model'):
     # print fname
     key = os.path.split(fname)
     tick = key[1].split('.')[0]
