@@ -4,6 +4,7 @@ import pdb
 import glob
 
 from collections import OrderedDict
+from collections import Counter
 import pandas as pd
 
 from tech_algo_analyse import DEFAULT_COMBO_LIST
@@ -16,6 +17,7 @@ def filter_fr(factor_result,parts):
                 od[k]=v
     return od
     
+cnt =Counter()
 path='model_catboost.cache'
 for fname in glob.glob(path+'/*.factor.*.model'):
     # print fname
@@ -23,8 +25,11 @@ for fname in glob.glob(path+'/*.factor.*.model'):
     tick = key[1].split('.')[0]
     fr = pickle.load(open(fname))
     fr = filter_fr(fr,'=>')
-    print tick,len(fr),fr.keys()[:5]
+    keys = fr.keys()[:5]
+    print tick,len(fr),keys
+    cnt.update(keys)
     #,fr.values()[:5]
     # print fr['boll_stage=>pchg_10d']['factor_df']
     # print fr['vswap_stage=>pchg_1d']['factor_df']
 # pdb.set_trace()
+print cnt
