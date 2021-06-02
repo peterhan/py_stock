@@ -594,11 +594,11 @@ def yf_get_hist_data(tick):
     df['turnover'] = 0
     return df
 
-def get_model_filename(tick,type):
+def get_model_filename(tick,type,dt='210601'):
     folder = 'model_catboost.cache'
     if not os.path.exists(folder):
-        os.mkdirs(folder)
-    fname=folder+'/'+tick.replace('.','_')+'.'+type+'.model'
+        os.mkdir(folder)
+    fname=folder+'/'+tick.replace('.','_')+'.'+type+'.%s.model'%dt
     if os.path.exists(fname):
         return True,fname
     else:
@@ -631,12 +631,12 @@ def main():
     
     remote_call = False
     remote_call = True
-    # tick='tsla'
-    tick='601601'
+    tick='tsla'
+    # tick='601601'
     if remote_call:
-        # df = yf_get_hist_data(tick)
+        df = yf_get_hist_data(tick)
         
-        df = ts.get_hist_data(tick)
+        # df = ts.get_hist_data(tick)
                 
         df = df.sort_index()
         
