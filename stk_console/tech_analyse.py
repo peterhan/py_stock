@@ -612,16 +612,34 @@ def get_model_filename(tick,type,dt='210601'):
         return True,fname
     else:
         return False,fname
- 
+
+DEFAULT_COMBO_LIST = [ 
+        ['roc_stage'] 
+        ,['vwap_stage','ema_stage']
+        ,['macd_stage','rsi_stage']
+        ,['week_stage','ema_stage']
+        ,['week_stage'] ,['CDLScore']
+        ,['ema_stage']  ,['sma_stage']
+        ,['volume_ema_stage'] ,['volume_sma_stage']  
+        ,['aroon_stage']
+        ,['macd_stage'] ,['cci_stage'] 
+        ,['rsi_stage']  ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage']
+        ,['vswap_stage'],['vwap_stage']
+]
+
 @time_count 
-def catboost_process(tick,df,top_n=10,factor_combo_list=None,target_days=None):
+def catboost_process(tick,df,top_n=10,factor_combo_list=None,target_days=None,no_cache=False):
+    if factor_combo_list is None:
+        factor_combo_list = DEFAULT_COMBO_LIST
     if target_days is None:
         target_days=['1d','3d','5d','10d','20d','30d','60d']
         target_days=['1d','5d','10d','30d']
+    print '[factor_combo_list]:',factor_combo_list 
+    print '[target_days]',target_days
     flag,pfname = get_model_filename(tick,'factor')
     df = df.loc[:,~df.columns.duplicated()]
     # cycles=['5d']
-    if not flag:
+    if (not flag) or  no_cache:
         print('  [train_cb_model]')
         factor_results  = catboost_factor_verify(df, target_days=target_days,factor_combo_list=factor_combo_list)        
         pickle.dump(factor_results,open(pfname ,'w'))

@@ -8,7 +8,7 @@ from collections import OrderedDict,defaultdict
 from collections import Counter
 import pandas as pd
 
-from tech_algo_analyse import DEFAULT_COMBO_LIST
+from tech_analyse import DEFAULT_COMBO_LIST
 
 def filter_fr(factor_result,parts):
     od  = OrderedDict()
@@ -59,9 +59,10 @@ def run_tick_model(tick):
     df = pd.concat([df,tdf,cdf],axis=1)
     res = [{'code':tick,'info':{}
         ,'tech':tinfo,'cdl':cinfo }]
-    fc_list=[['boll_stage']]
-    tdays=['1d','3d','5d','7d','10d']
-    df,factor_results,pstr = catboost_process(tick,df,factor_combo_list=fc_list,target_days=tdays)
+    fc_list=[['macd_stage']]
+    fc_list= DEFAULT_COMBO_LIST
+    tdays=['1d','3d','5d','7d','10d','14d']
+    df,factor_results,pstr = catboost_process(tick,df,factor_combo_list=fc_list,target_days=tdays,no_cache=True)
     print factor_results
     print pstr
  
