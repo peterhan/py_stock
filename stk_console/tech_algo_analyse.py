@@ -79,7 +79,7 @@ def predict_cat_boost(fit_model, adf,factor_combo,target_col,test_len=200,round_
         if len(factor_combo)==1:
             data_rows = map(lambda x:[x],data_rows)
         score = model.predict(data_rows)
-        df_gg['score_cb']= round(score,round_digit)
+        df_gg['score_cb']= score.round(round_digit)
     except:
         traceback.print_exc()
         # pdb.set_trace()
