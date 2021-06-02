@@ -2,7 +2,7 @@ import cPickle as pickle
 import os
 import pdb
 import glob
-
+import cPickle as pickle
 
 from collections import OrderedDict,defaultdict
 from collections import Counter
@@ -65,11 +65,16 @@ def batch_run_model():
     conf_tks  = OrderedDict(conf.items('cn-ticks'))
     
     ticks = conf_tks['holding'].split(' ')
-    tick = ticks[0]
-    from multiprocessing import Pool
-    p = Pool(4)
-    res=p.map(run_tick_model,ticks)
-
+    use_pool =False
+    if use_pool:
+        from multiprocessing import Pool
+        p = Pool(4)
+        res=p.map(run_tick_model,ticks)
+        p.close()
+        p.join()
+    else:
+        for tick in ticks:
+            run_tick_model(tick)
 
     
 if __name__ == '__main__':
