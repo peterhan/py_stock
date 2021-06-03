@@ -13,7 +13,6 @@ import locale
 from random import randint
 from collections import OrderedDict
 from matplotlib import pyplot as plt
-
 from tushare_patch import get_latest_news,get_today_ticks,print_latest_news
 from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_str,catboost_process
 
@@ -380,9 +379,9 @@ def cn_main_loop(mode):
     elif 'quit' in flags:
         sys.exit()
       
-    if not Pool:
+    if 'Pool' not in globals():
         for tk in the_ticks:
-            result = exec_func(tk,info)
+            results = [exec_func(tk,info)]
     else:
         pool = Pool(8)
         jobs = []

@@ -4,8 +4,7 @@ import pdb
 import glob
 import cPickle as pickle
 
-from collections import OrderedDict,defaultdict
-from collections import Counter
+from collections import OrderedDict,defaultdict,Counter
 import pandas as pd
 
 from tech_analyse import DEFAULT_COMBO_LIST
@@ -61,9 +60,9 @@ def run_tick_model(tick):
         ,'tech':tinfo,'cdl':cinfo }]
     fc_list=[['macd_stage']]
     fc_list= DEFAULT_COMBO_LIST
-    tdays=['1d','3d','5d','7d','10d','14d']
-    df,factor_results,pstr = catboost_process(tick,df,factor_combo_list=fc_list,target_days=tdays,no_cache=True)
-    print factor_results
+    tdays=['1d','3d','5d','7d','10d','14d','30d','60d']
+    df,factor_results,pstr = catboost_process(tick,df,top_n=50,factor_combo_list=fc_list,target_days=tdays,no_cache=False)
+    # print factor_results
     print pstr
  
 def batch_run_model():    
@@ -73,8 +72,8 @@ def batch_run_model():
     conf.readfp(open(fname))
     conf_tks  = OrderedDict(conf.items('cn-ticks'))
     
-    ticks = conf_tks['mao50'].split(' ')
-    ticks = ['600004']
+    ticks = conf_tks['holding'].split(' ')
+    # ticks = ['600004']
     use_pool =False
     if use_pool:
         from multiprocessing import Pool
@@ -93,8 +92,8 @@ if __name__ == '__main__':
     pd.set_option('display.max_rows',None)
     pd.set_option('display.max_columns',80)
     flag = raw_input('run_mode[b:batch_run_model,s:stat_model]:')
-    if flag.startswith('b'):
-        batch_run_model()
     if flag.startswith('s'):
         stat_model()
+    else:
+        batch_run_model()
     # raw_input('finish:')

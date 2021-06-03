@@ -7,52 +7,26 @@ import pdb
 from stk_util import time_count
 from collections import OrderedDict
 
+
 ## algo_analyse
 @time_count
-def add_target_out_col(df, factor_combo, target_col):
-    '''df按顺序递增!
-    '''
-    # factor_combo = cdl_pat_names
-    # adf = df[['turnover','rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+factor_combo].copy()
-    
-    adf = df[['rsi','dif_ag','rsi_ag','dif','k_ag','j_ag','d_ag','dea']+factor_combo].copy()
-    bencols = []
-    bencols.append(target_col)
-    i = int(target_col.split('_')[-1].strip('d'))
+def add_target_day_out_col(df, target_days,PREFIX_TARGET_DAY = 'pchg_'):
     direct = -1
     # pdb.set_trace()
     if df['date'].iloc[-1]<df['date'].iloc[-2]:
         direct = 1
-        print 'date is decending'
+        print '[date is decending!]'
     else:
-        print 'date is ascending'
-    adf[target_col] =  (df['close'].shift(direct*i) / df['close'] -1)*100
-    #for i in (1,3,5,7,10,15):
-    ## for i in (1,3,5,7):
-    #    bname = 'p_change_%sd'%i
-    #    # pdb.set_trace()
-    #    adf[bname] = (df['close'] / df['close'].shift(i) -1)*100
-    #    bencols.append(bname)
-    # adf['p_change_20d'] = df['p_change'].shift(-20)
-    # adf['p_change_30d'] = df['p_change'].shift(-30)
-    # print adf.corr()
-    
-    # adf.to_csv("veri/train_dump.csv")
-    def stat_gp(gp):
-        return gp.agg([np.size, np.mean, np.std, np.max, np.min]) 
-        # gp.agg({'text':'size', 'sent':'mean'}) \        
-        #.rename(columns={'text':'count','sent':'mean_sent'}) \
-        #.reset_index()
-        #.iloc[:,offset:]
-    # df = stat_gp(adf.groupby(['macd_stage','sma_stage','rsi_stage'] )[bencols])
-    # print df
-    # df.to_csv('veri/comb.csv')
-    for factor in factor_combo:
-        df = stat_gp(adf.groupby(factor )[bencols])
-        # print df
-        # df.to_csv('veri/'+stage+".csv")       
+        # print 'date is ascending'
+        pass
+    for target_day in target_days:
+        td_name= PREFIX_TARGET_DAY+target_day
+        days = int(target_day.split('_')[-1].strip('d'))
+        if td_name not in df.columns:        
+            df.loc[:,td_name] =  (df['close'].shift(direct*days) / df['close'] -1)*100
     # pdb.set_trace()
-    return adf
+    return df
+    
 
 
 def rmse(targets,predictions):
@@ -120,18 +94,19 @@ def train_cat_boost(adf,factor_combo,target_col):
     # pdb.set_trace()
 
 
-
-
 @time_count
-def catboost_factor_verify(df,target_days ,factor_combo_list):    
+def catboost_factor_verify(df,target_days ,factor_combo_list,PREFIX_TARGET_DAY = 'pchg_'):    
     factor_results = {}
     o_factor_results = OrderedDict()
-    for target_col in ['pchg_%s'%target_day for target_day in target_days]:    
+    df = add_target_day_out_col(df,target_days)
+    print '[Models to Train]:' ,len(target_days)*len(factor_combo_list)
+    for target_col in [PREFIX_TARGET_DAY+'%s'%target_day for target_day in target_days]:    
         for factor_combo in factor_combo_list:
             try:
                 if len(target_days)>=2:
                     print '[Training]:',factor_combo,target_col
-                adf = add_target_out_col(df, factor_combo, target_col)
+                
+                adf =df
                 fit_model = train_cat_boost(adf,factor_combo,target_col)
                 pred_res = predict_cat_boost(fit_model ,adf,factor_combo,target_col)
                 factor_results.update(pred_res)

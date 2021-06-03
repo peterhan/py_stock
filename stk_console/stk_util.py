@@ -165,7 +165,7 @@ def nest_selector(obj,path):
     return sel
     
 def time_count(func):
-    def wrapper(*arg, **kw):
+    def time_count_wrapper(*arg, **kw):
         t1 = time.time()
         res = func(*arg, **kw)
         t2 = time.time()
@@ -173,7 +173,7 @@ def time_count(func):
         if tcnt>1000:
             print '#[%s] take %0.2f ms'%(func.__name__, tcnt)
         return res
-    return wrapper
+    return time_count_wrapper
     
 def cli_select_menu(select_dic, default_input=None, menu_columns=5, column_width=22, control_flag_map = None):
     '''

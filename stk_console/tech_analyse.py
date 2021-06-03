@@ -12,9 +12,9 @@ import numpy as np
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 from stk_util import time_count,add_indent
+import pickle 
 
-from tech_algo_analyse import catboost_factor_verify,join_factor_result_to_df,get_factor_judge_result,print_factor_result
-import cPickle as pickle
+from tech_algo_analyse import catboost_factor_verify,join_factor_result_to_df,get_factor_judge_result,print_factor_result,add_target_day_out_col
 
 def load_ta_pat_map():
     return json.load(open('talib_pattern_name.json'))
@@ -468,7 +468,8 @@ def tech_analyse(df):
     
     ## MTM
     mtm_res,mdf =  mtm_analyse(ohlcv)
-    df= pd_concat(df, mdf)
+    df = pd_concat(df, mdf)
+    df.sort_index()
     ana_res['MTM'] = mtm_res
     
     
@@ -482,7 +483,7 @@ def tech_analyse(df):
     
     ## MA
     ma_anly_res,mdf = ma_analyse(ohlcv)
-    df= pd_concat(df,mdf)
+    df = pd_concat(df,mdf)
     ana_res['MA'] = ma_anly_res[0] + ' ' + ma_anly_res[1]    
     ana_res['ES-MA'] = ma_anly_res[2]
     ana_res['EMA-DTL'] = ma_anly_res[3]
@@ -499,30 +500,30 @@ def tech_analyse(df):
     
     ## weekday
     wdf = weekday_analyse(df)
-    df= pd_concat(df,wdf)
+    df = pd_concat(df,wdf)
     ana_res['WeekDay'] = wdf.iloc[-1]['week_stage']
 
     
     ## RSI
     rsi_anly_res,rdf = rsi_analyse(ohlcv)
-    df= pd_concat(df,rdf)
+    df = pd_concat(df,rdf)
     ana_res['RSI'] = rsi_anly_res    
     
     ## KDJ 
     kdj_anly_res,kdf = kdj_analyse(ohlcv)
-    df= pd_concat(df,kdf)
+    df = pd_concat(df,kdf)
     ana_res['KDJ'] = kdj_anly_res
     
     ## CCI 
     cci_anly_res,cdf = cci_analyse(ohlcv)
-    df= pd_concat(df,cdf)
+    df = pd_concat(df,cdf)
     ana_res['CCI'] = cci_anly_res
     
     
     ## talib.APO
     ## talib.AROON
     aroon_ana_res,adf = aroon_analyse(ohlcv)
-    df= pd_concat(df,adf)
+    df = pd_concat(df,adf)
     ana_res['AROON'] = aroon_ana_res
 
     
@@ -555,7 +556,7 @@ def tech_analyse(df):
     # ana_res['ATR28'] = round_float(list(atr28[-10::2]))
     ana_res['PIVOT'] = 'Resist:%s, Mid:%s, Support:%s'%(pivot_point[0:3],pivot_point[3],pivot_point[4:])
     ### put into output 
-    analyse_info['data']= ana_res
+    analyse_info['data'] = ana_res
     # pdb.set_trace()
     df = df.loc[:,~df.columns.duplicated()]
     return analyse_info,df
@@ -618,22 +619,24 @@ DEFAULT_COMBO_LIST = [
         ,['vwap_stage','ema_stage']
         ,['macd_stage','rsi_stage']
         ,['week_stage','ema_stage']
+        ,['boll_stage'] ,['kdj_stage'] ,['mom_stage']
         ,['week_stage'] ,['CDLScore']
         ,['ema_stage']  ,['sma_stage']
         ,['volume_ema_stage'] ,['volume_sma_stage']  
-        ,['aroon_stage']
+        #,['aroon_stage']
         ,['macd_stage'] ,['cci_stage'] 
-        ,['rsi_stage']  ,['ma_es_dif_stage'],['boll_stage'] ,['kdj_stage'] ,['mom_stage']
+        ,['rsi_stage']  ,['ma_es_dif_stage']
         ,['vswap_stage'],['vwap_stage']
 ]
 
 @time_count 
 def catboost_process(tick,df,top_n=10,factor_combo_list=None,target_days=None,no_cache=False):
+    global DEFAULT_COMBO_LIST
     if factor_combo_list is None:
         factor_combo_list = DEFAULT_COMBO_LIST
     if target_days is None:
         target_days=['1d','3d','5d','10d','20d','30d','60d']
-        target_days=['1d','5d','10d','30d']
+        target_days=['1d','5d','10d']
     print '[factor_combo_list]:',factor_combo_list 
     print '[target_days]',target_days
     flag,pfname = get_model_filename(tick,'factor')
@@ -641,6 +644,7 @@ def catboost_process(tick,df,top_n=10,factor_combo_list=None,target_days=None,no
     # cycles=['5d']
     if (not flag) or  no_cache:
         print('  [train_cb_model]')
+        df = add_target_day_out_col(df,target_days)
         factor_results  = catboost_factor_verify(df, target_days=target_days,factor_combo_list=factor_combo_list)        
         pickle.dump(factor_results,open(pfname ,'w'))
         print('  [dump_cb_cache_finish]')
@@ -648,10 +652,8 @@ def catboost_process(tick,df,top_n=10,factor_combo_list=None,target_days=None,no
         factor_results = pickle.load(open(pfname ))
         print('  [read_cb_cache_finish]')    
     df = join_factor_result_to_df(df,factor_results)
-    jdf = get_factor_judge_result(df.iloc[-1])
-    ldf = get_factor_judge_result(df.iloc[-10])
-    pstr = '\n'+str(jdf[:10])
-    # pdb.set_trace()
+    jdf = get_factor_judge_result(df.iloc[-1])    
+    pstr = '\n'+str(jdf[:top_n])    
     return df,factor_results,pstr
     
 def main():
@@ -672,19 +674,20 @@ def main():
         
         df = ts.get_k_data(tick)  #df从旧到新
         # df = ts.get_hist_data(tick)  # 从新到旧
-                
+        # df['date'] = df.index        
         df = df.sort_index()
         
         # df.index.name='date'
         # pdb.set_trace()
         df.to_csv('veri/origin.csv')
-        df['date'] = df.index
+        
     
+    
+    df=pd.read_csv('veri/origin.csv')
+    if 'date' not in df.columns:
+        df['date'] = df.index 
     # pdb.set_trace()
-    
-    df=pd.read_csv('veri/origin.csv',index_col='date')
-    
-    # df = df.sort_values('date')
+    df = df.sort_values('date')
     tinfo,tdf = tech_analyse(df)
     # print df.tail(1)
     # df.to_csv('temp_res.csv')
