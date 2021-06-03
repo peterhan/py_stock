@@ -106,9 +106,8 @@ def catboost_factor_verify(df,target_days ,factor_combo_list,PREFIX_TARGET_DAY =
                 if len(target_days)>=2:
                     print '[Training]:',factor_combo,target_col
                 
-                adf =df
-                fit_model = train_cat_boost(adf,factor_combo,target_col)
-                pred_res = predict_cat_boost(fit_model ,adf,factor_combo,target_col)
+                fit_model = train_cat_boost(df,factor_combo,target_col)
+                pred_res = predict_cat_boost(fit_model ,df,factor_combo,target_col)
                 factor_results.update(pred_res)
             except:
                 traceback.print_exc()

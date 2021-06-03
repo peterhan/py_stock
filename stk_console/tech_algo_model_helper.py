@@ -8,6 +8,9 @@ from collections import OrderedDict,defaultdict,Counter
 import pandas as pd
 
 from tech_analyse import DEFAULT_COMBO_LIST
+import tushare as ts
+from tech_analyse import tech_analyse,candle_analyse,catboost_process
+from tech_algo_analyse import add_target_day_out_col
 
 def filter_fr(factor_result,parts):
     od  = OrderedDict()
@@ -42,9 +45,27 @@ def stat_model():
     print '\n\nstat_last\n'
     print cnt['last']
  
+ 
+def run_multi_ticks_model(ticks):
+    fc_list=[['macd_stage']]
+    fc_list= DEFAULT_COMBO_LIST
+    tdays=['1d','3d','5d','7d','10d','14d','30d','60d']
+    dfs = []
+    for tick in ticks:
+        dfs.append( get_tech_df(tick,fc_list,tdays) )
+    pdb.set_trace()
+    df =pd.concat(dfs,axis=0) 
+    apply_model('multi-ticks',df,fc_list,tdays)
+    
 def run_tick_model(tick):
-    import tushare as ts
-    from tech_analyse import tech_analyse,candle_analyse,catboost_process
+    fc_list=[['macd_stage']]
+    fc_list= DEFAULT_COMBO_LIST
+    tdays=['1d','3d','5d','7d','10d','14d','30d','60d']
+    df = get_tech_df(tick,fc_list,tdays)
+    apply_model(tick,df,fc_list,tdays)
+    
+def get_tech_df(tick,fc_list,tdays):
+
     print tick
     ##
     df = ts.get_k_data(tick)
@@ -56,14 +77,16 @@ def run_tick_model(tick):
     tinfo,tdf = tech_analyse(df)    
     cinfo,cdf = candle_analyse(df)
     df = pd.concat([df,tdf,cdf],axis=1)
+    df = df.loc[:,~df.columns.duplicated()]
     res = [{'code':tick,'info':{}
         ,'tech':tinfo,'cdl':cinfo }]
-    fc_list=[['macd_stage']]
-    fc_list= DEFAULT_COMBO_LIST
-    tdays=['1d','3d','5d','7d','10d','14d','30d','60d']
-    df,factor_results,pstr = catboost_process(tick,df,top_n=50,factor_combo_list=fc_list,target_days=tdays,no_cache=False)
+    # pdb.set_trace()
+    df = add_target_day_out_col(df, tdays)
     # print factor_results
-    print pstr
+    return df
+    
+def apply_model(tick,df,fc_list,tdays):
+    df,factor_results,pstr = catboost_process(tick,df,top_n=50,factor_combo_list=fc_list,target_days=tdays,no_cache=False)
  
 def batch_run_model():    
     import ConfigParser
@@ -73,7 +96,11 @@ def batch_run_model():
     conf_tks  = OrderedDict(conf.items('cn-ticks'))
     
     ticks = conf_tks['holding'].split(' ')
+    ticks = conf_tks['mao50'].split(' ')
     # ticks = ['600004']
+    run_multi_ticks_model(ticks)
+    return
+    
     use_pool =False
     if use_pool:
         from multiprocessing import Pool
