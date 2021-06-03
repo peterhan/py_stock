@@ -23,27 +23,27 @@ def filter_fr(factor_result,parts):
 def stat_model():    
     cnt = defaultdict(Counter)
     path='model_catboost.cache'
+    frd = {}
     for fname in glob.glob(path+'/*.factor.*.model'):
         # print fname
-        key = os.path.split(fname)
-        tick = key[1].split('.')[0]
+        keypair = os.path.split(fname)
+        tick = keypair[1].split('.')[0]
         fr = pickle.load(open(fname))
         fr = filter_fr(fr,'=>')
+        frd[tick]=fr
         top = fr.keys()[:5]
         last = fr.keys()[-5:]
         print tick,len(fr),top,last
         cnt['top'].update(top)
         cnt['last'].update(last)
         #,fr.values()[:5]
-        print fr
+        # print fr
         # print fr['vswap_stage=>pchg_1d']['factor_df']
         # break
-    # pdb.set_trace()
-    print '\n\nstat_top\n'
-    print cnt['top']
+    print '\n\nstat_top:', cnt['top']
 
-    print '\n\nstat_last\n'
-    print cnt['last']
+    print '\n\nstat_last:',cnt['last']
+    pdb.set_trace()
  
  
 def run_multi_ticks_model(ticks):
