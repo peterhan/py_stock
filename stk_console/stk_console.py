@@ -1,26 +1,38 @@
 #!coding:utf8
-import sys
-import tushare as ts
-import pandas as pd
-import talib 
-import datetime
 import time
+lasttime=time.time()
+def load_bm(tag):
+    global lasttime
+    tcost =time.time()-lasttime
+    print tag,sys._getframe().f_lineno, '%0.2f s'%(tcost) 
+    lasttime=time.time()
+import sys
 import json
-import ConfigParser
 import pdb
+import datetime
 import traceback
 import locale
 from random import randint
+import ConfigParser
 from collections import OrderedDict
+load_bm('build_in')
+import pandas as pd
+load_bm('pandas')
+import tushare as ts ##
+load_bm('tushare')
+
+import talib 
+load_bm('talib')
 from matplotlib import pyplot as plt
+load_bm('matplotlib')
+
 from tushare_patch import get_latest_news,get_today_ticks,print_latest_news
 from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_str,catboost_process
-
-
 from stk_util import get_article_detail,cli_select_menu
-
 from stock_api import StockNewsWSCN,StockNewsFUTUNN
 from stock_emd import emd_plot
+load_bm('internal')
+
 
 try:    
     import gevent
@@ -29,7 +41,9 @@ try:
     monkey.patch_all()
     # print '[gevent ok]'
 except:
+    Pool = None
     print '[Not Found gevent]'
+load_bm('gevent')
 
 FNAME_PAT_RT = 'data/realtime.%s.csv'
 FNAME_PAT_HIST = 'data/hist.%s.csv'
@@ -379,7 +393,7 @@ def cn_main_loop(mode):
     elif 'quit' in flags:
         sys.exit()
       
-    if 'Pool' not in globals():
+    if Pool is None:
         for tk in the_ticks:
             results = [exec_func(tk,info)]
     else:

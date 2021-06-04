@@ -20,7 +20,7 @@ def load_ta_pat_map():
     return json.load(open('talib_pattern_name.json'))
 TA_PATTERN_MAP = load_ta_pat_map()
 
-cdl_pat_names =  []
+
 @time_count
 def candle_analyse(df):
     '''
@@ -30,14 +30,27 @@ def candle_analyse(df):
     ## calc all candle score
     open,high,low,close = df['open'],df['high'],df['low'],df['close']    
     df=df[['date']].copy()
-    for funcname in talib.get_function_groups()[ 'Pattern Recognition']:
-        func = getattr(talib,funcname) 
-        score_data = func(open,high,low,close)
-        pat_name = funcname[3:]        
-        cdl_pat_names.append(pat_name) 
-        df[pat_name] = score_data
-        cn_names.append(pat_name)
     
+    func_names = talib.get_function_groups()['Pattern Recognition']
+    for func_name in func_names:
+        func = getattr(talib,func_name) 
+        score_data = func(open,high,low,close)
+        patt_name = func_name[3:]
+        # if score_data!=0:
+        df[patt_name] = score_data
+        cn_names.append(patt_name)
+    
+    def make_dict(row):
+        res_d = OrderedDict()
+        for func_name in func_names:
+            patt_name = func_name[3:]
+            score = row[patt_name]
+            if score!=0:
+                res_d[patt_name] = score
+        st= ','.join(['%s:%s'%(k,v) for k,v in res_d.items()])
+        return st
+        
+    df['CDLList'] = df.apply(make_dict,axis=1)
     ###
     total_cdl_score = df[cn_names].sum(axis=1)
     df['CDLScore'] =  total_cdl_score
@@ -705,7 +718,7 @@ def main():
     # print df.tail(1)
     ###
     df.to_csv('veri/tech.csv')
-    # pdb.set_trace()
+    pdb.set_trace()
 
 if __name__ == '__main__':    
     main()
