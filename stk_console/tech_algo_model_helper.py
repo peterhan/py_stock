@@ -111,14 +111,14 @@ def batch_run_model():
     a=['date', 'open', 'close', 'high', 'low', 'volume', 'code', 'mse', 'boll_low', 'boll_mid', 'boll_up', 'bolllow_ag', 'bollmid_ag', 'bollup_ag', 'boll_stage', 'vwap', 'vwap_stage', 'vswap', 'vswap_stage', 'maroc', 'maroc_ag', 'roc', 'roc_ag', 'roc_stage', 'ag_mamom', 'ag_mom', 'mamom', 'mom', 'mom_cross_stage', 'mom_stage', 'dif_ag', 'dif', 'dea_ag', 'dea', 'macd_stage', 'macd_hist', 'EMA3', 'SMA3', 'EMA5', 'SMA5', 'EMA20', 'SMA20', 'EMA60', 'SMA60', 'ma_es_dif_stage', 'ema_stage', 'sma_stage', 'volume_EMA3', 'volume_SMA3', 'volume_EMA5', 'volume_SMA5', 'volume_EMA20', 'volume_SMA20', 'volume_EMA60', 'volume_SMA60', 'volume_ma_es_dif_stage', 'volume_ema_stage', 'volume_sma_stage', 'week_stage', 'rsi', 'rsi_ag', 'rsi_stage', 'd_aag', 'd_ag', 'j_aag', 'j_ag', 'k_aag', 'k_ag', 'kdj_d', 'kdj_j', 'kdj_k', 'p_ag', 'kdj_stage', 'cci', 'cci_ag', 'cci_stage', 'aroon_down', 'aroon_up', 'aroon_stage', '2CROWS', '3BLACKCROWS', '3INSIDE', '3LINESTRIKE', '3OUTSIDE', '3STARSINSOUTH', '3WHITESOLDIERS', 'ABANDONEDBABY', 'ADVANCEBLOCK', 'BELTHOLD', 'BREAKAWAY', 'CLOSINGMARUBOZU', 'CONCEALBABYSWALL', 'COUNTERATTACK', 'DARKCLOUDCOVER', 'DOJI', 'DOJISTAR', 'DRAGONFLYDOJI', 'ENGULFING', 'EVENINGDOJISTAR', 'EVENINGSTAR', 'GAPSIDESIDEWHITE', 'GRAVESTONEDOJI', 'HAMMER', 'HANGINGMAN', 'HARAMI', 'HARAMICROSS', 'HIGHWAVE', 'HIKKAKE', 'HIKKAKEMOD', 'HOMINGPIGEON', 'IDENTICAL3CROWS', 'INNECK', 'INVERTEDHAMMER', 'KICKING', 'KICKINGBYLENGTH', 'LADDERBOTTOM', 'LONGLEGGEDDOJI', 'LONGLINE', 'MARUBOZU', 'MATCHINGLOW', 'MATHOLD', 'MORNINGDOJISTAR', 'MORNINGSTAR', 'ONNECK', 'PIERCING', 'RICKSHAWMAN', 'RISEFALL3METHODS', 'SEPARATINGLINES', 'SHOOTINGSTAR', 'SHORTLINE', 'SPINNINGTOP', 'STALLEDPATTERN', 'STICKSANDWICH', 'TAKURI', 'TASUKIGAP', 'THRUSTING', 'TRISTAR', 'UNIQUE3RIVER', 'UPSIDEGAP2CROWS', 'XSIDEGAP3METHODS', 'CDLList', 'CDLScore', 'pchg_10d']
     a={'LONGLEGGEDDOJI:100': 101, 'DOJI:100': 101, 'SPINNINGTOP:100': 85, 'RICKSHAWMAN:100': 76, 'SPINNINGTOP:-100': 72, 'LONGLINE:100': 71, 'BELTHOLD:-100': 60, 'LONGLINE:-100': 56, 'BELTHOLD:100': 54, 'HIGHWAVE:100': 50, 'CLOSINGMARUBOZU:100': 44, 'HIGHWAVE:-100': 39, 'HIKKAKE:100': 35, 'SHORTLINE:-100': 30, 'ENGULFING:100': 28, 'SHORTLINE:100': 28, 'ENGULFING:-100': 27, 'HARAMI:100': 23, 'HIKKAKE:-100': 22, 'CLOSINGMARUBOZU:-100': 22, 'HARAMI:-100': 21, 'HAMMER:100': 19, '3OUTSIDE:100': 16, 'HANGINGMAN:-100': 13, 'HIKKAKE:200': 12, 'DOJISTAR:-100': 12, 'MATCHINGLOW:100': 12, 'MARUBOZU:100': 11, '3OUTSIDE:-100': 10, 'DRAGONFLYDOJI:100': 9, 'HARAMICROSS:100': 9, 'GRAVESTONEDOJI:100': 9, 'TAKURI:100': 9, 'MARUBOZU:-100': 8, 'HOMINGPIGEON:100': 7, 'INVERTEDHAMMER:100': 7, 'DOJISTAR:100': 7, 'SEPARATINGLINES:-100': 6, 'HARAMICROSS:-100': 6, 'HIKKAKE:-200': 5, '3INSIDE:100': 5, 'ADVANCEBLOCK:-100': 5, 'SHOOTINGSTAR:-100': 4, 'THRUSTING:-100': 4,'sma_stage':1}
     a={'LONGLEGGEDDOJI':1,'DOJI':1,'SPINNINGTOP':1,'RICKSHAWMAN':1,'LONGLINE':1,'HIGHWAVE':1,'BELTHOLD':1,'CLOSINGMARUBOZU':1,'ENGULFING':1}
+    a={'CLOSINGMARUBOZU':1,'ENGULFING':1}
+    a={'CLOSINGMARUBOZU':1,'ENGULFING':1}
     a={'macd_stage':1}
-    a={'CLOSINGMARUBOZU':1,'ENGULFING':1}
-    a={'CLOSINGMARUBOZU':1,'ENGULFING':1}
     fc_list = [list(set(map(lambda x:x.split(':')[0], a.keys())))]
     
     tdays=['7d','10d','14d']
-    tdays=['1d']
     tdays=['1d','3d','5d','7d','10d','14d','30d','60d']
+    tdays=['10d']
     
     run_multi_ticks_model(ticks,tgname,fc_list,tdays)
     # pdb.set_trace()

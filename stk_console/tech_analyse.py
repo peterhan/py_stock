@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 from stk_util import time_count,add_indent
 import pickle 
 
+from tech_cross_type import get_crossx_type,get_angle
 from tech_algo_analyse import catboost_factor_verify,join_factor_result_to_df,get_factor_judge_result,print_factor_result,add_target_day_out_col
 
 def load_ta_pat_map():
@@ -92,40 +93,7 @@ def value_range_judge(vlu,up_down,up_down_mid_name):
     else:
         return up_down_mid_name[2]    
 
-def get_crossx_type(fast_line,slow_line):
-    fast_ag = get_angle(fast_line, 2)
-    slow_ag = get_angle(slow_line, 2)
-    df=pd.DataFrame({'fast_line':fast_line,'slow_line':slow_line,'fast_ag':fast_ag,'slow_ag':slow_ag})
-    def cross_judge(row):    
-        # pdb.set_trace()
-        fast_ag = row['fast_ag']
-        slow_ag = row['slow_ag']
-        ag_diff = fast_ag - slow_ag
-        value_gap = row['fast_line'] - row['slow_line']
-        if fast_ag>0 and slow_ag>0:
-            res='Aft-GX'
-        elif fast_ag>0  and slow_ag<0:
-            res='TrnBef-GX'
-        elif ag_diff>0 and slow_ag<0:
-            res='CnvBef-GX'
-        elif fast_ag<0 and slow_ag<0:
-            res='Aft-DX'
-        elif fast_ag<0  and slow_ag>0:
-            res='TrnBef-DX'
-        elif  ag_diff<0 and slow_ag>0:
-            res='CnvBef-DX'
-        else:
-            # print ag_dif,fast_ag,slow_ag
-            res='Unknown'
-        return res
-    df['cross_stage'] = df.apply(cross_judge,axis=1)#,result_type='expand'    
-    # print edf
-    return df
-    
-def get_angle(ss,p=2):
-    fss = np.nan_to_num(ss,0)
-    ang =  talib.LINEARREG_ANGLE(fss, timeperiod=p)    
-    return ang
+
    
 @time_count
 def boll_analyse(ohlcv,period=10):
@@ -168,9 +136,9 @@ def macd_analyse(ohlcv,period=10):
     def macd_judge(row):
         res = row['macd_stage']
         if row['macd_hist']>0:
-            res +=' POS-HIST'
+            res +=' POS-HIS'
         else:
-            res +=' NEG-HIST'        
+            res +=' NEG-HIS'        
         return res
     # pdb.set_trace()
     df['macd_stage'] = df.apply(macd_judge,axis=1)    
@@ -319,13 +287,13 @@ def aroon_analyse(ohlcv,period=14):
     def aroon_row(row):
         res = []
         if  row['aroon_up'] > row['aroon_down']  and row['aroon_up'] >50:
-            res.append('UP_STRONG')
+            res.append('UP-STRONG')
         elif  row['aroon_up'] < row['aroon_down']  or row['aroon_up'] <50:
-            res.append('DN_WEAK')
+            res.append('DN-WEAK')
         elif  row['aroon_up'] < row['aroon_down']  or row['aroon_down'] >50:
-            res.append('DN_STRONG')
+            res.append('DN-STRONG')
         elif  row['aroon_up'] > row['aroon_down']  or row['aroon_down'] <50:
-            res.append('UP_WEAK')
+            res.append('UP-WEAK')
         else:
             res.append('UNKNOWN')
         return ' '.join(res)
