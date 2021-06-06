@@ -100,19 +100,19 @@ def get_crossx_type(fast_line,slow_line):
         # pdb.set_trace()
         fast_ag = row['fast_ag']
         slow_ag = row['slow_ag']
-        ag_dif = fast_ag - slow_ag
+        ag_diff = fast_ag - slow_ag
         value_gap = row['fast_line'] - row['slow_line']
         if fast_ag>0 and slow_ag>0:
             res='Aft-GX'
         elif fast_ag>0  and slow_ag<0:
             res='TrnBef-GX'
-        elif ag_dif>0 and slow_ag<0:
+        elif ag_diff>0 and slow_ag<0:
             res='CnvBef-GX'
         elif fast_ag<0 and slow_ag<0:
             res='Aft-DX'
         elif fast_ag<0  and slow_ag>0:
             res='TrnBef-DX'
-        elif  ag_dif<0 and slow_ag>0:
+        elif  ag_diff<0 and slow_ag>0:
             res='CnvBef-DX'
         else:
             # print ag_dif,fast_ag,slow_ag

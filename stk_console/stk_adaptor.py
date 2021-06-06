@@ -67,10 +67,10 @@ class CachedStockAdaptor(StockAdaptor):
     def get_tick_data(self,tick,mode='ts',cycle='day'):
         key = '%s-%s-%s'%(tick,mode,cycle)
         if key in self.cache:
-            print '[Load cache key]%',key
+            print '[Load cache key]:',key
             return self.cache[key]
         else:
-            print '[Remote call key]%',key
+            print '[Remote call key]:',key
             df = super(self.__class__, self).get_tick_data(tick,mode,cycle)
             self.cache[key] = df
             return df
