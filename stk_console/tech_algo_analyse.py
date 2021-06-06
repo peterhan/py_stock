@@ -33,10 +33,12 @@ def rmse(targets,predictions):
     return np.sqrt(((predictions - targets) ** 2).mean())
 
 @time_count    
-def predict_cat_boost(fit_model, adf,factor_combo,target_col,test_len=200,round_digit=4):
+def predict_cat_boost(fit_model, adf,factor_combo,target_col,test_len=None,round_digit=4):
     from catboost import CatBoostRegressor
     factor_results = {}
-    test_pool = adf[factor_combo][-1*test_len:]
+    if test_len is None:
+        test_len=len(adf)
+    test_pool = adf[factor_combo][-1*test_len:]    
     test_labels = adf[target_col].fillna(0)[-1*test_len:]
     model = fit_model
     # model = CatBoostRegressor(learning_rate=1, depth=6, loss_function='RMSE',cat_features=i_stages)
