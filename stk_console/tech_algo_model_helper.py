@@ -1,3 +1,4 @@
+#!coding:utf8
 import cPickle as pickle
 import os
 import pdb
@@ -48,22 +49,27 @@ def stat_model():
  
 def run_multi_ticks_model(ticks,tgname,fc_list,tdays):    
     dfs = []
-    for tick in ticks:
-        dfs.append( get_tech_df(tick,fc_list,tdays) )
+    from stk_adaptor import CachedStockAdaptor
+    with CachedStockAdaptor() as csa:
+        for tick in ticks:
+            tdf = get_tech_df(csa, tick,fc_list,tdays)
+            dfs.append( tdf )
+    print tdf.columns.to_list()
     df = pd.concat(dfs,axis=0) 
-    # pdb.set_trace()
+    pdb.set_trace()
     apply_model(tgname+'-multi-ticks',df,fc_list,tdays)
     
 def run_tick_model(tick,fc_list,tdays):    
     df = get_tech_df(tick,fc_list,tdays)
     apply_model(tick,df,fc_list,tdays)
     
-def get_tech_df(tick,fc_list,tdays):
+def get_tech_df(cached_sa, tick,fc_list,tdays):
 
     print tick
     ##
-    df = ts.get_k_data(tick)
-    
+    # df = ts.get_k_data(tick)
+    df = cached_sa.get_tick_data(tick,'ts')
+    # pdb.set_trace()
     # df = ts.get_hist_data(tick)
     # df['date'] = df.index
     # df = df.sort_index()
@@ -81,6 +87,8 @@ def get_tech_df(tick,fc_list,tdays):
     
 def apply_model(tick,df,fc_list,tdays):
     df,factor_results,pstr = catboost_process(tick,df,top_n=50,factor_combo_list=fc_list,target_days=tdays,no_cache=True)
+    print pstr
+    print factor_results
  
 def batch_run_model():    
     import ConfigParser
@@ -89,19 +97,20 @@ def batch_run_model():
     conf.readfp(open(fname))
     conf_tks  = OrderedDict(conf.items('cn-ticks'))
     
-    tgname = 'mao50'
-    tgname = 'holding'
+    # tgname = 'holding'
+    # tgname = 'mao50'
+    tgname = 'mao20'
     ticks = conf_tks[tgname].split(' ')
     
     # ticks = ['600004']
     fc_list=[['macd_stage']]
-    fc_list= DEFAULT_COMBO_LIST
-    
+    fc_list= DEFAULT_COMBO_LIST    
     fc_list=[['macd_stage']]
     fc_list= DEFAULT_COMBO_LIST
     fc_list = ['CDLList'.split('\t')]
-    a={'LONGLEGGEDDOJI:100': 101, 'DOJI:100': 101, 'SPINNINGTOP:100': 85, 'RICKSHAWMAN:100': 76, 'SPINNINGTOP:-100': 72, 'LONGLINE:100': 71, 'BELTHOLD:-100': 60, 'LONGLINE:-100': 56, 'BELTHOLD:100': 54, 'HIGHWAVE:100': 50, 'CLOSINGMARUBOZU:100': 44, 'HIGHWAVE:-100': 39, 'HIKKAKE:100': 35, 'SHORTLINE:-100': 30, 'ENGULFING:100': 28, 'SHORTLINE:100': 28, 'ENGULFING:-100': 27, 'HARAMI:100': 23, 'HIKKAKE:-100': 22, 'CLOSINGMARUBOZU:-100': 22, 'HARAMI:-100': 21, 'HAMMER:100': 19, '3OUTSIDE:100': 16, 'HANGINGMAN:-100': 13, 'HIKKAKE:200': 12, 'DOJISTAR:-100': 12, 'MATCHINGLOW:100': 12, 'MARUBOZU:100': 11, '3OUTSIDE:-100': 10, 'DRAGONFLYDOJI:100': 9, 'HARAMICROSS:100': 9, 'GRAVESTONEDOJI:100': 9, 'TAKURI:100': 9, 'MARUBOZU:-100': 8, 'HOMINGPIGEON:100': 7, 'INVERTEDHAMMER:100': 7, 'DOJISTAR:100': 7, 'SEPARATINGLINES:-100': 6, 'HARAMICROSS:-100': 6, 'HIKKAKE:-200': 5, '3INSIDE:100': 5, 'ADVANCEBLOCK:-100': 5, 'SHOOTINGSTAR:-100': 4, 'THRUSTING:-100': 4}
-    fc_list = map(lambda x:[x.split(':')[0]], a.keys())
+    a={'LONGLEGGEDDOJI:100': 101, 'DOJI:100': 101, 'SPINNINGTOP:100': 85, 'RICKSHAWMAN:100': 76, 'SPINNINGTOP:-100': 72, 'LONGLINE:100': 71, 'BELTHOLD:-100': 60, 'LONGLINE:-100': 56, 'BELTHOLD:100': 54, 'HIGHWAVE:100': 50, 'CLOSINGMARUBOZU:100': 44, 'HIGHWAVE:-100': 39, 'HIKKAKE:100': 35, 'SHORTLINE:-100': 30, 'ENGULFING:100': 28, 'SHORTLINE:100': 28, 'ENGULFING:-100': 27, 'HARAMI:100': 23, 'HIKKAKE:-100': 22, 'CLOSINGMARUBOZU:-100': 22, 'HARAMI:-100': 21, 'HAMMER:100': 19, '3OUTSIDE:100': 16, 'HANGINGMAN:-100': 13, 'HIKKAKE:200': 12, 'DOJISTAR:-100': 12, 'MATCHINGLOW:100': 12, 'MARUBOZU:100': 11, '3OUTSIDE:-100': 10, 'DRAGONFLYDOJI:100': 9, 'HARAMICROSS:100': 9, 'GRAVESTONEDOJI:100': 9, 'TAKURI:100': 9, 'MARUBOZU:-100': 8, 'HOMINGPIGEON:100': 7, 'INVERTEDHAMMER:100': 7, 'DOJISTAR:100': 7, 'SEPARATINGLINES:-100': 6, 'HARAMICROSS:-100': 6, 'HIKKAKE:-200': 5, '3INSIDE:100': 5, 'ADVANCEBLOCK:-100': 5, 'SHOOTINGSTAR:-100': 4, 'THRUSTING:-100': 4,'sma_stage':1}
+    a={'LONGLEGGEDDOJI':1,'DOJI':1,'SPINNINGTOP':1,'RICKSHAWMAN':1,'LONGLINE':1}
+    fc_list = [list(set(map(lambda x:x.split(':')[0], a.keys())))]
     tdays=['1d','3d','5d','7d','10d','14d','30d','60d']
     tdays=['7d','10d','14d']
     tdays=['10d']
