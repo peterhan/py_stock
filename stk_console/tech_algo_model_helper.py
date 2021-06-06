@@ -117,6 +117,7 @@ def batch_run_model():
     fc_list = [list(set(map(lambda x:x.split(':')[0], a.keys())))]
     
     tdays=['7d','10d','14d']
+    tdays=['60d']
     tdays=['10d']
     tdays=['1d','3d','5d','7d','10d','14d','30d','60d']
     

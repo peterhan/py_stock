@@ -14,8 +14,9 @@ from stock_api import StockNewsFinViz
 
 class StockAdaptor(object):
     def __init__(self,cache=False):
-        self._ftnn = StockNewsFUTUNN()
-        self._finvz = StockNewsFinViz()
+        print '__init__ StockAdaptor'
+        self.ftnn = StockNewsFUTUNN()
+        self.finvz = StockNewsFinViz()
         
                 
     def get_tick_data(self,tick,mode='ts',cycle='day'):
@@ -25,7 +26,7 @@ class StockAdaptor(object):
         elif mode in ('ts_hist','tushare_hist'):
             df = self.get_hist_data_ts(tick)
         elif mode in ('ft','ftnn'):            
-            df = self._ftnn.get_kline(tick, cycle) 
+            df = self.ftnn.get_kline(tick, cycle) 
         elif mode in ('yf','yfinance'):
             df = None
         elif mode in ('alvt','alpha_vantage'):
@@ -53,7 +54,8 @@ class StockAdaptor(object):
     
     
 class CachedStockAdaptor(StockAdaptor):
-    def __init__(self):        
+    def __init__(self):
+        super(self.__class__, self).__init__(self)
         self.cfname = 'c_stk_adaptor.cache'      
         if  not os.path.exists(self.cfname):
             self.cache = {}
