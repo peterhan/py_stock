@@ -98,7 +98,7 @@ def batch_run_model():
     conf_tks  = OrderedDict(conf.items('cn-ticks'))
     
     tgname = 'holding'
-    # tgname = 'mao50'
+    tgname = 'mao50'
     # tgname = 'mao20'
     ticks = conf_tks[tgname].split(' ')
     
@@ -117,8 +117,8 @@ def batch_run_model():
     fc_list = [list(set(map(lambda x:x.split(':')[0], a.keys())))]
     
     tdays=['7d','10d','14d']
-    tdays=['1d','3d','5d','7d','10d','14d','30d','60d']
     tdays=['10d']
+    tdays=['1d','3d','5d','7d','10d','14d','30d','60d']
     
     run_multi_ticks_model(ticks,tgname,fc_list,tdays)
     # pdb.set_trace()
