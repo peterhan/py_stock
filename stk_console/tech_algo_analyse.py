@@ -105,9 +105,8 @@ def catboost_factor_verify(df,target_days ,factor_combo_list,PREFIX_TARGET_DAY =
     for target_col in [PREFIX_TARGET_DAY+'%s'%target_day for target_day in target_days]:    
         for factor_combo in factor_combo_list:
             try:
-                if len(target_days)>=2:
-                    print '[Training]:',factor_combo,target_col
-                
+                # if len(target_days)>=2:
+                print '[Training]:',factor_combo,target_col                
                 fit_model = train_cat_boost(df,factor_combo,target_col)
                 pred_res = predict_cat_boost(fit_model ,df,factor_combo,target_col)
                 factor_results.update(pred_res)
