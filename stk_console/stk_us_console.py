@@ -21,7 +21,7 @@ from stock_emd import emd_plot
 from matplotlib import pyplot as plt
 from stk_util import time_count,cli_select_menu,get_article_detail
 import talib
-from tech_analyse import tech_analyse,candle_analyse,analyse_res_to_str,catboost_process
+from tech_analyse import tech_analyse,extract_candle_tech_summary,candle_analyse,analyse_res_to_str,catboost_process
 from yfinance_cache import yfinance_cache
 
 pd.set_option('display.max_rows',None)
@@ -146,10 +146,10 @@ def get_one_tick_data(tick,stk_infos,flags,api_route = 'futu'):
     res_info['info'].update({'price':df['close'].values[-1],'name':''})
     # pdb.set_trace()
     if 'detail' in flags or 'catboost' in flags:
-        tinfo,tdf = tech_analyse(df)
-        cinfo,cdf = candle_analyse(df)
+        tdf = tech_analyse(df)
+        cdf = candle_analyse(df)
         df = pd.concat([df,tdf,cdf],axis=1)        
-        
+        cinfo,tinfo = extract_candle_tech_summary(df.iloc[-1]) 
         res_info['info'].update({'price':df['close'].values[-1],'name':''})
         res_info.update({'tech':tinfo,'cdl':cinfo})
     if 'catboost' in flags:

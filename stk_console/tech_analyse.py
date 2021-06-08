@@ -16,6 +16,8 @@ import pickle
 
 from tech_cross_type import get_crossx_type,get_angle
 from tech_algo_analyse import catboost_factor_verify,join_factor_result_to_df,get_factor_judge_result,print_factor_result,add_target_day_out_col
+SYS_ENCODE = locale.getpreferredencoding()
+
 
 def load_ta_pat_map():
     return json.load(open('talib_pattern_name.json'))
@@ -54,10 +56,14 @@ def candle_analyse(df):
     df['candle_list'] = df.apply(make_dict,axis=1)
     ###
     total_cdl_score = df[cn_names].sum(axis=1)
-    df['candle_score'] =  total_cdl_score
-    cdl_info = {'cdl_total' : '%s'% (total_cdl_score.values[-1]),'data':{} }
-    last_cdlrow = df.iloc[-1]
-    for name,cdl_vlu in last_cdlrow.iteritems():        
+    df['CDLScore'] =  total_cdl_score
+    # print jsdump(cdl_info)
+    return df
+
+def extract_candle_tech_summary(row):
+    # candle info
+    cdl_info = {'cdl_total' : '%s'% (row['CDLScore']),'data':{} }
+    for name,cdl_vlu in row.iteritems():        
         if cdl_vlu != 0 and name in TA_PATTERN_MAP:
             the_info = TA_PATTERN_MAP[name]
             fig = the_info['figure'].split(' ')[1]
@@ -66,8 +72,60 @@ def candle_analyse(df):
             define = the_info['define']
             intro = the_info['intro']
             cdl_info['data'][name] = {'figure':fig,'score':cdl_vlu,'cn_name':cn_name,'define':define,'intro':intro,'en_name':en_name}
-    # print jsdump(cdl_info)
-    return cdl_info,df
+    
+    ## tech info
+    tech_info = OrderedDict()
+    bres = [row['boll_stage']]
+    bres += ['ANG[MID:%0.2f, UP:%0.2f], MID_PRC:%0.2f'%(row['bollmid_ag'], row['bollup_ag']-row['bollmid_ag'], row['boll_mid'])]
+    bres += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(row['boll_up'],row['boll_mid'],row['boll_low'])]
+    tech_info['BOLL'] = bres
+    
+    tech_info['MACD'] = [
+        '%s: ANG[IF:%0.2f, EA:%0.2f]'%(row['macd_stage'],row['dif_ag'],row['dea_ag']),
+        'DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(row['dif'],row['dea'],row['macd_hist']*2)
+    ]
+    
+    
+    tech_info['RSI'] = [row['rsi_stage']+', '+'RSI: %0.2f, ANG:%02.f'%(row['rsi'],row['rsi_ag'])]
+    
+    tech_info['CCI'] = row['cci_stage']+', '+'CCI: %0.2f, ANG:%02.f'%(row['cci'],row['cci_ag']) 
+    
+    tech_info['ROC'] = row['roc_stage']+', '+'ROC: %0.2f, ANG:%02.f'%(row['roc'],row['roc_ag'])
+    
+    tech_info['KDJ'] = [
+        row['kdj_stage']
+        ,'KDJ:%0.2f,%02.f,%02.f'%(row['kdj_k'],row['kdj_d'],row['kdj_j']) 
+        ,'ANG-KDJ:%0.2f,%02.f,%02.f'%(row['k_ag'],row['d_ag'],row['j_ag'])
+        ]
+    
+    
+    tech_info['MOM'] = [row['mom_stage'],row['mom_cross_stage'],'MOM:','%0.2f'%row['mom'],'MA-MOM:','%0.2f'%row['mamom']]        
+    
+    tech_info['AROON'] = [row['aroon_stage'],'%0.2f'%row['aroon_up'], '%0.2f'%row['aroon_down'] ]
+    
+    tech_info['VWAP']={
+        'vswap':'%0.2f'%row['vswap'],'vswap_stage':row['vswap_stage']
+        ,'vwap':'%0.2f'%row['vwap'],  'vwap_stage':row['vwap_stage']
+        ,'close':row['close']
+        }
+        
+    def ma_str(row,typ,prefix,cycles):
+        res = []
+        for cyc in cycles:            
+            k = '%sMA%s'%(typ,cyc)
+            v = row[prefix+k]
+            res.append('%s:%0.2f'%(k,v))
+        return ', '.join(res)
+        
+    prefixes = ['','volume_']
+    cycles = [3,5,20,60]
+    for prefix in prefixes:
+        tech_info['MA'+' '+prefix] = ['[S]'+row[prefix+'sma_stage'], '[E]'+row[prefix+'ema_stage'], 
+            '[ES]'+row[prefix+'ma_es_dif_stage'],
+            ma_str(row,'E',prefix,cycles), ma_str(row,'S',prefix,cycles)
+        ]
+    
+    return cdl_info,{'data':tech_info}
     
 def pivot_line(open,high,low,close, mode='classic'):
     pivot = (high + low + 2* close )/4
@@ -77,13 +135,24 @@ def pivot_line(open,high,low,close, mode='classic'):
     s2 = pivot - (r1 - s1)
     r3 = high + 2*(pivot - low)
     s3 = low - 2*(high - pivot)
-    sm1 = (pivot+s1)/2
-    sm2 = (s1+s2)/2
-    sm3 = (s2+s3)/2
-    rm1 = (pivot+r1)/2
-    rm2 = (r1+r2)/2
-    rm3 = (r2+r3)/2
-    return r3,r2,r1,pivot,s1,s2,s3    
+    names = 'pivot,r1,s1,r2,s2,r3,s3'.split(',')
+    res_d = OrderedDict(zip(names ,[pivot,r1,s1,r2,s2,r3,s3]))
+    if mode == 'extend':
+        res_d['sm1'] = (pivot+s1)/2
+        res_d['sm2'] = (s1+s2)/2
+        res_d['sm3'] = (s2+s3)/2
+        res_d['rm1'] = (pivot+r1)/2
+        res_d['rm2'] = (r1+r2)/2
+        res_d['rm3'] = (r2+r3)/2
+    return res_d
+
+def pivot_line_analyse(open,high,low,close):
+    df = pd.DataFrame({'open':open,'high':high,'low':low,'close': close})
+    def pivot_line_judge(row):
+        po= pivot_line(row['open'],row['high'],row['low'],row['close'])
+        return ','.join(['%s:%0.2f'%(k,v) for k,v in po.items()])
+    df = pd.DataFrame({'pivot_line':df.apply(pivot_line_judge,axis=1)})
+    return df    
     
 def value_range_judge(vlu,up_down,up_down_mid_name): 
     if vlu>=up_down[0]:
@@ -91,8 +160,7 @@ def value_range_judge(vlu,up_down,up_down_mid_name):
     elif vlu<=up_down[1]:
         return up_down_mid_name[1]
     else:
-        return up_down_mid_name[2]    
-
+        return up_down_mid_name[2]
   
 @time_count
 def boll_analyse(ohlcv,period=10):
@@ -116,12 +184,8 @@ def boll_analyse(ohlcv,period=10):
         else:
             res += '-SHRINK'
         return res
-    df['boll_stage'] = df.apply(boll_judge,axis=1)
-    row = df.iloc[-1]
-    res = [row['boll_stage']]
-    res += ['ANG[MID:%0.2f, UP:%0.2f], MID_PRC:%0.2f'%(row['bollmid_ag'], row['bollup_ag']-row['bollmid_ag'], row['boll_mid'])]
-    res += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(row['boll_up'],row['boll_mid'],row['boll_low'])]
-    return res,df
+    df['boll_stage'] = df.apply(boll_judge,axis=1)        
+    return df
    
 @time_count
 def macd_analyse(ohlcv,period=10):
@@ -140,11 +204,8 @@ def macd_analyse(ohlcv,period=10):
             res +=' NEG-HIS'        
         return res
     # pdb.set_trace()
-    df['macd_stage'] = df.apply(macd_judge,axis=1)    
-    row = df.iloc[-1]         
-    res += ['%s: ANG[IF:%0.2f, EA:%0.2f]'%(row['macd_stage'],row['dif_ag'],row['dea_ag'])]
-    res += ['DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(row['dif'],row['dea'],row['macd_hist']*2)]   
-    return res,df
+    df['macd_stage'] = df.apply(macd_judge,axis=1) 
+    return df
     
 @time_count
 def rsi_analyse(ohlcv,period=10):
@@ -156,9 +217,7 @@ def rsi_analyse(ohlcv,period=10):
         return value_range_judge( row['rsi'] ,[70,30],['OverBrought','OverSell','MID'])
     df['rsi_stage'] =  df.apply(rsi_row, axis=1)
     # pdb.set_trace()
-    row = df.iloc[-1]
-    res_info = row['rsi_stage']+', '+'RSI: %0.2f, ANG:%02.f'%(row['rsi'],row['rsi_ag'])
-    return res_info,df
+    return df
 
 @time_count
 def cci_analyse(ohlcv,period=10):
@@ -170,9 +229,7 @@ def cci_analyse(ohlcv,period=10):
         return value_range_judge( row['cci'] ,[100,-100],['OverBrought','OverSell','MID'])
     df['cci_stage'] =  df.apply(cci_row, axis=1)
     # pdb.set_trace()
-    row = df.iloc[-1]
-    res_info = row['cci_stage']+', '+'CCI: %0.2f, ANG:%02.f'%(row['cci'],row['cci_ag'])
-    return res_info,df
+    return df
 
 @time_count
 def roc_analyse(ohlcv,period=10):
@@ -181,17 +238,12 @@ def roc_analyse(ohlcv,period=10):
     roc_ag = get_angle(roc,2)
     maroc = talib.SMA(roc,14)
     maroc_ag = talib.SMA(maroc,14)
-    # plt.plot(roc)
-    # plt.plot(maroc)
-    # plt.show()
     df = pd.DataFrame({'roc':roc,'roc_ag':roc_ag,'maroc':maroc,'maroc_ag':maroc_ag})
     def roc_row(row):
         return value_range_judge( row['roc'] ,[0,0],['STRONG','WEAK','ZERO'])
     df['roc_stage'] =  df.apply(roc_row, axis=1)
     # pdb.set_trace()
-    row = df.iloc[-1]
-    res_info = row['roc_stage']+', '+'ROC: %0.2f, ANG:%02.f'%(row['roc'],row['roc_ag'])
-    return res_info,df
+    return df
 
 @time_count
 def kdj_analyse(ohlcv,period=10):
@@ -237,14 +289,7 @@ def kdj_analyse(ohlcv,period=10):
         return ','.join(res)
         
     df['kdj_stage'] =  df.apply(kdj_row, axis=1)
-    row = df.iloc[-1]
-    res_info = [
-        row['kdj_stage']
-        ,'KDJ:%0.2f,%02.f,%02.f'%(row['kdj_k'],row['kdj_d'],row['kdj_j']) 
-        ,'ANG-KDJ:%0.2f,%02.f,%02.f'%(row['k_ag'],row['d_ag'],row['j_ag'])
-        ]
-    res_info = ', '.join(res_info)
-    return res_info,df
+    return df
 
 @time_count
 def mtm_analyse(ohlcv,period1=6,period2=12):
@@ -268,10 +313,8 @@ def mtm_analyse(ohlcv,period1=6,period2=12):
         return ' '.join(res)
     df['mom_cross_stage'] =  get_crossx_type(df['mom'],df['mamom'])['cross_stage']    
     df['mom_stage'] = df.apply(mom_row, axis=1)
-    # pdb.set_trace()
-    row = df.iloc[-1]
-    res_info = [row['mom_stage'],row['mom_cross_stage'],'MOM:','%0.2f'%row['mom'],'MA-MOM:','%0.2f'%row['mamom']]
-    return res_info,df
+    # pdb.set_trace()    
+    return df
 
 @time_count
 def aroon_analyse(ohlcv,period=14):
@@ -296,10 +339,8 @@ def aroon_analyse(ohlcv,period=14):
         else:
             res.append('UNKNOWN')
         return ' '.join(res)
-    df['aroon_stage'] = df.apply(aroon_row, axis=1)
-    row = df.iloc[-1]
-    res_info = [row['aroon_stage'],'%0.2f'%row['aroon_up'], '%0.2f'%row['aroon_down'] ]
-    return res_info,df
+    df['aroon_stage'] = df.apply(aroon_row, axis=1)    
+    return df
    
 def get_weekday(dt):
     if isinstance(dt,basestring):
@@ -338,14 +379,8 @@ def vwap_analyse(ohlcv,period = 3):
     ndf['vwap_stage'] = get_crossx_type(close,vwap)['cross_stage']
     ndf['vswap'] = vswap
     ndf['vswap_stage'] = get_crossx_type(close,vswap)['cross_stage']
-    row=ndf.iloc[-1]
-    vwap_info={
-        'vswap':'%0.2f'%row['vswap'],'vswap_stage':row['vswap_stage']
-        ,'vwap':'%0.2f'%row['vwap'],  'vwap_stage':row['vwap_stage']
-        ,'close':row['close']
-        }
     ndf.pop('close')
-    return vwap_info,ndf
+    return ndf
     
 @time_count
 def ma_analyse(ohlcv,period=10,target_col='close'):
@@ -360,8 +395,8 @@ def ma_analyse(ohlcv,period=10,target_col='close'):
         ma[prefix+'EMA%s'%cyc]  = talib.EMA(close,cyc)
         ma[prefix+'SMA%s'%cyc]  = talib.SMA(close,cyc)
     df = pd.DataFrame(ma)
-    ## 
-    def ma_es_dif_judge(row):
+    ## ema_sma_dif_judge
+    def ema_sma_dif_judge(row):
         es_res = []
         for cyc in cycles:
             ema = row[prefix+'EMA%s'%cyc]
@@ -385,24 +420,18 @@ def ma_analyse(ohlcv,period=10,target_col='close'):
             ma_res.append(s)
         return ','.join(ma_res)
     ##
-    df[ prefix +'ma_es_dif_stage'] = df.apply(ma_es_dif_judge,axis=1)
+    df[ prefix +'ma_es_dif_stage'] = df.apply(ema_sma_dif_judge,axis=1)
     df[ prefix +'ema_stage'] = df.apply(lambda row:ma_stage_judge(row,'EMA'), axis=1)
-    df[ prefix +'sma_stage'] = df.apply(lambda row:ma_stage_judge(row,'SMA'), axis=1)
-    row = df.iloc[-1]
-    def ma_str(row,typ):
-        res = []
-        for cyc in cycles:            
-            k = '%sMA%s'%(typ,cyc)
-            v = row[prefix+k]
-            res.append('%s:%0.2f'%(k,v))
-        return ', '.join(res)
-    res_info = ['[S]'+row[prefix+'sma_stage'], '[E]'+row[prefix+'ema_stage'], '[ES]'+row[prefix+'ma_es_dif_stage'], ma_str(row,'E'), ma_str(row,'S')]
-    return res_info,df
+    df[ prefix +'sma_stage'] = df.apply(lambda row:ma_stage_judge(row,'SMA'), axis=1)    
+    return df
 
 @time_count
 def td9_analyse(ohlcv):
     close = ohlcv['close']
     return ohlcv
+    
+def pd_concat(df1,df2):
+    return pd.concat([df1,df2.set_index(df1.index)],axis=1)
     
 @time_count
 def tech_analyse(df):  
@@ -419,132 +448,97 @@ def tech_analyse(df):
     # ohlcv= {'open':open,'high':high,'low':low,'close':close,'volume':vol}
     ohlcv = df    
     
-    ana_res = OrderedDict()
-    
-    def pd_concat(df1,df2):
-        return pd.concat([df1,df2.set_index(df1.index)],axis=1)
-    
     df = df[['date']].copy()
 
     ## BOLL
-    boll_anly_res,bdf = boll_analyse(ohlcv)
+    bdf = boll_analyse(ohlcv)
     df= pd_concat(df,bdf)
-    ana_res['BOLL'] =  boll_anly_res
     
     
     ## VWAP VSWAP
-    vwap_res,vdf = vwap_analyse(ohlcv)
-    df= pd_concat(df,vdf)
-    ana_res['VWAP'] = vwap_res
-    
+    vdf = vwap_analyse(ohlcv)
+    df= pd_concat(df,vdf)    
         
     ## ROC
     try:
-        roc_anly_res,rdf = roc_analyse(ohlcv)
+        rdf = roc_analyse(ohlcv)
         df = pd_concat(df,rdf)
-        ana_res['ROC'] = roc_anly_res
     except:
         traceback.print_exc()
     
     ## MTM
-    mtm_res,mdf =  mtm_analyse(ohlcv)
+    mdf =  mtm_analyse(ohlcv)
     df = pd_concat(df, mdf)
     df.sort_index()
-    ana_res['MTM'] = mtm_res
     
     
     ## MACD
     try:
-        macd_anly_res,mdf = macd_analyse(ohlcv)
+        mdf = macd_analyse(ohlcv)
         df= pd_concat(df,mdf)
-        ana_res['MACD'] = macd_anly_res
     except:
         traceback.print_exc()
     
     ## MA
-    ma_anly_res,mdf = ma_analyse(ohlcv)
+    mdf = ma_analyse(ohlcv)
     df = pd_concat(df,mdf)
-    ana_res['MA'] = ma_anly_res[0] + ' ' + ma_anly_res[1]    
-    ana_res['ES-MA'] = ma_anly_res[2]
-    ana_res['EMA-DTL'] = ma_anly_res[3]
-    ana_res['SMA-DTL'] = ma_anly_res[4]    
-
     ## VOLMA
     # pdb.set_trace()
-    volume_ma_res, vdf = ma_analyse(ohlcv,target_col='volume')
-    df= pd_concat(df,vdf)
-    ana_res['VOL_MA'] = volume_ma_res[0] + ' ' + volume_ma_res[1]    
-    ana_res['VOL_ES-MA'] = volume_ma_res[2]
-    # ana_res['VOL_EMA-DTL'] = volume_ma_res[3]
-    # ana_res['VOL_SMA-DTL'] = volume_ma_res[4]   
+    vdf = ma_analyse(ohlcv,target_col='volume')
+    df= pd_concat(df,vdf) 
     
     ## weekday
     wdf = weekday_analyse(df)
     df = pd_concat(df,wdf)
-    ana_res['WeekDay'] = wdf.iloc[-1]['week_stage']
-
     
     ## RSI
-    rsi_anly_res,rdf = rsi_analyse(ohlcv)
-    df = pd_concat(df,rdf)
-    ana_res['RSI'] = rsi_anly_res    
+    rdf = rsi_analyse(ohlcv)
+    df = pd_concat(df,rdf) 
     
     ## KDJ 
-    kdj_anly_res,kdf = kdj_analyse(ohlcv)
+    kdf = kdj_analyse(ohlcv)
     df = pd_concat(df,kdf)
-    ana_res['KDJ'] = kdj_anly_res
     
     ## CCI 
-    cci_anly_res,cdf = cci_analyse(ohlcv)
-    df = pd_concat(df,cdf)
-    ana_res['CCI'] = cci_anly_res
-    
+    cdf = cci_analyse(ohlcv)
+    df = pd_concat(df,cdf)    
     
     ## talib.APO
+    
     ## talib.AROON
-    aroon_ana_res,adf = aroon_analyse(ohlcv)
+    adf = aroon_analyse(ohlcv)
     df = pd_concat(df,adf)
-    ana_res['AROON'] = aroon_ana_res
-
     
     ## Forcast
-    tsf_res =  'Forcast: %0.2f'%list(talib.TSF(ohlcv['close']))[-1]
-    ana_res['TSF'] = tsf_res
+    df['tsf'] = talib.TSF(ohlcv['close'])
     
     ## OBV
-    obv = talib.OBV(close,vol)
+    df['obv'] = talib.OBV(close,vol)
     
     ## SAR
-    sar = talib.SAREXT(high,low)    
- 
-    ##
-    atr14 = talib.ATR(high,low,close,timeperiod =14)
-    atr28 = talib.ATR(high,low,close,timeperiod =28)
-    ##
-    pivot_point = map(lambda x:round(x[-1],2) , pivot_line(open,high,low,close) )    
+    df['sar'] = talib.SAREXT(high,low)    
+    
+    ## ATR
+    df['atr14'] = talib.ATR(high,low,close,timeperiod =14)
+    df['atr28'] = talib.ATR(high,low,close,timeperiod =28)
+    
+    ##pivot line
+    # df['pivot_point'] 
+    ppdf = pivot_line_analyse(open,high,low,close)
+    # pdb.set_trace()
+    df = pd_concat(df,ppdf)
     # name = ' '
+    
     analyse_info = OrderedDict({'price':close[-1]})
     
-    # ana_res['BOLL'] = [bl_upper[-1],bl_middle[-1],bl_lower[-1] ]
-           
-    # ana_res['OBV'] = round_float([ obv[-1] ])
-    ana_res['SAR'] = round_float([ sar[-1] ])
-    # ana_res['EMA'] = round_float([ ema05[-1],ema10[-1],ema20[-1],ema60[-1],ema240[-1] ])
-    # ana_res['SMA'] = round_float([ sma05[-1],sma10[-1],sma20[-1],sma60[-1],sma240[-1] ])
-    ana_res['VOL_Rate'] = round_float([vol[-1]*1.0/vol[-2]])
-    # ana_res['ATR14'] = round_float(list(atr14[-10::2]))
-    # ana_res['ATR28'] = round_float(list(atr28[-10::2]))
-    ana_res['PIVOT'] = 'Resist:%s, Mid:%s, Support:%s'%(pivot_point[0:3],pivot_point[3],pivot_point[4:])
-    ### put into output 
-    analyse_info['data'] = ana_res
-    # pdb.set_trace()
+    df['vol_rate'] = pd.Series(vol) / pd.Series(vol).shift(1)
+    
+    ### put into output     
     df = df.loc[:,~df.columns.duplicated()]
-    return analyse_info,df
+    return df
     
 def jsdump(info, indent=None):
     return json.dumps(info, ensure_ascii=False, indent=indent) 
-    
-SYS_ENCODE = locale.getpreferredencoding()
 
 def analyse_res_to_str(stock_anly_res):
     intro = {}
@@ -560,15 +554,18 @@ def analyse_res_to_str(stock_anly_res):
             pstr+= stock['algo_cb']            
         if 'tech' in stock and stock['tech'] != None:
             tech = stock['tech']
-            for key,vlu in tech['data'].items():
+            for key,vlu in tech.get('data',{}).items():
                 pstr+= '\n[%s] %s'%(key,jsdump(vlu))
             
         if 'cdl' in stock and stock['cdl'] != None:
-            cdl = stock['cdl']
-            cdl_ent_str = ','.join([u'[{}:{}]:{}{}'.format(info['score'],info['figure'],name,info['cn_name']) for name,info in cdl['data'].items()])
-            for name,info in cdl['data'].items():
+            cdl = stock['cdl']            
+            cdl_ent_arr = []            
+            for name,info in cdl.get('data',{}).items():
+                ent_st = u'[{}:{}]:{}{}'.format( info['score'], info['figure'], name, info['cn_name'] )
+                cdl_ent_arr.append(ent_st)
                 intro[info['en_name']+info['cn_name']] = info['intro']
-            pstr+= "\n[CDL_Total:{0}]  {1}".format(cdl['cdl_total'], cdl_ent_str.encode(SYS_ENCODE) )
+            cdl_ent_str = ','.join(cdl_ent_arr)
+            pstr += "\n[CDL_Total:{0}]  {1}".format(cdl.get('cdl_total','NaN'), cdl_ent_str.encode(SYS_ENCODE) )
     pstr += '\n'
     for name,intro in intro.items():
         pstr+= u"\n[EXPLAIN:{}]:{}".format(name,intro).encode(SYS_ENCODE)     
@@ -600,7 +597,7 @@ DEFAULT_COMBO_LIST = [
         ,['macd_stage','rsi_stage']
         ,['week_stage','ema_stage']
         ,['boll_stage'] ,['kdj_stage'] ,['mom_stage']
-        ,['week_stage'] ,['candle_score']
+        ,['week_stage'] ,['CDLScore']
         ,['ema_stage']  ,['sma_stage']
         ,['volume_ema_stage'] ,['volume_sma_stage']  
         #,['aroon_stage']
@@ -660,22 +657,19 @@ def main():
         # df.index.name='date'
         # pdb.set_trace()
         df.to_csv('veri/origin.csv')
-        
-    
     
     df=pd.read_csv('veri/origin.csv')
     if 'date' not in df.columns:
         df['date'] = df.index 
     # pdb.set_trace()
     df = df.sort_values('date')
-    tinfo,tdf = tech_analyse(df)
-    # print df.tail(1)
-    # df.to_csv('temp_res.csv')
-    # pdb.set_trace()
-    cinfo,cdf = candle_analyse(df)
-    
-    
+    tdf = tech_analyse(df)    
+    cdf = candle_analyse(df)    
     df = pd.concat([df,tdf,cdf],axis=1)
+    
+    cinfo,tinfo = extract_candle_tech_summary(df.iloc[-1])    
+    # pdb.set_trace()
+    
     res = [{'code':tick,'info':{}
         ,'tech':tinfo,'cdl':cinfo }]
     df,factor_results,pstr = catboost_process(tick,df,top_n=20)

@@ -27,7 +27,7 @@ from matplotlib import pyplot as plt
 load_bm('matplotlib')
 
 from tushare_patch import get_latest_news,get_today_ticks,print_latest_news
-from tech_analyse import tech_analyse,candle_analyse,pivot_line,analyse_res_to_str,catboost_process
+from tech_analyse import tech_analyse,extract_candle_tech_summary,candle_analyse,pivot_line,analyse_res_to_str,catboost_process
 from stk_util import get_article_detail,cli_select_menu
 from stock_api import StockNewsWSCN,StockNewsFUTUNN
 from stock_emd import emd_plot
@@ -216,14 +216,15 @@ def get_one_ticker_k_data(tick,info,flags):
     if df.shape[0] == 0:
         return
     ## technical indicator
-    tech_info,tdf = tech_analyse(df)
+    tdf = tech_analyse(df)
     ## japanese candle pattern
-    cdl_info,cdf = candle_analyse(df)
+    cdf = candle_analyse(df)
     tdf.pop('date')
     cdf.pop('date')
-    res_info={'code':tick,'info':info[tick]
-           ,'tech':tech_info,'cdl':cdl_info}
     df = pd.concat([df,tdf,cdf],axis=1)
+    cinfo,tinfo = extract_candle_tech_summary(df.iloc[-1]) 
+    res_info={'code':tick,'info':info[tick]
+           ,'tech':tinfo,'cdl':cdl_info}
     if 'catboost' in flags:        
         df,factor_results,pstr = catboost_process(tick,df)
         res_info['algo_cb'] = pstr

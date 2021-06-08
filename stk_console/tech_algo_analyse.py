@@ -128,7 +128,10 @@ def join_factor_result_to_df(df,factor_results):
         fdf.drop('date_count',axis=1)
         fdf = fdf.add_prefix(algo_key+'.')
         key_columns = algo_key.split('=>')[0].split(':')
-        df = df.join(fdf,on=key_columns)
+        if all([kc in df.columns for kc in key_columns]):
+            df = df.join(fdf,on=key_columns)
+        else:
+            print '[Fail to Load Model Column]',key_columns
     return df
 
 @time_count     
