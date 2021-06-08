@@ -93,8 +93,7 @@ def value_range_judge(vlu,up_down,up_down_mid_name):
     else:
         return up_down_mid_name[2]    
 
-
-   
+  
 @time_count
 def boll_analyse(ohlcv,period=10):
     boll_up, boll_mid, boll_low = talib.BBANDS(ohlcv['close'],period)
@@ -611,7 +610,7 @@ DEFAULT_COMBO_LIST = [
 ]
 
 @time_count 
-def catboost_process(tick,df,top_n=10,factor_combo_list=None,target_days=None,no_cache=False):
+def catboost_process(tick,df,top_n=20,factor_combo_list=None,target_days=None,no_cache=False):
     global DEFAULT_COMBO_LIST
     if factor_combo_list is None:
         factor_combo_list = DEFAULT_COMBO_LIST
@@ -679,7 +678,7 @@ def main():
     df = pd.concat([df,tdf,cdf],axis=1)
     res = [{'code':tick,'info':{}
         ,'tech':tinfo,'cdl':cinfo }]
-    df,factor_results,pstr = catboost_process(tick,df)
+    df,factor_results,pstr = catboost_process(tick,df,top_n=20)
     res[0]['algo_cb']=pstr
     print analyse_res_to_str(res)
     # pprint(cinfo)

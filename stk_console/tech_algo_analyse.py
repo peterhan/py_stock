@@ -113,7 +113,7 @@ def catboost_factor_verify(df,target_days ,factor_combo_list,PREFIX_TARGET_DAY =
             except:
                 traceback.print_exc()
     for key,check_result in sorted(factor_results.items(),key=lambda v:v[1]['correct_rate'],reverse=True):
-        o_factor_results[key] =  check_result
+        o_factor_results[key] = check_result
     
     return o_factor_results
 
