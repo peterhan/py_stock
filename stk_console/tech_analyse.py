@@ -51,10 +51,10 @@ def candle_analyse(df):
         st= ','.join(['%s:%s'%(k,v) for k,v in res_d.items()])
         return st
         
-    df['CDLList'] = df.apply(make_dict,axis=1)
+    df['candle_list'] = df.apply(make_dict,axis=1)
     ###
     total_cdl_score = df[cn_names].sum(axis=1)
-    df['CDLScore'] =  total_cdl_score
+    df['candle_score'] =  total_cdl_score
     cdl_info = {'cdl_total' : '%s'% (total_cdl_score.values[-1]),'data':{} }
     last_cdlrow = df.iloc[-1]
     for name,cdl_vlu in last_cdlrow.iteritems():        
@@ -600,7 +600,7 @@ DEFAULT_COMBO_LIST = [
         ,['macd_stage','rsi_stage']
         ,['week_stage','ema_stage']
         ,['boll_stage'] ,['kdj_stage'] ,['mom_stage']
-        ,['week_stage'] ,['CDLScore']
+        ,['week_stage'] ,['candle_score']
         ,['ema_stage']  ,['sma_stage']
         ,['volume_ema_stage'] ,['volume_sma_stage']  
         #,['aroon_stage']
