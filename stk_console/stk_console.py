@@ -224,13 +224,12 @@ def get_one_ticker_k_data(tick,info,flags):
     df = pd.concat([df,tdf,cdf],axis=1)
     cinfo,tinfo = extract_candle_tech_summary(df.iloc[-1]) 
     res_info={'code':tick,'info':info[tick]
-           ,'tech':tinfo,'cdl':cdl_info}
+           ,'tech':tinfo,'cdl':cinfo}
     if 'catboost' in flags:        
         df,factor_results,pstr = catboost_process(tick,df)
         res_info['algo_cb'] = pstr
     if 'pdb' in flags:
         pdb.set_trace()
-    # cdl_info = None
     # df.to_csv(fname)
     if 'emd' in flags:        
         emd_res = emd_plot(df['close'])  

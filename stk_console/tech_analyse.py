@@ -542,14 +542,15 @@ def jsdump(info, indent=None):
 
 def analyse_res_to_str(stock_anly_res):
     intro = {}
-    pstr = ''
+    pstrs = []
     for stock in stock_anly_res:
+        pstr = ''
         if stock is None:
             continue        
         code = stock.get('code','no-code')
         name = stock.get('info',{}).get('name','')
         price = stock.get('info',{}).get('price','')
-        pstr+= "\n#[{0}:{1}] Price:{2}".format(code,name.encode(SYS_ENCODE),price)
+        pstr+= "#[{0}:{1}] Price:{2}".format(code,name.encode(SYS_ENCODE),price)
         if 'algo_cb' in stock :
             pstr+= stock['algo_cb']            
         if 'tech' in stock and stock['tech'] != None:
@@ -566,7 +567,8 @@ def analyse_res_to_str(stock_anly_res):
                 intro[info['en_name']+info['cn_name']] = info['intro']
             cdl_ent_str = ','.join(cdl_ent_arr)
             pstr += "\n[CDL_Total:{0}]  {1}".format(cdl.get('cdl_total','NaN'), cdl_ent_str.encode(SYS_ENCODE) )
-    pstr += '\n'
+        pstrs.append(pstr)
+    pstr = '\n'.join(pstrs)
     for name,intro in intro.items():
         pstr+= u"\n[EXPLAIN:{}]:{}".format(name,intro).encode(SYS_ENCODE)     
     return add_indent(pstr,'  ')
