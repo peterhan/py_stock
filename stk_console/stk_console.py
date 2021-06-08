@@ -1,10 +1,10 @@
 #!coding:utf8
 import time
 lasttime=time.time()
-def load_bm(tag):
+def load_time_stat(tag):
     global lasttime
     tcost =time.time()-lasttime
-    print tag,sys._getframe().f_lineno, '%0.2f s'%(tcost) 
+    print 'import',tag, '%0.2f s'%(tcost) #,sys._getframe().f_lineno
     lasttime=time.time()
 import sys
 import json
@@ -15,23 +15,23 @@ import locale
 from random import randint
 import ConfigParser
 from collections import OrderedDict
-load_bm('build_in')
+load_time_stat('build_in')
 import pandas as pd
-load_bm('pandas')
+load_time_stat('pandas')
 import tushare as ts ##
-load_bm('tushare')
+load_time_stat('tushare')
 
 import talib 
-load_bm('talib')
+load_time_stat('talib')
 from matplotlib import pyplot as plt
-load_bm('matplotlib')
+load_time_stat('matplotlib')
 
 from tushare_patch import get_latest_news,get_today_ticks,print_latest_news
 from tech_analyse import tech_analyse,extract_candle_tech_summary,candle_analyse,pivot_line,analyse_res_to_str,catboost_process
 from stk_util import get_article_detail,cli_select_menu
 from stock_api import StockNewsWSCN,StockNewsFUTUNN
 from stock_emd import emd_plot
-load_bm('internal')
+load_time_stat('internal')
 
 
 try:    
@@ -43,7 +43,7 @@ try:
 except:
     Pool = None
     print '[Not Found gevent]'
-load_bm('gevent')
+load_time_stat('gevent')
 
 FNAME_PAT_RT = 'data/realtime.%s.csv'
 FNAME_PAT_HIST = 'data/hist.%s.csv'

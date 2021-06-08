@@ -53,7 +53,7 @@ def candle_analyse(df):
         st= ','.join(['%s:%s'%(k,v) for k,v in res_d.items()])
         return st
         
-    df['candle_list'] = df.apply(make_dict,axis=1)
+    df['CDLList'] = df.apply(make_dict,axis=1)
     ###
     total_cdl_score = df[cn_names].sum(axis=1)
     df['CDLScore'] =  total_cdl_score
@@ -75,6 +75,8 @@ def extract_candle_tech_summary(row):
     
     ## tech info
     tech_info = OrderedDict()
+    tech_info['Price'] = row['close']
+    
     bres = [row['boll_stage']]
     bres += ['ANG[MID:%0.2f, UP:%0.2f], MID_PRC:%0.2f'%(row['bollmid_ag'], row['bollup_ag']-row['bollmid_ag'], row['boll_mid'])]
     bres += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(row['boll_up'],row['boll_mid'],row['boll_low'])]
@@ -84,7 +86,6 @@ def extract_candle_tech_summary(row):
         '%s: ANG[IF:%0.2f, EA:%0.2f]'%(row['macd_stage'],row['dif_ag'],row['dea_ag']),
         'DIF:%0.2f, DEA:%0.2f, MACD:%0.2f'%(row['dif'],row['dea'],row['macd_hist']*2)
     ]
-    
     
     tech_info['RSI'] = [row['rsi_stage']+', '+'RSI: %0.2f, ANG:%02.f'%(row['rsi'],row['rsi_ag'])]
     
@@ -568,9 +569,9 @@ def analyse_res_to_str(stock_anly_res):
             cdl_ent_str = ','.join(cdl_ent_arr)
             pstr += "\n[CDL_Total:{0}]  {1}".format(cdl.get('cdl_total','NaN'), cdl_ent_str.encode(SYS_ENCODE) )
         pstrs.append(pstr)
-    pstr = '\n'.join(pstrs)
+    pstr = '\n\n'.join(pstrs)
     for name,intro in intro.items():
-        pstr+= u"\n[EXPLAIN:{}]:{}".format(name,intro).encode(SYS_ENCODE)     
+        pstr+= u"\n\n[EXPLAIN:{}]:{}".format(name,intro).encode(SYS_ENCODE)     
     return add_indent(pstr,'  ')
 
 def yf_get_hist_data(tick):
@@ -646,8 +647,8 @@ def main():
     remote_call = False
     remote_call = True
     # tick='tsla'
-    tick='600438'
     tick='600031'
+    tick='600438'
     if remote_call:
         # df = yf_get_hist_data(tick) 
         
@@ -674,7 +675,15 @@ def main():
     
     res = [{'code':tick,'info':{}
         ,'tech':tinfo,'cdl':cinfo }]
-    df,factor_results,pstr = catboost_process(tick,df,top_n=20)
+    adf,factor_results,pstr = catboost_process(tick,df,top_n=20)
+    res[0]['algo_cb']=pstr
+    print analyse_res_to_str(res)
+    
+    print '##[10 days ago]'
+    cinfo,tinfo = extract_candle_tech_summary(df.iloc[-10])
+    res = [{'code':tick,'info':{}
+        ,'tech':tinfo,'cdl':cinfo }]
+    adf,factor_results,pstr = catboost_process(tick,df,top_n=20)
     res[0]['algo_cb']=pstr
     print analyse_res_to_str(res)
     # pprint(cinfo)
