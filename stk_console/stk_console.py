@@ -158,7 +158,7 @@ def summary_list_ticks(tks,flags):
         rdf['name'] = rdf['name'].str.slice(0,10,1)
     
     rdf.index.name = 'id'
-    r3,r2,r1,pivot,s1,s2,s3 = pivot_line(rdf['open'],rdf['high'],rdf['low'],rdf['price'])
+    pivot_res = pivot_line(rdf['open'],rdf['high'],rdf['low'],rdf['price'])
     rdf.insert(0,'code',rdf.pop('code'))
     rdf.insert(1,'op_gp',(rdf['open']-rdf['pclose'])/(rdf['pclose'])*100)
     rdf.insert(2,'mx_up',(rdf['high']-rdf['pclose'])/(rdf['pclose'])*100)
@@ -167,9 +167,9 @@ def summary_list_ticks(tks,flags):
     rdf.insert(5,'rate',(rdf['price']-rdf['pclose'])/(rdf['pclose'])*100)
     # rdf.insert(5,'r2',r2)
     rdf.insert(6,'price',rdf.pop('price'))
-    rdf.insert(8,'pivot',pivot)
-    rdf.insert(9,'r1',r1)
-    rdf.insert(10,'s1',s1)
+    rdf.insert(8,'pivot',pivot_res['pivot'])
+    rdf.insert(9,'r1',pivot_res['r1'])
+    rdf.insert(10,'s1',pivot_res['s1'])
     rdf.insert(11,'amount',rdf.pop('amount')/100000000.0)
     # rdf.insert(10,'s2',s2)
     # rdf.insert(16,'name',rdf.pop('name'))
