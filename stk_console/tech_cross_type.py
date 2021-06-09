@@ -5,10 +5,13 @@ import talib
 from matplotlib import pyplot as plt
 
 
-def get_angle(ss,p=2):
+def get_angle(ss,p=4):
     fss = np.nan_to_num(ss,0)
-    ang =  talib.LINEARREG_ANGLE(fss, timeperiod=p)    
-    return ang
+    scale = (max(fss)-min(fss))/2*1.1
+    nfss = fss/scale    
+    # pdb.set_trace()
+    angle =  talib.LINEARREG_ANGLE(nfss, timeperiod=p)    
+    return angle
     
 def get_crossx_type(fast_line,slow_line):
     fast_ag = get_angle(fast_line, 2)
@@ -41,14 +44,17 @@ def get_crossx_type(fast_line,slow_line):
     return df
     
 if __name__ == '__main__':
-    fs=np.sin(np.arange(80)*0.1+0.5)*1
-    ss=np.sin(np.arange(80)*0.1)*1
-    res = get_crossx_type(fs,ss)
-    print res.columns
+    fast_s=np.sin(np.arange(80)*0.1+0.5)*5
+    slow_s=np.sin(np.arange(80)*0.1)*5
+    res = get_crossx_type(fast_s,slow_s)
+    print res.columns.to_list()
     for row in res.iterrows():
         print row[1].to_list()
     print res.groupby('cross_stage')['cross_stage'].count()
+    ag = get_angle(fast_s)
+    print 'angle:',ag
     # pdb.set_trace()
-    plt.plot(fs)
-    plt.plot(ss)
+    plt.plot(fast_s)
+    plt.plot(slow_s)
+    plt.plot(ag)
     plt.show()
