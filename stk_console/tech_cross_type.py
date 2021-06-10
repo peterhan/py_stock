@@ -53,8 +53,10 @@ if __name__ == '__main__':
     print res.groupby('cross_stage')['cross_stage'].count()
     ag = get_angle(fast_s)
     print 'angle:',ag
+    print 'angle:',np.arctan(ag)/np.pi*180*0.01
     # pdb.set_trace()
     plt.plot(fast_s)
-    plt.plot(slow_s)
+    # plt.plot(slow_s)
+    plt.plot(np.arctan(ag)/np.pi*180*0.01)
     plt.plot(ag)
     plt.show()
