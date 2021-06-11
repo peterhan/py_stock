@@ -14,7 +14,7 @@ from matplotlib import pyplot as plt
 from stk_util import time_count,add_indent
 import pickle 
 
-from tech_cross_type import get_crossx_type,get_angle
+from tech_cross_type import get_crossx_type,get_angle,get_angle_diff_stage
 from tech_algo_analyse import catboost_factor_verify,join_factor_result_to_df,get_factor_judge_result,print_factor_result,add_target_day_out_col
 SYS_ENCODE = locale.getpreferredencoding()
 
@@ -78,7 +78,7 @@ def extract_candle_tech_summary(row):
     tech_info['Price'] = row['close']
     
     bres = [row['boll_stage']]
-    bres += ['ANG[MID:%0.2f, UP:%0.2f], MID_PRC:%0.2f'%(row['bollmid_ag'], row['bollup_ag']-row['bollmid_ag'], row['boll_mid'])]
+    bres += ['ANG[MID:%0.2f, UP_DIF:%0.2f], MID_PRC:%0.2f'%(row['bollmid_ag'], row['bollup_ag']-row['bollmid_ag'], row['boll_mid'])]
     bres += ['UP:%0.2f, MID:%0.2f, LOW:%0.2f'%(row['boll_up'],row['boll_mid'],row['boll_low'])]
     tech_info['BOLL'] = bres
     
@@ -180,10 +180,7 @@ def boll_analyse(ohlcv,period=10):
             res = 'UP'
         else:
             res = 'DN'
-        if (u_ag - m_ag) >= 0:
-            res += '-EXPAND'
-        else:
-            res += '-SHRINK'
+        res+='-'+get_angle_diff_stage(u_ag,m_ag)
         return res
     df['boll_stage'] = df.apply(boll_judge,axis=1)        
     return df
@@ -571,7 +568,7 @@ def analyse_res_to_str(stock_anly_res):
         pstrs.append(pstr)
     pstr = '\n\n'.join(pstrs)
     for name,intro in intro.items():
-        pstr+= u"\n\n[EXPLAIN:{}]:{}".format(name,intro).encode(SYS_ENCODE)     
+        pstr+= u"\n[EXPLAIN:{}]:{}".format(name,intro).encode(SYS_ENCODE)     
     return add_indent(pstr,'  ')
 
 def yf_get_hist_data(tick):

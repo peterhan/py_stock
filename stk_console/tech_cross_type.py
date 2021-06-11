@@ -17,7 +17,21 @@ def get_angle(ss,p=4,ang_type='degree'):
         return np.arctan(angle)
     else:
         return angle
-    
+  
+def get_angle_diff_stage(ang_up,ang_mid):
+    dif = ang_up-ang_mid
+    res = "PARA"
+    if ang_up>=0 and dif>=0:
+        res = 'EXPAND'
+    if ang_up>=0 and dif<0:
+        res = 'SHRINK'
+    if ang_up<0 and dif<0:
+        res = 'SHRINK'
+    if ang_up<0 and dif>=0:
+        res = 'EXPAND'
+        
+    return res
+  
 def get_crossx_type(fast_line,slow_line):
     fast_ag = get_angle(fast_line, 2)
     slow_ag = get_angle(slow_line, 2)
