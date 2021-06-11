@@ -155,14 +155,12 @@ def pivot_line_analyse(open,high,low,close):
     df = pd.DataFrame({'pivot_line':df.apply(pivot_line_judge,axis=1)})
     return df    
     
-def value_range_judge(vlu,up_down,up_down_mid_name): 
-    if vlu>=up_down[0]:
-        return up_down_mid_name[0]
-    elif vlu<=up_down[1]:
-        return up_down_mid_name[1]
-    else:
-        return up_down_mid_name[2]
-  
+def value_range_map(vlu,up_down_points,up_mid_down_name): 
+    for i,thre in enumerate(up_down_points):
+        if vlu > thre:
+            return up_mid_down_name[i]
+    return up_mid_down_name[-1]
+    
 @time_count
 def boll_analyse(ohlcv,period=10):
     boll_up, boll_mid, boll_low = talib.BBANDS(ohlcv['close'],period)
@@ -212,7 +210,7 @@ def rsi_analyse(ohlcv,period=10):
     rsi_ag = get_angle(rsi,2)
     df = pd.DataFrame({'rsi':rsi,'rsi_ag':rsi_ag})
     def rsi_row(row):
-        return value_range_judge( row['rsi'] ,[70,30],['OverBrought','OverSell','MID'])
+        return value_range_map( row['rsi'] ,[70,30],['OverBrought','MID','OverSell'])
     df['rsi_stage'] =  df.apply(rsi_row, axis=1)
     # pdb.set_trace()
     return df
@@ -224,7 +222,7 @@ def cci_analyse(ohlcv,period=10):
     cci_ag = get_angle(cci,2)
     df = pd.DataFrame({'cci':cci,'cci_ag':cci_ag})
     def cci_row(row):
-        return value_range_judge( row['cci'] ,[100,-100],['OverBrought','OverSell','MID'])
+        return value_range_map( row['cci'] ,[100,-100],['OverBrought','MID','OverSell'])
     df['cci_stage'] =  df.apply(cci_row, axis=1)
     # pdb.set_trace()
     return df
@@ -238,7 +236,7 @@ def roc_analyse(ohlcv,period=10):
     maroc_ag = talib.SMA(maroc,14)
     df = pd.DataFrame({'roc':roc,'roc_ag':roc_ag,'maroc':maroc,'maroc_ag':maroc_ag})
     def roc_row(row):
-        return value_range_judge( row['roc'] ,[0,0],['STRONG','WEAK','ZERO'])
+        return value_range_map( row['roc'] ,[0,-0.0001],['STRONG','ZERO','WEAK'])
     df['roc_stage'] =  df.apply(roc_row, axis=1)
     # pdb.set_trace()
     return df
@@ -280,9 +278,9 @@ def kdj_analyse(ohlcv,period=10):
             sw += 'NORM' ## 无现象
         res = [
             sw 
-            # ,'K-'+value_range_judge( row['kdj_k'] ,[80,20],['OB','OS','MD']) +'-'+ value_range_judge( row['kdj_k'] ,[50,50],['S','W','M'])
-            # ,'D-'+value_range_judge( row['kdj_d'] ,[80,20],['OB','OS','MD']) +'-'+ value_range_judge( row['kdj_d'] ,[50,50],['S','W','M'])        
-            # ,'J-'+value_range_judge( row['kdj_j'] ,[80,20],['OB','OS','MD']) +'-'+ value_range_judge( row['kdj_j'] ,[50,50],['S','W','M'])
+            # ,'K-'+value_range_map( row['kdj_k'] ,[80,20],['OB','MD','OS']) +'-'+ value_range_map( row['kdj_k'] ,[50,49.99],['S','M','W'])
+            # ,'D-'+value_range_map( row['kdj_d'] ,[80,20],['OB','MD','OS']) +'-'+ value_range_map( row['kdj_d'] ,[50,49.99],['S','M','W'])        
+            # ,'J-'+value_range_map( row['kdj_j'] ,[80,20],['OB','MD','OS']) +'-'+ value_range_map( row['kdj_j'] ,[50,49.99],['S','M','W'])
         ]
         return ','.join(res)
         

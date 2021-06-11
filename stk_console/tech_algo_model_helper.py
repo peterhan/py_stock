@@ -78,8 +78,9 @@ def get_tech_df(cached_sa, tick,fc_list,tdays):
     # df['date'] = df.index
     # df = df.sort_index()
     ##
-    tinfo,tdf = tech_analyse(df)    
-    cinfo,cdf = candle_analyse(df)
+    tdf = tech_analyse(df)    
+    cdf = candle_analyse(df)
+    tinfo,cinfo = {},{}
     df = pd.concat([df,tdf,cdf],axis=1)
     df = df.loc[:,~df.columns.duplicated()]
     res = [{'code':tick,'info':{}

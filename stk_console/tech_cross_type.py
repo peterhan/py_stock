@@ -28,9 +28,9 @@ def get_angle_diff_stage(ang_up,ang_mid):
     if ang_up<0 and dif<0:
         res = 'SHRINK'
     if ang_up<0 and dif>=0:
-        res = 'EXPAND'
-        
+        res = 'EXPAND'        
     return res
+    
   
 def get_crossx_type(fast_line,slow_line):
     fast_ag = get_angle(fast_line, 2)
