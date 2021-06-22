@@ -231,5 +231,6 @@ if __name__ =='__main__':
     df7 = fv.get_statement(tick,'BA')
     df8 = fv.get_statement(tick,'CA')
     # query = OrderedDict([['v','111'],['f','ind_banksdiversified']])
-    # fv.get_screener(query)
+    query = OrderedDict([['v','111'],['t','TSLA,NIO,LI,XPEV']])
+    df9=fv.get_screener(query)
     pdb.set_trace()
