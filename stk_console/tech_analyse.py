@@ -191,7 +191,6 @@ def tech_analyse(df):
     return df
     
 
-
 def analyse_res_to_str(stock_anly_res):
     intro = {}
     pstrs = []
