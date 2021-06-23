@@ -17,6 +17,9 @@ def ts2unix(str_date,mask=DATE_FORMAT):
          time.strptime(str_date, mask)
         )) 
 
+def pd_concat(df1,df2):
+    return pd.concat([df1,df2.set_index(df1.index)],axis=1)
+
 def unix2ts(uxts,mask=DATE_FORMAT,base=10):
     return \
         datetime.datetime.fromtimestamp( 
@@ -34,8 +37,8 @@ def get_date(fmt=DATE_FORMAT,base= datetime.datetime.now(), isobj=False, **kwarg
     else: 
         return dateobj.strftime(fmt)
     
-def js_dumps(obj,encode='gbk'):    
-    return json.dumps(obj,indent=2,ensure_ascii=False).encode(encode,'ignore')
+def js_dumps(obj,encode='gbk',indent=None):    
+    return json.dumps(obj,indent=indent,ensure_ascii=False).encode(encode,'ignore')
     
     
 def gen_random(n=16):
