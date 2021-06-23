@@ -179,7 +179,7 @@ def us_main_loop(mode):
         'q':'quit','d':'detail','i':'pdb'
         ,'s':'onestock','n':'news','r':'realtime'
         ,'f':'fullname','a':'alpha_vantage','y':"yfinance",'f':'futu','vt':"vantage"
-        ,'g':"graph",'ia':'intraday','id':'day','iw':'week','im':'month','u':'us','z':'zh'
+        ,'g':"graph",'r':'intraday','id':'day','iw':'week','im':'month','u':'us','z':'zh'
         ,'e':'emd','ve':'vemd','c':'catboost','o':'option_chain','ft':'futures','fe':'futures_etc'
     }
     menu_dict = conf_tks
