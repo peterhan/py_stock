@@ -49,7 +49,7 @@ def gen_random(n=16):
     
 def get_article_detail(url,tag='article',attr_mask=''):   
     ftags = get_tags(url,tag ,attr_mask)
-    texts =  map(lambda x:x.text.strip().replace('\n','') ,ftags)
+    texts =  filter(lambda x:x.strip()!='',map(lambda x:x.text.strip().replace('\n','') ,ftags))
     return '\n'.join(texts),ftags
  
 def get_tags(soup, tag='article',attr_mask=''):    

@@ -12,7 +12,7 @@ from stk_util import ts2unix,js_dumps,gen_random,to_timestamp,DATE_FORMAT,flatte
 
 
 
-class StockNewsXGB():
+class StockNewsEastMoney():
     def __init__(self):
         self.urls='''http://xuangubao.cn/
 http://xuangubao.cn/subjects

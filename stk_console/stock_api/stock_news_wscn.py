@@ -52,6 +52,7 @@ class StockNewsWSCN():
         df2['type']='week'
         df = pd.concat([df1,df2],axis=0,sort=True)
         df['display_time'] = df['display_time'].apply(to_timestamp)
+        df = df.reset_index()
         # print df[['type','title','uri']]
         # pdb.set_trace()
         return df
@@ -244,6 +245,7 @@ if __name__ =='__main__':
     
     # sys.exit()
     wscn.mode_run('hot_article')
+    # pdb.set_trace()
     # wscn.article_detail('3623418')
     wscn.mode_run('article',stocks=['https://wallstreetcn.com/articles/3623418'])
     wscn.mode_run('macro')
